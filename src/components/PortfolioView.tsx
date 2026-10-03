@@ -6,6 +6,8 @@ import type { Work } from '@/lib/types';
 import { useSite } from './SiteProvider';
 import { WorkCard } from './WorkCard';
 
+const PAGE_SIZE = 12; // 한 페이지에 보여줄 작업물 수 (4열 × 3줄)
+
 /** 여러 개 선택 가능한 드롭다운 */
 function Multi({ label, options, value, onChange }: {
   label: string; options: { id: string; name: string }[]; value: string[]; onChange: (v: string[]) => void;
@@ -37,6 +39,37 @@ function Multi({ label, options, value, onChange }: {
   );
 }
 
+/** 1 … 4 5 6 … 20 형태의 페이지 번호 목록 */
+function pageNums(cur: number, total: number): (number | '…')[] {
+  const keep = new Set([1, total, cur - 1, cur, cur + 1]);
+  const nums = [...keep].filter((n) => n >= 1 && n <= total).sort((a, b) => a - b);
+  const out: (number | '…')[] = [];
+  nums.forEach((n, i) => {
+    if (i > 0 && n - nums[i - 1] > 1) out.push('…');
+    out.push(n);
+  });
+  return out;
+}
+
+function Pager({ page, pages, onGo }: { page: number; pages: number; onGo: (n: number) => void }) {
+  if (pages < 2) return null;
+  return (
+    <nav className="hr-pgn" aria-label="페이지 이동">
+      <button onClick={() => onGo(page - 1)} disabled={page === 1} aria-label="이전 페이지">‹</button>
+      {pageNums(page, pages).map((n, i) =>
+        n === '…'
+          ? <span key={`gap-${i}`} className="gap">…</span>
+          : (
+            <button key={n} className={n === page ? 'on' : ''} aria-current={n === page ? 'page' : undefined} onClick={() => onGo(n)}>
+              {n}
+            </button>
+          ),
+      )}
+      <button onClick={() => onGo(page + 1)} disabled={page === pages} aria-label="다음 페이지">›</button>
+    </nav>
+  );
+}
+
 export function PortfolioView() {
   const s = useSite();
   const [q, setQ] = useState('');
@@ -46,6 +79,8 @@ export function PortfolioView() {
   const [aType, setAType] = useState<string[]>([]);
   const [sort, setSort] = useState<'new' | 'old'>('new');
   const [expanded, setExpanded] = useState(false);
+  const [pg, setPg] = useState<{ key: string; n: number }>({ key: '', n: 1 });
+  const allRef = useRef<HTMLDivElement>(null);
 
   const filter: Filter = { q, groupId, partId, usage, aType };
   const dir = <X,>(l: X[]) => (sort === 'old' ? [...l].reverse() : l);
@@ -66,6 +101,16 @@ export function PortfolioView() {
   const matched = dir(s.works.filter((w) => matches(w, s, filter)));
   const list = matched.filter((w) => !featIds.has(w.id));
   const count = new Set([...list.map((w) => w.id), ...featIds]).size;
+
+  /* 페이지 나누기: 검색·필터·정렬이 바뀌면 자동으로 1페이지로 돌아갑니다 */
+  const filterKey = JSON.stringify([q, groupId, partId, usage, aType, sort]);
+  const pages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+  const page = Math.min(pg.key === filterKey ? pg.n : 1, pages);
+  const shown = list.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const goPage = (n: number) => {
+    setPg({ key: filterKey, n: Math.max(1, Math.min(pages, n)) });
+    allRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   const scopeKey = partId ?? groupId ?? 'all';
   const scopeName = partId ? s.partName(partId) : groupId ? s.groupName(groupId) : '';
@@ -157,19 +202,20 @@ export function PortfolioView() {
           </div>
         )}
 
-        <div className="fh">
+        <div className="fh all-anchor" ref={allRef}>
           <span className="n">ALL</span>
           <h2>{scopeName ? `${scopeName} 참여 작업물` : '전체 작업물'}</h2>
         </div>
         <div className="meta">
-          <span><b>{count}</b> works</span>
+          <span><b>{count}</b> works{pages > 1 && <> · {page} / {pages} 페이지</>}</span>
           {active && <button onClick={reset}>필터 초기화</button>}
         </div>
         <div className="grid">
-          {list.length
-            ? list.map((w) => <WorkCard key={w.id} work={w} />)
+          {shown.length
+            ? shown.map((w) => <WorkCard key={w.id} work={w} />)
             : <div className="empty">{feats.length ? '위 대표작 외 추가 작업물이 없습니다.' : '조건에 맞는 작업물이 없습니다.'}</div>}
         </div>
+        <Pager page={page} pages={pages} onGo={goPage} />
       </div>
     </>
   );

@@ -1,6 +1,7 @@
 // src/components/Avatar.tsx
 import type { Artist } from '@/lib/types';
-/** 이미지를 쓰지 않으면 같은 크기의 빈 원(테두리만) */
-export const Avatar = ({ artist }: { artist: Artist }) => (
-  <span className="av">{artist.useAvatar && artist.avatarUrl && <img src={artist.avatarUrl} alt="" />}</span>
-);
+/** 프로필 이미지가 있을 때만 그립니다. 없으면 아무것도 그리지 않아 이름만 보입니다. */
+export const Avatar = ({ artist }: { artist: Artist }) =>
+  artist.useAvatar && artist.avatarUrl ? (
+    <span className="av"><img src={artist.avatarUrl} alt="" /></span>
+  ) : null;
