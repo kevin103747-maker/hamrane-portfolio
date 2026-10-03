@@ -26,6 +26,7 @@ export default async function DashboardPage({
     { href: '/hr-admin/artists', title: '아티스트 관리', desc: '아티스트와 프로필 이미지', ok: can(me, 'artists') },
     { href: '/hr-admin/rates', title: '단가표', desc: '파트별 단가와 할인', ok: can(me, 'rates') },
     { href: '/hr-admin/rates/packages', title: '패키지', desc: '단가표 아래의 구성 예시', ok: can(me, 'rates') },
+    { href: '/hr-admin/groups', title: '분야·파트', desc: '포트폴리오·단가표의 분야 이름, 순서, 파트', ok: can(me, 'settings') },
     { href: '/hr-admin/settings', title: '사이트 설정', desc: '문구, 제목·설명, 채널 링크, 연락처, 공지', ok: can(me, 'settings') },
   ].filter((x) => x.ok);
 

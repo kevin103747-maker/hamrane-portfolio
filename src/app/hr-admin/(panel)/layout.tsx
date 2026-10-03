@@ -23,7 +23,12 @@ export default async function PanelLayout({ children }: { children: React.ReactN
           { href: '/hr-admin/rates/packages', label: '패키지', group: 2 },
         ]
       : []),
-    ...(can(me, 'settings') ? [{ href: '/hr-admin/settings', label: '설정', group: 3 }] : []),
+    ...(can(me, 'settings')
+      ? [
+          { href: '/hr-admin/groups', label: '분야·파트', group: 3 },
+          { href: '/hr-admin/settings', label: '설정', group: 3 },
+        ]
+      : []),
   ];
 
   return (
