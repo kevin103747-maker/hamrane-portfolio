@@ -6,8 +6,9 @@ import { adminDb } from '@/lib/auth/admin-db';
 import { can } from '@/lib/auth/permissions';
 import { tx } from '@/lib/i18n';
 import { ConfirmButton } from '@/components/admin/ConfirmButton';
-import { saveWork, removeWork } from '../actions';
 import { ArtistPicker } from '@/components/admin/ArtistPicker';
+import { WorkBasics } from '@/components/admin/WorkBasics';
+import { saveWork, removeWork } from '../actions';
 
 type FeatValue = { default?: string; groups?: string[]; parts?: string[] };
 type WorkRow = {
@@ -35,10 +36,10 @@ const FILTERS = [
 
 export default async function WorksPage({
   searchParams,
-}: { searchParams: Promise<{ edit?: string; err?: string; ok?: string; q?: string; f?: string; na?: string }> }) {
+}: { searchParams: Promise<{ edit?: string; copy?: string; err?: string; ok?: string; q?: string; f?: string; na?: string }> }) {
   const me = await requireAdmin();
   if (!can(me, 'works')) redirect('/hr-admin');
-  const { edit, err, ok, na, q = '', f = '' } = await searchParams;
+  const { edit, copy, err, ok, na, q = '', f = '' } = await searchParams;
 
   const db = adminDb();
   const [w, a, u, g, p, iq] = await Promise.all([
@@ -56,8 +57,12 @@ export default async function WorksPage({
   const parts = p.data ?? [];
   const homeIds = new Set((iq.data ?? []).map((r: { work_id: string }) => r.work_id));
   const cur = edit ? works.find((x) => x.id === edit) : undefined;
+  // 새 곡을 "이전 곡 설정 이어받기"로 열었을 때, 아티스트·용도·파트를 가져올 곡
+  const base = cur ?? (copy ? works.find((x) => x.id === copy) : undefined);
+  const isCopy = !cur && !!base;
   const artistName = (id: string) => artists.find((x: { id: string; name: string }) => x.id === id)?.name ?? '';
   const feat = (cur?.feat ?? {}) as FeatValue;
+  const today = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10); // 한국 시간 오늘
 
   // 검색·필터 (제목, 아티스트 이름)
   const needle = q.trim().toLowerCase();
@@ -72,12 +77,12 @@ export default async function WorksPage({
     return true;
   });
 
-  // 목록에서 수정으로 갈 때 검색 조건을 유지하고, 폼 위치(#form)로 이동합니다.
-  const editHref = (id: string) => {
+  // 목록에서 수정/설정 복사로 갈 때 검색 조건을 유지하고, 폼 위치(#form)로 이동합니다.
+  const rowHref = (key: 'edit' | 'copy', id: string) => {
     const sp = new URLSearchParams();
     if (q) sp.set('q', q);
     if (f) sp.set('f', f);
-    sp.set('edit', id);
+    sp.set(key, id);
     return `/hr-admin/works?${sp.toString()}#form`;
   };
 
@@ -102,19 +107,24 @@ export default async function WorksPage({
       {err && <p className="hr-adm-err">{err}</p>}
       {w.error && <p className="hr-adm-err">목록을 불러오지 못했습니다: {w.error.message}</p>}
 
-      <form id="form" key={cur?.id ?? 'new'} action={saveWork} className="hr-card hr-f">
-        <h2>{cur ? `곡 수정 · ${cur.title}` : '새 곡 추가'}</h2>
+      <form id="form" key={cur?.id ?? `new-${copy ?? ''}`} action={saveWork} className="hr-card hr-f">
+        <h2>{cur ? `곡 수정 · ${cur.title}` : isCopy ? '새 곡 추가 (이전 곡 설정 이어받기)' : '새 곡 추가'}</h2>
+        {isCopy && base && (
+          <p className="hr-adm-sub">
+            「{base.title}」의 아티스트·용도·참여 파트를 그대로 가져왔습니다. YouTube 링크를 붙여넣고 다른 점만 고친 뒤 저장하세요.
+          </p>
+        )}
         {cur && <input type="hidden" name="id" value={cur.id} />}
-        <label>제목<input name="title" required defaultValue={cur?.title ?? ''} /></label>
-        <label>YouTube 링크 또는 영상 ID<input name="youtube" placeholder="https://youtu.be/..." defaultValue={cur?.youtube_id ?? ''} /></label>
-        <label>공개일<input type="date" name="date" defaultValue={toInputDate(cur?.work_date)} /></label>
-        <label>썸네일 파일 올리기(JPG·PNG·WebP, 4MB 이하. 올리면 아래 주소보다 우선합니다)<input type="file" name="thumbFile" accept="image/jpeg,image/png,image/webp" /></label>
-        <label>썸네일 주소(선택, 비우면 유튜브 썸네일 사용)<input name="thumb" placeholder="https://..." defaultValue={cur?.thumb_url ?? ''} /></label>
 
+        <WorkBasics
+          title={cur?.title ?? ''}
+          youtube={cur?.youtube_id ?? ''}
+          date={cur ? toInputDate(cur.work_date) : today}
+        />
 
         <fieldset>
           <legend>아티스트</legend>
-          <ArtistPicker artists={artists} initial={cur?.artist_ids ?? []} />
+          <ArtistPicker artists={artists} initial={base?.artist_ids ?? []} />
         </fieldset>
 
         <fieldset>
@@ -122,7 +132,7 @@ export default async function WorksPage({
           <div className="hr-chks">
             {usage.map((x: { id: string; name: unknown }) => (
               <label key={x.id} className="hr-chk">
-                <input type="checkbox" name="usageIds" value={x.id} defaultChecked={cur?.usage_ids?.includes(x.id)} />{tx(x.name as never)}
+                <input type="checkbox" name="usageIds" value={x.id} defaultChecked={base?.usage_ids?.includes(x.id)} />{tx(x.name as never)}
               </label>
             ))}
           </div>
@@ -136,7 +146,7 @@ export default async function WorksPage({
               <div className="hr-chks">
                 {parts.filter((x: { group_id: string }) => x.group_id === gr.id).map((x: { id: string; name: unknown }) => (
                   <label key={x.id} className="hr-chk">
-                    <input type="checkbox" name="partIds" value={x.id} defaultChecked={cur?.part_ids?.includes(x.id)} />{tx(x.name as never)}
+                    <input type="checkbox" name="partIds" value={x.id} defaultChecked={base?.part_ids?.includes(x.id)} />{tx(x.name as never)}
                   </label>
                 ))}
               </div>
@@ -144,11 +154,17 @@ export default async function WorksPage({
           ))}
           <label>
             곡 카드에서 강조할 파트 (선택. 위에서 체크한 파트 중에서 고르세요. 비우면 목록상 가장 앞의 파트가 강조됩니다)
-            <select name="mainPartId" defaultValue={cur?.main_part_id ?? ''}>
+            <select name="mainPartId" defaultValue={base?.main_part_id ?? ''}>
               <option value="">(자동)</option>
               {partOptions}
             </select>
           </label>
+        </details>
+
+        <details className="hr-fold" open={!!cur?.thumb_url}>
+          <summary>썸네일 직접 지정 (선택 · 비우면 유튜브 썸네일을 씁니다)</summary>
+          <label>썸네일 파일 올리기(JPG·PNG·WebP, 4MB 이하. 올리면 아래 주소보다 우선합니다)<input type="file" name="thumbFile" accept="image/jpeg,image/png,image/webp" /></label>
+          <label>썸네일 주소<input name="thumb" placeholder="https://..." defaultValue={cur?.thumb_url ?? ''} /></label>
         </details>
 
         <details className="hr-fold" open={hasFeat(cur?.feat ?? null)}>
@@ -191,7 +207,8 @@ export default async function WorksPage({
 
         <div className="hr-row hr-savebar">
           <button type="submit" className="hr-adm-btn">저장</button>
-          {cur && <Link href="/hr-admin/works" className="hr-link">새 곡 추가로 돌아가기</Link>}
+          <button type="submit" name="next" value="1" className="hr-adm-btn">저장하고 다음 곡 추가</button>
+          {(cur || isCopy) && <Link href="/hr-admin/works" className="hr-link">빈 폼으로 새 곡 추가</Link>}
         </div>
       </form>
 
@@ -234,7 +251,8 @@ export default async function WorksPage({
                     <td>{x.work_date || '-'}</td>
                     <td>{(x.artist_ids ?? []).map(artistName).filter(Boolean).join(', ') || '-'}</td>
                     <td className="hr-act">
-                      <Link href={editHref(x.id)}>수정</Link>
+                      <Link href={rowHref('edit', x.id)}>수정</Link>
+                      <Link href={rowHref('copy', x.id)} title="이 곡의 아티스트·용도·파트를 가져와서 새 곡을 추가합니다">이 설정으로 추가</Link>
                       <form action={removeWork}>
                         <input type="hidden" name="id" value={x.id} />
                         <ConfirmButton className="hr-del" message={`'${x.title}' 곡을 삭제할까요?`}>삭제</ConfirmButton>

@@ -744,3 +744,7 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 .hr-mv button:disabled { opacity: .35; cursor: default; }
 .hr-mv input[type="number"] { width: 64px; }
 .hr-pager { justify-content: center; margin-top: 12px; }
+
+/* 곡 추가: 유튜브 확인 미리보기 */
+.hr-yt { display: flex; gap: 10px; align-items: center; }
+.hr-yt img { width: 96px; height: 54px; object-fit: cover; border-radius: 6px; }

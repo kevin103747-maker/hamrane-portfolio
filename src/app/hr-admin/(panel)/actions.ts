@@ -131,7 +131,9 @@ export async function saveWork(fd: FormData) {
     if (error) fail(back, `저장 실패: ${error.message}`);
     await logEdit(me, 'create', 'works', nid, null, row);
   }
-  redirect(`${WORKS}?edit=${encodeURIComponent(savedId)}&ok=1${made.added ? `&na=${made.added}` : ''}`);
+  const naQs = made.added ? `&na=${made.added}` : '';
+  if (fd.get('next') === '1') redirect(`${WORKS}?copy=${encodeURIComponent(savedId)}&ok=1${naQs}`);
+  redirect(`${WORKS}?edit=${encodeURIComponent(savedId)}&ok=1${naQs}`);
 }
 
 export async function removeWork(fd: FormData) {
