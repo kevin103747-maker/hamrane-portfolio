@@ -35,7 +35,7 @@ export default async function FeaturedPage({
       <h1>대표곡 지정</h1>
       <p>홈 화면 &quot;대표작&quot; 패널에 나올 곡입니다. 위에서부터 순서대로 표시되고, 비워 둔 칸은 무시됩니다. 모두 비우면 최신 곡이 대신 표시됩니다.</p>
 
-      {ok && <p role="status">저장했습니다. 공개 사이트에는 대시보드의 &quot;게시&quot;를 눌러야 반영됩니다.</p>}
+      {ok && <p role="status">저장했습니다. 공개 사이트에는 상단의 &quot;게시&quot; 버튼을 눌러야 반영됩니다.</p>}
       {err && <p role="alert">{err}</p>}
 
       <form action={saveIndexQueue} className="hr-card hr-f">

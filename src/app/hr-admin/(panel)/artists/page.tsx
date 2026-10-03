@@ -26,7 +26,7 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Prom
   return (
     <div className="hr-pn-body">
       <h1 className="hr-pn-h">아티스트 관리</h1>
-      {ok && <p className="hr-ok">저장했습니다. 배포된 사이트에는 대시보드에서 게시해야 반영됩니다.</p>}
+      {ok && <p className="hr-ok">저장했습니다. 배포된 사이트에는 상단의 게시 버튼을 눌러야 반영됩니다.</p>}
       {err && <p className="hr-adm-err">{err}</p>}
       {a.error && <p className="hr-adm-err">목록을 불러오지 못했습니다: {a.error.message}</p>}
 

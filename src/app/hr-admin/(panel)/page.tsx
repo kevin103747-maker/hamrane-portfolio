@@ -20,6 +20,15 @@ export default async function DashboardPage({
     db.from('index_queue').select('*', { count: 'exact', head: true }),
   ]);
 
+  const shortcuts = [
+    { href: '/hr-admin/works', title: '곡 관리', desc: '곡 추가·수정, 참여 파트와 대표작 설정', ok: can(me, 'works') },
+    { href: '/hr-admin/featured', title: '대표곡 지정', desc: '홈 화면 대표작 패널에 나올 곡 선택', ok: can(me, 'works') },
+    { href: '/hr-admin/artists', title: '아티스트 관리', desc: '아티스트와 프로필 이미지', ok: can(me, 'artists') },
+    { href: '/hr-admin/rates', title: '단가표', desc: '파트별 단가와 할인', ok: can(me, 'rates') },
+    { href: '/hr-admin/rates/packages', title: '패키지', desc: '단가표 아래의 구성 예시', ok: can(me, 'rates') },
+    { href: '/hr-admin/settings', title: '사이트 설정', desc: '문구, 제목·설명, 채널 링크, 연락처, 공지', ok: can(me, 'settings') },
+  ].filter((x) => x.ok);
+
   return (
     <div className="hr-pn-body">
       <h1>대시보드</h1>
@@ -34,19 +43,20 @@ export default async function DashboardPage({
 
       <div className="hr-card">
         <h2>바로가기</h2>
-        <p>
-          <Link href="/hr-admin/works">곡 관리</Link>
-          {' · '}
-          <Link href="/hr-admin/artists">아티스트 관리</Link>
-          {' · '}
-          <Link href="/hr-admin/featured">대표곡 지정</Link>
-        </p>
+        <div className="hr-shortcuts">
+          {shortcuts.map((x) => (
+            <Link key={x.href} href={x.href}>
+              <b>{x.title}</b>
+              <small>{x.desc}</small>
+            </Link>
+          ))}
+        </div>
       </div>
 
       {can(me, 'publish') && (
         <div className="hr-card">
           <h2>게시</h2>
-          <p>저장한 변경 사항을 공개 사이트에 반영합니다.</p>
+          <p>저장한 변경 사항을 공개 사이트에 반영합니다. 상단바의 &quot;사이트에 게시&quot; 버튼으로도 어느 화면에서나 게시할 수 있습니다.</p>
           <form action={publishSite}>
             <button type="submit">사이트에 게시</button>
           </form>

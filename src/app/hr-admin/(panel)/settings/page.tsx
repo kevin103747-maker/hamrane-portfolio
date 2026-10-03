@@ -27,7 +27,7 @@ export default async function SettingsPage({
       <h1>사이트 설정</h1>
       <p>채널 링크, 연락처, 단가표 안내 문구, 사이트 제목·설명, 홈 소개 문구를 바꿉니다. 비워 둔 채널 아이콘은 홈에서 흐리게 표시되고 눌러도 이동하지 않습니다.</p>
 
-      {ok && <p role="status">저장했습니다. 공개 사이트에는 대시보드의 &quot;게시&quot;를 눌러야 반영됩니다.</p>}
+      {ok && <p role="status">저장했습니다. 공개 사이트에는 상단의 &quot;게시&quot; 버튼을 눌러야 반영됩니다.</p>}
       {err && <p role="alert">{err}</p>}
 
       <form action={saveSettings} className="hr-card hr-f">

@@ -44,7 +44,7 @@ export default async function RatesPage({
       <h1>단가표</h1>
       <p>파트별 기본 단가입니다. 패키지는 <Link href="/hr-admin/rates/packages">패키지 화면</Link>에서 관리합니다.</p>
 
-      {ok && <p role="status">저장했습니다. 공개 사이트에는 대시보드의 &quot;게시&quot;를 눌러야 반영됩니다.</p>}
+      {ok && <p role="status">저장했습니다. 공개 사이트에는 상단의 &quot;게시&quot; 버튼을 눌러야 반영됩니다.</p>}
       {err && <p role="alert">{err}</p>}
 
       <form key={cur?.id ?? 'new'} id="form" action={saveRate} className="hr-card hr-f">

@@ -11,15 +11,19 @@ export default async function Pricing() {
   const d = await getSiteData();
   const item = (id: string) => d.rateItems.find((i) => i.id === id);
   const gname = (id: string) => { const g = d.groups.find((x) => x.id === id); return g ? tx(g.name) : ''; };
+  // 단가 항목이 하나라도 있는 분야만 표시합니다. (리믹스처럼 포트폴리오 전용 분야는 단가 항목을 넣지 않으면 숨겨집니다.)
+  const groups = d.groups.filter((g) => d.rateItems.some((i) => i.groupId === g.id));
+  // 화면의 분야 번호는 보이는 분야 기준으로 01부터 다시 매깁니다.
+  const no = (n: number) => String(n + 1).padStart(2, '0');
   return (
     <>
       <PageHead crumb="PRICING" title="외주 단가" en="Pricing" desc="파트별 기본 단가입니다. 필요한 파트만 골라 의뢰하실 수 있습니다." />
       <section><div className="wrap">
-        <nav className="cat-nav">{d.groups.map((g) => <a key={g.id} href={`#cat-${g.id}`}><small>{g.no}</small>{tx(g.name)}</a>)}</nav>
+        <nav className="cat-nav">{groups.map((g, n) => <a key={g.id} href={`#cat-${g.id}`}><small>{no(n)}</small>{tx(g.name)}</a>)}</nav>
         <div className="rates">
-          {d.groups.map((g) => (
+          {groups.map((g, n) => (
             <article className="cat" id={`cat-${g.id}`} key={g.id}>
-              <div className="chd"><span className="no">{g.no}</span><h3>{tx(g.name)}<span>{g.en}</span></h3><p>{tx(g.desc)}</p></div>
+              <div className="chd"><span className="no">{no(n)}</span><h3>{tx(g.name)}<span>{g.en}</span></h3><p>{tx(g.desc)}</p></div>
               <ul className="items">
                 {d.rateItems.filter((i) => i.groupId === g.id).map((i) => (
                   <li className="it" key={i.id}>

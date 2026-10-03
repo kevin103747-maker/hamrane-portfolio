@@ -213,3 +213,12 @@ export async function saveIndexQueue(fd: FormData) {
   await logEdit(me, 'update', 'index_queue', '-', before, rows);
   redirect(`${FEATURED}?ok=1`);
 }
+
+/* ---------------- 게시(상단바 버튼용: 화면 이동 없이 결과만 돌려줍니다) ---------------- */
+export async function publishSiteInline(_prev: unknown, _fd: FormData) {
+  const me = await guard('publish');
+  revalidatePath('/', 'layout');
+  await logEdit(me, 'publish', 'site', '-', null, null);
+  const at = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(11, 16); // 한국 시간 시:분
+  return { ok: true, msg: `게시했습니다 · ${at}` };
+}

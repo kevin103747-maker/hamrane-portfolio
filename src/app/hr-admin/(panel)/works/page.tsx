@@ -52,7 +52,7 @@ export default async function WorksPage({
   return (
     <div className="hr-pn-body">
       <h1 className="hr-pn-h">곡 관리</h1>
-      {ok && <p className="hr-ok">저장했습니다. 배포된 사이트에는 대시보드에서 게시해야 반영됩니다.</p>}
+      {ok && <p className="hr-ok">저장했습니다. 배포된 사이트에는 상단의 게시 버튼을 눌러야 반영됩니다.</p>}
       {err && <p className="hr-adm-err">{err}</p>}
       {w.error && <p className="hr-adm-err">목록을 불러오지 못했습니다: {w.error.message}</p>}
 

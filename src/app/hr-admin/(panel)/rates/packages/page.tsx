@@ -47,7 +47,7 @@ export default async function PackagesPage({
       <h1>패키지</h1>
       <p>단가표 아래에 나오는 구성 예시입니다. 합계는 직접 입력합니다. 항목은 단가표에 있는 것 중에서 고릅니다. 항목 가격을 바꿔도 합계는 자동으로 바뀌지 않습니다.</p>
 
-      {ok && <p role="status">저장했습니다. 공개 사이트에는 대시보드의 &quot;게시&quot;를 눌러야 반영됩니다.</p>}
+      {ok && <p role="status">저장했습니다. 공개 사이트에는 상단의 &quot;게시&quot; 버튼을 눌러야 반영됩니다.</p>}
       {err && <p role="alert">{err}</p>}
 
       <form key={cur?.id ?? 'new'} id="form" action={savePackage} className="hr-card hr-f">
