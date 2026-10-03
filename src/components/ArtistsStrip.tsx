@@ -44,7 +44,12 @@ export function ArtistsStrip() {
       >
         <div className="hr-strip-page" key={cur}>
           {list.slice(cur * PER_PAGE, cur * PER_PAGE + PER_PAGE).map((a) => (
-            <button key={a.id} className="hr-artist" onClick={() => openArtist(a.id)}>
+            <button
+  key={a.id}
+  className={`hr-artist${a.useAvatar && a.avatarUrl ? '' : ' noav'}`}
+  onClick={() => openArtist(a.id)}
+>
+
               <Avatar artist={a} />
               <span>{a.name}</span>
               <small>{s.artistWorks(a.id).length}</small>

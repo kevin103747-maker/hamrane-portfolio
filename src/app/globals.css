@@ -779,3 +779,6 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 .hr-pgn button:disabled { opacity: .35; cursor: default; }
 .hr-pgn .gap { color: var(--text-3); padding: 0 4px; }
 @media (max-width: 1080px) { .all-anchor { scroll-margin-top: 20px; } }
+
+/* 사진 없는 아티스트 칩: 글자가 왼쪽 테두리에 붙지 않도록 여백 확보 */
+.hr-artist.noav { padding-left: 16px; padding-right: 14px; }
