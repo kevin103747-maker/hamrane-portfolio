@@ -7,6 +7,7 @@ import { useSite } from './SiteProvider';
 import { useModal } from './ModalContext';
 import { Thumb } from './Thumb';
 import { Icon } from './Icons';
+import { orderParts } from '@/lib/work-parts';
 
 type Entry = { work: Work; item: QueueItem };
 
@@ -30,13 +31,13 @@ export function IndexReel() {
   const cur = items[Math.min(idx, items.length - 1)];
 
   const label = ({ work, item }: Entry) => {
-    const pid = item.labelPartId ?? work.partIds[0];
+    const pid = item.labelPartId ?? orderParts(work)[0];
     if (!pid) return '';
     const extra = item.labelPartId && item.partCount && item.partCount > 1 ? ` 외 ${item.partCount - 1}개 파트` : '';
     return s.partName(pid) + extra;
   };
   const sub = (w: Work) => [s.artistNames(w), s.usageNames(w)].filter(Boolean).join(' · ');
-  const chips = cur.work.partIds.slice(0, 4);
+  const chips = orderParts(cur.work).slice(0, 4);
   const more = cur.work.partIds.length - chips.length;
   const curLabel = label(cur);
   const open = () => openWork(cur.work.id);

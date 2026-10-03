@@ -1,6 +1,7 @@
 // src/components/WorkCard.tsx
 'use client';
 import type { Work } from '@/lib/types';
+import { orderParts } from '@/lib/work-parts';
 import { Icon } from './Icons';
 import { Thumb } from './Thumb';
 import { useSite } from './SiteProvider';
@@ -17,7 +18,7 @@ export function WorkCard({ work, pin, parts = true }: { work: Work; pin?: string
       </Thumb>
       <h3>{work.title}</h3>
       <p><span>{s.artistNames(work)}</span><span className="d">· {s.usageNames(work)} · {work.date}</span></p>
-      {parts && <div className="pts">{work.partIds.map((id, i) => <span key={id} className={i === 0 ? 'k' : ''}>{s.partName(id)}</span>)}</div>}
+      {parts && <div className="pts">{orderParts(work).map((id, i) => <span key={id} className={i === 0 ? 'k' : ''}>{s.partName(id)}</span>)}</div>}
     </a>
   );
 }

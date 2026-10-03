@@ -7,6 +7,7 @@ import { Avatar } from './Avatar';
 import { Icon } from './Icons';
 import { Thumb } from './Thumb';
 import { WorkCard } from './WorkCard';
+import { orderParts } from '@/lib/work-parts';
 
 type Open = { kind: 'work' | 'artist'; id: string } | null;
 
@@ -38,7 +39,7 @@ function WorkModal({ id, onClose }: { id: string; onClose: () => void }) {
       <div className="hr-vinfo">
         <p>{s.artistNames(w)} · {w.date}</p>
         <div className="pts">
-          {w.partIds.map((pid, i) => <span key={pid} className={i === 0 ? 'k' : ''}>{s.partName(pid)}</span>)}
+          {orderParts(w).map((pid, i) => <span key={pid} className={i === 0 ? 'k' : ''}>{s.partName(pid)}</span>)}
         </div>
         {w.youtubeId && (
           <a className="hr-yt" href={`https://www.youtube.com/watch?v=${w.youtubeId}`} target="_blank" rel="noopener noreferrer">

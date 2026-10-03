@@ -8,6 +8,8 @@ import { tx } from '@/lib/i18n';
 import { ConfirmButton } from '@/components/admin/ConfirmButton';
 import { saveWork, removeWork } from '../actions';
 
+type FeatValue = { default?: string; groups?: string[]; parts?: string[] };
+
 /** 저장된 "2026.09.15" → 달력 입력값 "2026-09-15". 예전 월 단위 값("2026.09")은 1일로 채웁니다. */
 const toInputDate = (v?: string | null) => {
   const m = (v ?? '').match(/^(\d{4})[.-](\d{2})(?:[.-](\d{2}))?$/);
@@ -36,6 +38,16 @@ export default async function WorksPage({
   const parts = p.data ?? [];
   const cur = edit ? works.find((x) => x.id === edit) : undefined;
   const artistName = (id: string) => artists.find((x) => x.id === id)?.name ?? '';
+  const feat = (cur?.feat ?? {}) as FeatValue;
+
+  // 분야별로 묶은 파트 선택지(강조 파트·대표작 라벨 선택에 같이 씁니다)
+  const partOptions = groups.map((gr) => (
+    <optgroup key={gr.id} label={tx(gr.name)}>
+      {parts.filter((x) => x.group_id === gr.id).map((x) => (
+        <option key={x.id} value={x.id}>{tx(x.name)}</option>
+      ))}
+    </optgroup>
+  ));
 
   return (
     <div className="hr-pn-body">
@@ -93,7 +105,49 @@ export default async function WorksPage({
               </div>
             </div>
           ))}
-          <p className="hr-adm-sub">곡 카드에서 강조되는 첫 번째 파트는 위 목록에서 가장 앞에 있는 선택 항목입니다.</p>
+          <label>
+            곡 카드에서 강조할 파트 (선택. 위에서 체크한 파트 중에서 고르세요. 비우면 목록상 가장 앞의 파트가 강조됩니다)
+            <select name="mainPartId" defaultValue={cur?.main_part_id ?? ''}>
+              <option value="">(자동)</option>
+              {partOptions}
+            </select>
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>포트폴리오 대표작 (홈 화면 대표곡과는 별개입니다)</legend>
+          <label>
+            포트폴리오 &quot;전체&quot; 탭의 대표작으로 표시 (카드 위 라벨에 보일 파트를 고르면 대표작이 됩니다)
+            <select name="featDefault" defaultValue={feat.default ?? ''}>
+              <option value="">(표시 안 함)</option>
+              {partOptions}
+            </select>
+          </label>
+          <div className="hr-grp">
+            <b>분야 탭의 대표작으로 표시</b>
+            <div className="hr-chks">
+              {groups.map((gr) => (
+                <label key={gr.id} className="hr-chk">
+                  <input type="checkbox" name="featGroups" value={gr.id} defaultChecked={feat.groups?.includes(gr.id)} />{tx(gr.name)}
+                </label>
+              ))}
+            </div>
+          </div>
+          <details>
+            <summary>파트 탭별 대표작 지정 (선택)</summary>
+            {groups.map((gr) => (
+              <div key={gr.id} className="hr-grp">
+                <b>{tx(gr.name)}</b>
+                <div className="hr-chks">
+                  {parts.filter((x) => x.group_id === gr.id).map((x) => (
+                    <label key={x.id} className="hr-chk">
+                      <input type="checkbox" name="featParts" value={x.id} defaultChecked={feat.parts?.includes(x.id)} />{tx(x.name)}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </details>
         </fieldset>
 
         <label className="hr-chk"><input type="checkbox" name="hidden" defaultChecked={cur?.hidden ?? false} />숨김 (공개 사이트에 표시하지 않음)</label>

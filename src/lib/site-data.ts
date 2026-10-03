@@ -40,7 +40,7 @@ async function load(): Promise<SiteData | null> {
     works: rows(w).map((x) => ({
       id: x.id, title: x.title, youtubeId: x.youtube_id, date: x.work_date, duration: x.duration,
       thumbUrl: x.thumb_url ?? undefined, artistIds: x.artist_ids, usageIds: x.usage_ids,
-      partIds: x.part_ids, hidden: x.hidden, feat: x.feat ?? undefined,
+      partIds: x.part_ids, mainPartId: x.main_part_id ?? undefined, hidden: x.hidden, feat: x.feat ?? undefined,
     })),
     rateItems: rows(r).map((x) => ({
       id: x.id, groupId: x.group_id, name: x.name, desc: x.descr, price: x.price, unit: x.unit,

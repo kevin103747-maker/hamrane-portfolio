@@ -49,11 +49,31 @@ export async function saveWork(fd: FormData) {
   const thumbUp = await uploadImage(fd.get('thumbFile'), 'works');
   if (thumbUp.error) fail(back, thumbUp.error);
 
+  // 카드에서 강조할 파트: 참여 파트에 체크된 항목이어야 합니다.
+  const partIds = list(fd, 'partIds');
+  const mainPartId = str(fd, 'mainPartId');
+  if (mainPartId && !partIds.includes(mainPartId)) {
+    fail(back, '강조 파트는 "참여 파트"에서 체크한 항목 중에서 골라 주세요.');
+  }
+
+  // 포트폴리오 대표작(홈 대표곡과는 별개): 전체 탭 / 분야 탭 / 파트 탭
+  const featDefault = str(fd, 'featDefault');
+  const featGroups = list(fd, 'featGroups');
+  const featParts = list(fd, 'featParts');
+  const feat =
+    featDefault || featGroups.length || featParts.length
+      ? {
+          ...(featDefault ? { default: featDefault } : {}),
+          ...(featGroups.length ? { groups: featGroups } : {}),
+          ...(featParts.length ? { parts: featParts } : {}),
+        }
+      : null;
+
   // 영상 길이는 사용하지 않습니다(입력·표시 없음).
   const row = {
     title, youtube_id: youtube, work_date: date.replace(/-/g, '.'),
     thumb_url: thumbUp.url || thumb || null, artist_ids: list(fd, 'artistIds'), usage_ids: list(fd, 'usageIds'),
-    part_ids: list(fd, 'partIds'), hidden: flag(fd, 'hidden'),
+    part_ids: partIds, main_part_id: mainPartId || null, feat, hidden: flag(fd, 'hidden'),
   };
   const db = adminDb();
 
