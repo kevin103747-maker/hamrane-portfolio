@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation';
 import { requireAdmin } from '@/lib/auth/guard';
 import { can } from '@/lib/auth/permissions';
 import { getSiteData } from '@/lib/site-data';
+import { getPageSettings } from '@/lib/page-settings';
+import { CountedField } from '@/components/admin/CountedField';
 import { saveSettings } from './actions';
 
 // 문자열 또는 { ko: "..." } 형태 모두 글자로 바꿉니다.
@@ -18,11 +20,12 @@ export default async function SettingsPage({
   if (!can(me, 'settings')) redirect('/hr-admin');
   const { ok, err } = await searchParams;
   const { links, notice } = await getSiteData();
+  const { seo, intro } = await getPageSettings();
 
   return (
     <div className="hr-pn-body">
       <h1>사이트 설정</h1>
-      <p>채널 링크, 연락처, 단가표 안내 문구를 바꿉니다. 비워 둔 채널 아이콘은 홈에서 흐리게 표시되고 눌러도 이동하지 않습니다.</p>
+      <p>채널 링크, 연락처, 단가표 안내 문구, 사이트 제목·설명, 홈 소개 문구를 바꿉니다. 비워 둔 채널 아이콘은 홈에서 흐리게 표시되고 눌러도 이동하지 않습니다.</p>
 
       {ok && <p role="status">저장했습니다. 공개 사이트에는 대시보드의 &quot;게시&quot;를 눌러야 반영됩니다.</p>}
       {err && <p role="alert">{err}</p>}
@@ -43,6 +46,64 @@ export default async function SettingsPage({
           <label className="hr-chk">
             <input type="checkbox" name="profileReset" /> 기본 사진(character.png)으로 되돌리기
           </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>홈 화면 문구</legend>
+          <CountedField
+            name="introEyebrow"
+            label="직함 줄 (이름 위의 작은 글자. 비우면 기본 문구)"
+            defaultValue={intro.eyebrow}
+            soft={30}
+            max={40}
+          />
+          <CountedField
+            name="introRoles"
+            label="소개 한 줄 (이름 아래. 비우면 기본 문구)"
+            defaultValue={intro.roles}
+            soft={40}
+            max={60}
+          />
+        </fieldset>
+
+        <fieldset>
+          <legend>검색 결과 · 브라우저 탭</legend>
+          <CountedField
+            name="seoTitle"
+            label="사이트 제목 (브라우저 탭과 검색 결과의 제목. 비우면 기본 문구)"
+            defaultValue={seo.title}
+            soft={40}
+            max={60}
+          />
+          <CountedField
+            name="seoDescription"
+            label="사이트 설명 (검색 결과 제목 아래에 나오는 문장. 비우면 기본 문구)"
+            defaultValue={seo.description}
+            soft={120}
+            max={160}
+            rows={3}
+          />
+        </fieldset>
+
+        <fieldset>
+          <legend>링크 공유 미리보기 (디스코드 · X 등)</legend>
+          <CountedField
+            name="shareTitle"
+            label="공유 제목 (비우면 위의 사이트 제목 사용)"
+            defaultValue={seo.shareTitle}
+            placeholder={seo.title}
+            soft={40}
+            max={60}
+          />
+          <CountedField
+            name="shareDescription"
+            label="공유 설명 (비우면 위의 사이트 설명 사용)"
+            defaultValue={seo.shareDescription}
+            placeholder={seo.description}
+            soft={120}
+            max={160}
+            rows={3}
+          />
         </fieldset>
 
         <fieldset>

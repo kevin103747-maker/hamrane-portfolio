@@ -1,5 +1,6 @@
 // src/app/(site)/page.tsx
 import { getSiteData } from '@/lib/site-data';
+import { getPageSettings } from '@/lib/page-settings';
 import { IndexReel } from '@/components/IndexReel';
 import { RecentMarquee } from '@/components/RecentMarquee';
 import { SectionHead } from '@/components/Heads';
@@ -7,7 +8,7 @@ import { SocialLinks } from '@/components/SocialLinks';
 import { ScrollHint } from '@/components/ScrollHint';
 
 export default async function Home() {
-  const { links } = await getSiteData();
+  const [{ links }, { intro }] = await Promise.all([getSiteData(), getPageSettings()]);
   return (
     <>
       <section className="hero hx-hero">
@@ -18,10 +19,10 @@ export default async function Home() {
               <img src={links.profileUrl || '/character.png'} alt="" />
             </div>
             <div className="hx-id-text">
-              <small className="hr-eyebrow">COMPOSER {'&'} MUSIC PRODUCER</small>
+              <small className="hr-eyebrow">{intro.eyebrow}</small>
               <h1>햄버거라네 <span>HamRanè</span></h1>
               <p className="hx-roles">
-                작곡 · 편곡 · 믹싱 · 마스터링<i>/</i>
+                {intro.roles}<i>/</i>
               </p>
             </div>
           </div>
