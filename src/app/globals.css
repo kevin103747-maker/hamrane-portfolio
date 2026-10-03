@@ -751,3 +751,16 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 
 /* 곡 모달: 링크 버튼이 두 개일 때 간격 */
 .hr-vinfo .hr-yt + .hr-yt { margin-left: 12px; }
+
+/* 아티스트 목록: 드래그 손잡이, 유형 칩 */
+.hr-drag { cursor: grab; user-select: none; padding: 0 8px 0 0; opacity: .55; font-size: 18px; }
+.hr-drag:hover { opacity: 1; }
+.hr-drag:active { cursor: grabbing; }
+.hr-ord { white-space: nowrap; }
+.hr-tbl tr.is-drag { opacity: .4; }
+.hr-tbl tr.over-before td { box-shadow: inset 0 2px 0 0 #3b82f6; }
+.hr-tbl tr.over-after td { box-shadow: inset 0 -2px 0 0 #3b82f6; }
+.hr-tchips { display: flex; flex-wrap: wrap; gap: 4px; }
+.hr-tchip { padding: 2px 9px; border-radius: 999px; border: 1px solid rgba(128,128,128,.4); background: transparent; color: inherit; cursor: pointer; font-size: 12px; }
+.hr-tchip[aria-pressed="true"] { background: rgba(59,130,246,.25); border-color: rgba(59,130,246,.85); font-weight: 600; }
+.hr-tchip:disabled { opacity: .5; cursor: default; }

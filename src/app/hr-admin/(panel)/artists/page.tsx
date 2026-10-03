@@ -5,9 +5,9 @@ import { requireAdmin } from '@/lib/auth/guard';
 import { adminDb } from '@/lib/auth/admin-db';
 import { can } from '@/lib/auth/permissions';
 import { tx } from '@/lib/i18n';
-import { ConfirmButton } from '@/components/admin/ConfirmButton';
 import { ARTIST_PAGE_SIZE } from '@/lib/artist-admin';
-import { saveArtist, removeArtist, moveArtist } from '../actions';
+import { ArtistTable } from '@/components/admin/ArtistTable';
+import { saveArtist } from '../actions';
 
 type Row = {
   id: string; name: string; type_ids: string[] | null; use_avatar: boolean | null;
@@ -31,7 +31,6 @@ export default async function ArtistsPage({
   const artists = (a.data ?? []) as Row[];
   const types = t.data ?? [];
   const cur = edit ? artists.find((x) => x.id === edit) : undefined;
-  const typeName = (id: string) => { const f = types.find((x) => x.id === id); return f ? tx(f.name) : ''; };
 
   // 공개된(숨김 아님) 곡 수
   const count = new Map<string, number>();
@@ -56,6 +55,23 @@ export default async function ArtistsPage({
     const s = sp.toString();
     return `/hr-admin/artists${s ? `?${s}` : ''}${n.edit ? '#form' : ''}`;
   };
+
+  // 표 컴포넌트에 넘길 데이터(함수는 넘길 수 없어서 수정 링크도 미리 만들어 둡니다)
+  const rowsData = shown.map(({ x }) => ({
+    id: x.id,
+    name: x.name,
+    typeIds: x.type_ids ?? [],
+    hide: !!x.hide_in_strip,
+    showWhenEmpty: !!x.show_when_empty,
+    works: count.get(x.id) ?? 0,
+  }));
+  const slots = shown.map(({ no }) => no);
+  const editLinks = Object.fromEntries(shown.map(({ x }) => [x.id, href({ page, edit: x.id })]));
+  const typeOpts = types.map((x) => ({ id: x.id as string, name: tx(x.name) }));
+  // 서버 데이터가 바뀌면(이동 버튼·수정 후 등) 표를 새로 만들어 최신 값을 보여 줍니다
+  const sig = shown
+    .map(({ x, no }) => `${x.id}:${no}:${x.hide_in_strip ? 1 : 0}:${(x.type_ids ?? []).join('+')}`)
+    .join('|');
 
   return (
     <div className="hr-pn-body">
@@ -95,7 +111,7 @@ export default async function ArtistsPage({
 
       <div className="hr-card">
         <h2>등록된 아티스트 ({found.length}{found.length !== artists.length ? ` / 전체 ${artists.length}` : ''})</h2>
-        <p className="hr-adm-sub">이 순서가 포트폴리오 &quot;Artists&quot; 칸의 표시 순서입니다. 순서를 바꾼 뒤에는 상단의 게시 버튼을 눌러야 사이트에 반영됩니다.</p>
+        <p className="hr-adm-sub">이 순서가 포트폴리오 &quot;Artists&quot; 칸의 표시 순서입니다. 바꾼 뒤에는 상단의 게시 버튼을 눌러야 사이트에 반영됩니다.</p>
 
         <form method="get" action="/hr-admin/artists" className="hr-search">
           <input type="search" name="q" defaultValue={q} placeholder="이름 검색" />
@@ -104,47 +120,17 @@ export default async function ArtistsPage({
         </form>
 
         {shown.length === 0 ? <p>{artists.length ? '검색 결과가 없습니다.' : '아직 없습니다.'}</p> : (
-          <table className="hr-tbl">
-            <thead><tr><th>순서</th><th>이름</th><th>유형</th><th>곡</th><th>칸 표시</th><th></th></tr></thead>
-            <tbody>
-              {shown.map(({ x, no }) => {
-                const n = count.get(x.id) ?? 0;
-                const status = x.hide_in_strip ? '숨김' : (n > 0 || x.show_when_empty) ? '표시' : '곡 없어서 안 보임';
-                return (
-                  <tr key={x.id} id={`a-${x.id}`}>
-                    <td>{no}</td>
-                    <td>{x.name}</td>
-                    <td>{(x.type_ids ?? []).map(typeName).filter(Boolean).join(', ') || '-'}</td>
-                    <td>{n}</td>
-                    <td>{status}</td>
-                    <td className="hr-act">
-                      <form action={moveArtist} className="hr-mv">
-                        <input type="hidden" name="id" value={x.id} />
-                        <input type="hidden" name="q" value={q} />
-                        <input type="hidden" name="p" value={String(page)} />
-                        <button type="submit" name="mode" value="top" disabled={no === 1} title="맨 위로">⤒</button>
-                        <button type="submit" name="mode" value="up" disabled={no === 1} title="한 칸 위로">↑</button>
-                        <button type="submit" name="mode" value="down" disabled={no === artists.length} title="한 칸 아래로">↓</button>
-                      </form>
-                      <form action={moveArtist} className="hr-mv">
-                        <input type="hidden" name="id" value={x.id} />
-                        <input type="hidden" name="q" value={q} />
-                        <input type="hidden" name="p" value={String(page)} />
-                        <input type="hidden" name="mode" value="to" />
-                        <input type="number" name="pos" min={1} max={artists.length} required placeholder={String(no)} aria-label={`${x.name} 이동할 순서`} />
-                        <button type="submit">이동</button>
-                      </form>
-                      <Link href={href({ page, edit: x.id })}>수정</Link>
-                      <form action={removeArtist}>
-                        <input type="hidden" name="id" value={x.id} />
-                        <ConfirmButton className="hr-del" message={`'${x.name}' 아티스트를 삭제할까요? 연결된 곡에서도 빠집니다.`}>삭제</ConfirmButton>
-                      </form>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <ArtistTable
+            key={sig}
+            rows={rowsData}
+            slots={slots}
+            total={artists.length}
+            types={typeOpts}
+            editLinks={editLinks}
+            editingId={cur?.id}
+            q={q}
+            page={page}
+          />
         )}
 
         {pages > 1 && (
