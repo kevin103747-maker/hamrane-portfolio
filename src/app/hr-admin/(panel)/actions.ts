@@ -37,6 +37,7 @@ export async function saveWork(fd: FormData) {
   const me = await guard('works');
   const id = str(fd, 'id');
   const back = id ? `${WORKS}?edit=${encodeURIComponent(id)}` : WORKS;
+  let savedId = id;
 
   const title = str(fd, 'title');
   if (!title) fail(back, '제목을 입력하세요.');
@@ -84,11 +85,12 @@ export async function saveWork(fd: FormData) {
     await logEdit(me, 'update', 'works', id, before, row);
   } else {
     const nid = newId('w');
+    savedId = nid;
     const { error } = await db.from('works').insert({ id: nid, ...row });
     if (error) fail(back, `저장 실패: ${error.message}`);
     await logEdit(me, 'create', 'works', nid, null, row);
   }
-  redirect(`${WORKS}?ok=1`);
+  redirect(`${WORKS}?edit=${encodeURIComponent(savedId)}&ok=1`);
 }
 
 export async function removeWork(fd: FormData) {
