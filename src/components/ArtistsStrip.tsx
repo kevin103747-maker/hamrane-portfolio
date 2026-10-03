@@ -11,7 +11,7 @@ const INTERVAL = 5000;
 export function ArtistsStrip() {
   const s = useSite();
   const { openArtist } = useModal();
-  const list = s.visibleArtists;
+  const list = s.stripArtists;
   const pages = Math.max(1, Math.ceil(list.length / PER_PAGE));
   const [page, setPage] = useState(0);
   const [paused, setPaused] = useState(false);

@@ -38,6 +38,8 @@ async function load(): Promise<SiteData | null> {
     artists: rows(a).map((x) => ({
       id: x.id, name: x.name, typeIds: x.type_ids, useAvatar: x.use_avatar,
       avatarUrl: x.avatar_url ?? undefined, showWhenEmpty: x.show_when_empty,
+      hideInStrip: !!x.hide_in_strip,
+      
     })),
     works: visibleWorks.map((x) => ({
       id: x.id, title: x.title, youtubeId: x.youtube_id, date: x.work_date, duration: x.duration,

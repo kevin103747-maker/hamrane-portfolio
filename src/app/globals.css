@@ -723,3 +723,24 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 .hr-slot-warn { margin: 8px 0 0; color: #e5484d; font-size: 13px; }
 .hr-slot-note { margin: 0 0 12px; opacity: .75; font-size: 13px; }
 .hr-feat-row input[readonly] { opacity: .55; }
+
+/* 아티스트 선택기(곡 편집 화면) */
+.hr-ap { display: grid; gap: 8px; }
+.hr-ap-chips { display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px; align-items: center; }
+.hr-ap-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px 4px 10px; border-radius: 999px; border: 1px solid rgba(128,128,128,.4); font-size: 13px; }
+.hr-ap-chip.new { border-style: dashed; }
+.hr-ap-chip em { font-style: normal; font-size: 11px; opacity: .65; }
+.hr-ap-chip button { border: 0; background: transparent; cursor: pointer; opacity: .7; padding: 0 4px; }
+.hr-ap-chip button:hover { opacity: 1; }
+.hr-ap-list { list-style: none; margin: 0; padding: 4px; border: 1px solid rgba(128,128,128,.35); border-radius: 8px; display: grid; gap: 2px; }
+.hr-ap-list button { width: 100%; text-align: left; padding: 8px 10px; border: 0; background: transparent; cursor: pointer; border-radius: 6px; color: inherit; }
+.hr-ap-list button:hover { background: rgba(128,128,128,.18); }
+.hr-ap-list .hr-adm-sub { padding: 6px 10px; }
+.hr-ap-new { font-weight: 600; }
+
+/* 아티스트 관리 목록: 순서 이동 */
+.hr-mv { display: inline-flex; gap: 4px; align-items: center; margin-right: 8px; }
+.hr-mv button { min-width: 32px; }
+.hr-mv button:disabled { opacity: .35; cursor: default; }
+.hr-mv input[type="number"] { width: 64px; }
+.hr-pager { justify-content: center; margin-top: 12px; }

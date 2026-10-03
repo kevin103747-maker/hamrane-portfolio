@@ -7,6 +7,7 @@ import { can } from '@/lib/auth/permissions';
 import { tx } from '@/lib/i18n';
 import { ConfirmButton } from '@/components/admin/ConfirmButton';
 import { saveWork, removeWork } from '../actions';
+import { ArtistPicker } from '@/components/admin/ArtistPicker';
 
 type FeatValue = { default?: string; groups?: string[]; parts?: string[] };
 type WorkRow = {
@@ -34,15 +35,15 @@ const FILTERS = [
 
 export default async function WorksPage({
   searchParams,
-}: { searchParams: Promise<{ edit?: string; err?: string; ok?: string; q?: string; f?: string }> }) {
+}: { searchParams: Promise<{ edit?: string; err?: string; ok?: string; q?: string; f?: string; na?: string }> }) {
   const me = await requireAdmin();
   if (!can(me, 'works')) redirect('/hr-admin');
-  const { edit, err, ok, q = '', f = '' } = await searchParams;
+  const { edit, err, ok, na, q = '', f = '' } = await searchParams;
 
   const db = adminDb();
   const [w, a, u, g, p, iq] = await Promise.all([
     db.from('works').select('*').order('work_date', { ascending: false }).order('created_at', { ascending: false }),
-    db.from('artists').select('id, name').order('name'),
+    db.from('artists').select('id, name').order('sort').order('name'),
     db.from('usage_types').select('*').order('sort'),
     db.from('part_groups').select('*').order('sort'),
     db.from('parts').select('*').order('sort'),
@@ -93,6 +94,11 @@ export default async function WorksPage({
     <div className="hr-pn-body">
       <h1 className="hr-pn-h">곡 관리</h1>
       {ok && <p className="hr-ok">저장했습니다. 공개 사이트에 반영하려면 상단의 &quot;사이트에 게시&quot; 버튼을 누르세요.</p>}
+      {ok && na && (
+        <p className="hr-ok">
+          새 아티스트 {na}명도 함께 추가했습니다. 유형·프로필 이미지는 <Link href="/hr-admin/artists">아티스트 관리</Link>에서 설정하세요.
+        </p>
+      )}
       {err && <p className="hr-adm-err">{err}</p>}
       {w.error && <p className="hr-adm-err">목록을 불러오지 못했습니다: {w.error.message}</p>}
 
@@ -105,19 +111,10 @@ export default async function WorksPage({
         <label>썸네일 파일 올리기(JPG·PNG·WebP, 4MB 이하. 올리면 아래 주소보다 우선합니다)<input type="file" name="thumbFile" accept="image/jpeg,image/png,image/webp" /></label>
         <label>썸네일 주소(선택, 비우면 유튜브 썸네일 사용)<input name="thumb" placeholder="https://..." defaultValue={cur?.thumb_url ?? ''} /></label>
 
+
         <fieldset>
           <legend>아티스트</legend>
-          {artists.length === 0 ? (
-            <p className="hr-adm-sub">등록된 아티스트가 없습니다. <Link href="/hr-admin/artists">아티스트 관리</Link>에서 먼저 추가하세요.</p>
-          ) : (
-            <div className="hr-chks">
-              {artists.map((x: { id: string; name: string }) => (
-                <label key={x.id} className="hr-chk">
-                  <input type="checkbox" name="artistIds" value={x.id} defaultChecked={cur?.artist_ids?.includes(x.id)} />{x.name}
-                </label>
-              ))}
-            </div>
-          )}
+          <ArtistPicker artists={artists} initial={cur?.artist_ids ?? []} />
         </fieldset>
 
         <fieldset>

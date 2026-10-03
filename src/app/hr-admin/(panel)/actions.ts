@@ -6,6 +6,7 @@ import { requireAdmin } from '@/lib/auth/guard';
 import { adminDb } from '@/lib/auth/admin-db';
 import { can, logEdit } from '@/lib/auth/permissions';
 import { uploadImage } from '@/lib/auth/upload';
+import { ARTIST_PAGE_SIZE } from '@/lib/artist-admin';
 
 async function guard(key: string) {
   const me = await requireAdmin();
@@ -28,6 +29,37 @@ function ytId(v: string) {
   if (/^[\w-]{11}$/.test(v)) return v;
   const m = v.match(/(?:[?&]v=|youtu\.be\/|embed\/|shorts\/|live\/)([\w-]{11})/);
   return m ? m[1] : null;
+}
+
+/** 곡 저장 화면에서 새로 입력한 이름들을 아티스트로 만듭니다. 이미 같은 이름이 있으면 그 아티스트를 씁니다. */
+async function ensureArtists(
+  me: Awaited<ReturnType<typeof guard>>,
+  names: string[],
+): Promise<{ ids: string[]; added: number; error?: string }> {
+  const ids: string[] = [];
+  if (!names.length) return { ids, added: 0 };
+  const db = adminDb();
+  const { data: all, error } = await db.from('artists').select('id, name, sort');
+  if (error) return { ids, added: 0, error: error.message };
+
+  const key = (s: string) => s.replace(/\s+/g, '').toLowerCase();
+  const byName = new Map<string, string>((all ?? []).map((x): [string, string] => [key(x.name), x.id]));
+  let next = Math.max(-1, ...(all ?? []).map((x) => Number(x.sort) || 0)) + 1;
+  let added = 0;
+
+  for (const name of names) {
+    const hit = byName.get(key(name));
+    if (hit) { ids.push(hit); continue; }
+    const nid = `${newId('a')}${added.toString(36)}`; // 같은 밀리초에 여러 명을 만들어도 겹치지 않게
+    const row = { name, type_ids: [], use_avatar: false, avatar_url: null, show_when_empty: false, sort: next++ };
+    const ins = await db.from('artists').insert({ id: nid, ...row });
+    if (ins.error) return { ids, added, error: ins.error.message };
+    await logEdit(me, 'create', 'artists', nid, null, row);
+    byName.set(key(name), nid);
+    ids.push(nid);
+    added++;
+  }
+  return { ids, added };
 }
 
 /* ---------------- 곡 ---------------- */
@@ -70,10 +102,19 @@ export async function saveWork(fd: FormData) {
         }
       : null;
 
+  // 아티스트: 선택한 기존 아티스트 + 이 화면에서 새로 입력한 이름
+  const picked = list(fd, 'artistIds');
+  const newNames = [...new Set(list(fd, 'newArtistNames').map((n) => n.replace(/\s+/g, ' ').trim()).filter(Boolean))];
+  if (newNames.some((n) => n.length > 50)) fail(back, '아티스트 이름은 50자 이하로 입력하세요.');
+  if (newNames.length > 20) fail(back, '새 아티스트는 한 번에 20명까지 추가할 수 있습니다.');
+  const made = await ensureArtists(me, newNames);
+  if (made.error) fail(back, `새 아티스트 추가 실패: ${made.error}`);
+  const artistIds = [...new Set([...picked, ...made.ids])];
+      
   // 영상 길이는 사용하지 않습니다(입력·표시 없음).
   const row = {
     title, youtube_id: youtube, work_date: date.replace(/-/g, '.'),
-    thumb_url: thumbUp.url || thumb || null, artist_ids: list(fd, 'artistIds'), usage_ids: list(fd, 'usageIds'),
+    thumb_url: thumbUp.url || thumb || null, artist_ids: artistIds, usage_ids: list(fd, 'usageIds'),
     part_ids: partIds, main_part_id: mainPartId || null, feat, hidden: flag(fd, 'hidden'),
   };
   const db = adminDb();
@@ -90,7 +131,7 @@ export async function saveWork(fd: FormData) {
     if (error) fail(back, `저장 실패: ${error.message}`);
     await logEdit(me, 'create', 'works', nid, null, row);
   }
-  redirect(`${WORKS}?edit=${encodeURIComponent(savedId)}&ok=1`);
+  redirect(`${WORKS}?edit=${encodeURIComponent(savedId)}&ok=1${made.added ? `&na=${made.added}` : ''}`);
 }
 
 export async function removeWork(fd: FormData) {
@@ -124,19 +165,22 @@ export async function saveArtist(fd: FormData) {
   const row = {
     name, type_ids: list(fd, 'typeIds'), use_avatar: flag(fd, 'useAvatar'),
     avatar_url: avatarUp.url || avatar || null, show_when_empty: flag(fd, 'showWhenEmpty'),
+    hide_in_strip: flag(fd, 'hideInStrip'),
   };
   const db = adminDb();
 
   if (id) {
     const { data: before } = await db.from('artists').select('*').eq('id', id).maybeSingle();
-    const { error } = await db.from('artists').update(row).eq('id', id);
+    const { error } = await db.from('artists').update(row).eq('id', id); // 순서(sort)는 건드리지 않습니다
     if (error) fail(back, `저장 실패: ${error.message}`);
     await logEdit(me, 'update', 'artists', id, before, row);
   } else {
+    const { data: last } = await db.from('artists').select('sort').order('sort', { ascending: false }).limit(1);
+    const sort = (last?.length ? Number(last[0].sort) || 0 : -1) + 1; // 새 아티스트는 맨 뒤
     const nid = newId('a');
-    const { error } = await db.from('artists').insert({ id: nid, ...row });
+    const { error } = await db.from('artists').insert({ id: nid, ...row, sort });
     if (error) fail(back, `저장 실패: ${error.message}`);
-    await logEdit(me, 'create', 'artists', nid, null, row);
+    await logEdit(me, 'create', 'artists', nid, null, { ...row, sort });
   }
   redirect(`${ARTISTS}?ok=1`);
 }
@@ -156,6 +200,61 @@ export async function removeArtist(fd: FormData) {
   }
   await logEdit(me, 'delete', 'artists', id, before, null);
   redirect(`${ARTISTS}?ok=1`);
+}
+
+/** 아티스트 순서 이동: up / down / top / bottom / to(n번째로) */
+export async function moveArtist(fd: FormData) {
+  const me = await guard('artists');
+  const id = str(fd, 'id');
+  const mode = str(fd, 'mode');
+  const db = adminDb();
+
+  const { data, error } = await db.from('artists').select('id, sort').order('sort', { ascending: true }).order('name', { ascending: true });
+  if (error) fail(ARTISTS, `순서를 불러오지 못했습니다: ${error.message}`);
+  const order = (data ?? []).map((x) => ({ id: x.id as string, old: Number(x.sort) || 0 }));
+
+  const fromIdx = order.findIndex((x) => x.id === id);
+  if (fromIdx < 0) redirect(ARTISTS);
+
+  let to = fromIdx;
+  if (mode === 'up') to = fromIdx - 1;
+  else if (mode === 'down') to = fromIdx + 1;
+  else if (mode === 'top') to = 0;
+  else if (mode === 'bottom') to = order.length - 1;
+  else if (mode === 'to') {
+    const n = parseInt(str(fd, 'pos'), 10);
+    if (!Number.isFinite(n)) fail(ARTISTS, '이동할 순서를 숫자로 입력하세요.');
+    to = n - 1;
+  }
+  to = Math.max(0, Math.min(order.length - 1, to));
+
+  if (to !== fromIdx) {
+    const [moved] = order.splice(fromIdx, 1);
+    order.splice(to, 0, moved);
+    const changed = order.map((x, i) => ({ id: x.id, sort: i, old: x.old })).filter((x) => x.sort !== x.old);
+    for (let i = 0; i < changed.length; i += 20) {
+      const res = await Promise.all(
+        changed.slice(i, i + 20).map((x) => db.from('artists').update({ sort: x.sort }).eq('id', x.id)),
+      );
+      const bad = res.find((r) => r.error);
+      if (bad?.error) fail(ARTISTS, `순서 저장 실패: ${bad.error.message}`);
+    }
+    await logEdit(me, 'update', 'artists', id, { position: fromIdx + 1 }, { position: to + 1 });
+  }
+
+  // 검색 중이면 검색 상태 유지, 아니면 옮긴 아티스트가 있는 페이지로 이동
+  const q = str(fd, 'q');
+  const sp = new URLSearchParams();
+  if (q) {
+    sp.set('q', q);
+    const p = str(fd, 'p');
+    if (p && p !== '1') sp.set('p', p);
+  } else {
+    const pg = Math.floor(to / ARTIST_PAGE_SIZE) + 1;
+    if (pg > 1) sp.set('p', String(pg));
+  }
+  const s = sp.toString();
+  redirect(`${ARTISTS}${s ? `?${s}` : ''}#a-${id}`);
 }
 
 /* ---------------- 게시 ---------------- */

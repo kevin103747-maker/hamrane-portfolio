@@ -20,6 +20,8 @@ function build(data: SiteData) {
     usageNames: (w: Work) => w.usageIds.map((i) => nm(usage, i)).filter(Boolean).join(' / '),
     artistWorks,
     visibleArtists: data.artists.filter((a) => a.showWhenEmpty || artistWorks(a.id).length > 0),
+    // 포트폴리오 "Artists" 칸용: 숨김으로 지정한 아티스트는 곡이 있어도 뺍니다. 순서는 DB의 sort를 따릅니다.
+    stripArtists: data.artists.filter((a) => !a.hideInStrip && (a.showWhenEmpty || artistWorks(a.id).length > 0)),
   };
 }
 type Site = ReturnType<typeof build>;

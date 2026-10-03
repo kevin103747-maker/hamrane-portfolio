@@ -4,7 +4,7 @@ import type { Text } from './i18n';
 export type Group = { id: string; no: string; name: Text; en: string; desc: Text };
 export type Part = { id: string; groupId: string; name: Text };
 export type Tag = { id: string; name: Text };
-export type Artist = { id: string; name: string; typeIds: string[]; useAvatar: boolean; avatarUrl?: string; showWhenEmpty: boolean };
+export type Artist = { id: string; name: string; typeIds: string[]; useAvatar: boolean; avatarUrl?: string; showWhenEmpty: boolean; hideInStrip?: boolean };
 export type Feat = { default?: string; groups?: string[]; parts?: string[] }; // default = 핀 라벨로 쓸 partId
 export type Work = {
   id: string; title: string; youtubeId: string; date: string; duration: string; thumbUrl?: string;
