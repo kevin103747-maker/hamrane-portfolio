@@ -53,7 +53,7 @@ export function WorkBasics({ title, youtube, date }: { title: string; youtube: s
         />
       </label>
       {(busy || note || thumb) && (
-        <div className="hr-yt">
+        <div className="hr-ytprev">
           {thumb && (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={thumb} alt="" width={96} height={54} />

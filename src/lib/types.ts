@@ -7,7 +7,7 @@ export type Tag = { id: string; name: Text };
 export type Artist = { id: string; name: string; typeIds: string[]; useAvatar: boolean; avatarUrl?: string; showWhenEmpty: boolean; hideInStrip?: boolean };
 export type Feat = { default?: string; groups?: string[]; parts?: string[] }; // default = 핀 라벨로 쓸 partId
 export type Work = {
-  id: string; title: string; youtubeId: string; date: string; duration: string; thumbUrl?: string;
+  id: string; title: string; youtubeId: string; date: string; duration: string; thumbUrl?: string; clipUrl?: string;
  artistIds: string[]; usageIds: string[]; partIds: string[]; mainPartId?: string; hidden?: boolean; feat?: Feat;
 };
 export type Discount = { on: boolean; rate?: number; price?: string; endDate?: string }; // endDate: YYYY-MM-DD (KST)

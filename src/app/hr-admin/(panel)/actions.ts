@@ -7,6 +7,7 @@ import { adminDb } from '@/lib/auth/admin-db';
 import { can, logEdit } from '@/lib/auth/permissions';
 import { uploadImage } from '@/lib/auth/upload';
 import { ARTIST_PAGE_SIZE } from '@/lib/artist-admin';
+import { normalizeClipUrl } from '@/lib/clip';
 
 async function guard(key: string) {
   const me = await requireAdmin();
@@ -112,7 +113,11 @@ export async function saveWork(fd: FormData) {
   const artistIds = [...new Set([...picked, ...made.ids])];
       
   // 영상 길이는 사용하지 않습니다(입력·표시 없음).
+  const clipRaw = str(fd, 'clipUrl');
+  const clipUrl = clipRaw ? normalizeClipUrl(clipRaw) : '';
+  if (clipRaw && !clipUrl) fail(back, '클립 링크는 https:// 로 시작하는 주소를 넣어 주세요.');
   const row = {
+    clip_url: clipUrl || null,
     title, youtube_id: youtube, work_date: date.replace(/-/g, '.'),
     thumb_url: thumbUp.url || thumb || null, artist_ids: artistIds, usage_ids: list(fd, 'usageIds'),
     part_ids: partIds, main_part_id: mainPartId || null, feat, hidden: flag(fd, 'hidden'),

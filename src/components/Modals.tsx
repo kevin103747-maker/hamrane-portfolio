@@ -8,6 +8,7 @@ import { Icon } from './Icons';
 import { Thumb } from './Thumb';
 import { WorkCard } from './WorkCard';
 import { orderParts } from '@/lib/work-parts';
+import { parseClip } from '@/lib/clip';
 
 type Open = { kind: 'work' | 'artist'; id: string } | null;
 
@@ -15,6 +16,7 @@ function WorkModal({ id, onClose }: { id: string; onClose: () => void }) {
   const s = useSite();
   const w = s.works.find((x) => x.id === id);
   if (!w) return null;
+  const clip = parseClip(w.clipUrl);
   return (
     <div className="box vbox" onClick={(e) => e.stopPropagation()}>
       <div className="mh">
@@ -32,6 +34,13 @@ function WorkModal({ id, onClose }: { id: string; onClose: () => void }) {
             allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
             allowFullScreen
           />
+        ) : clip?.embedUrl ? (
+          <iframe
+            src={clip.embedUrl}
+            title={w.title}
+            allow="autoplay; encrypted-media; picture-in-picture; fullscreen; clipboard-write; web-share"
+            allowFullScreen
+          />
         ) : (
           <Thumb work={w} />
         )}
@@ -44,6 +53,11 @@ function WorkModal({ id, onClose }: { id: string; onClose: () => void }) {
         {w.youtubeId && (
           <a className="hr-yt" href={`https://www.youtube.com/watch?v=${w.youtubeId}`} target="_blank" rel="noopener noreferrer">
             YouTube에서 보기 <Icon name="external" />
+          </a>
+        )}
+        {clip && (
+          <a className="hr-yt" href={clip.watchUrl} target="_blank" rel="noopener noreferrer">
+            {clip.platform === 'other' ? '원본 영상 보기' : `${clip.label}에서 보기`} <Icon name="external" />
           </a>
         )}
       </div>

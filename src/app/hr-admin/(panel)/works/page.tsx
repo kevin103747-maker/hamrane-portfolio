@@ -14,7 +14,7 @@ type FeatValue = { default?: string; groups?: string[]; parts?: string[] };
 type WorkRow = {
   id: string; title: string; youtube_id: string | null; thumb_url: string | null; work_date: string | null;
   artist_ids: string[] | null; usage_ids: string[] | null; part_ids: string[] | null;
-  main_part_id: string | null; feat: FeatValue | null; hidden: boolean | null;
+  main_part_id: string | null; clip_url: string | null; feat: FeatValue | null; hidden: boolean | null;
 };
 
 /** 저장된 "2026.09.15" → 달력 입력값 "2026-09-15". 예전 월 단위 값("2026.09")은 1일로 채웁니다. */
@@ -121,6 +121,11 @@ export default async function WorksPage({
           youtube={cur?.youtube_id ?? ''}
           date={cur ? toInputDate(cur.work_date) : today}
         />
+        <label>
+          클립·외부 영상 링크 (SOOP·치지직 등, 선택)
+          <input name="clipUrl" placeholder="https://chzzk.naver.com/clips/..." defaultValue={cur?.clip_url ?? ''} />
+        </label>
+        <p className="hr-adm-sub">유튜브가 없는 곡은 이 링크만 넣어도 됩니다. 이 경우 카드에 쓸 썸네일을 아래 &quot;썸네일 직접 지정&quot;에서 꼭 올려 주세요.</p>
 
         <fieldset>
           <legend>아티스트</legend>
@@ -161,7 +166,7 @@ export default async function WorksPage({
           </label>
         </details>
 
-        <details className="hr-fold" open={!!cur?.thumb_url}>
+        <details className="hr-fold" open={!!cur?.thumb_url || (!!cur && !cur.youtube_id)}>
           <summary>썸네일 직접 지정 (선택 · 비우면 유튜브 썸네일을 씁니다)</summary>
           <label>썸네일 파일 올리기(JPG·PNG·WebP, 4MB 이하. 올리면 아래 주소보다 우선합니다)<input type="file" name="thumbFile" accept="image/jpeg,image/png,image/webp" /></label>
           <label>썸네일 주소<input name="thumb" placeholder="https://..." defaultValue={cur?.thumb_url ?? ''} /></label>

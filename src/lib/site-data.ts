@@ -42,7 +42,7 @@ async function load(): Promise<SiteData | null> {
       
     })),
     works: visibleWorks.map((x) => ({
-      id: x.id, title: x.title, youtubeId: x.youtube_id, date: x.work_date, duration: x.duration,
+      id: x.id, title: x.title, youtubeId: x.youtube_id, clipUrl: x.clip_url ?? undefined, date: x.work_date, duration: x.duration,
       thumbUrl: x.thumb_url ?? undefined, artistIds: x.artist_ids, usageIds: x.usage_ids,
       partIds: x.part_ids, mainPartId: x.main_part_id ?? undefined, hidden: x.hidden, feat: x.feat ?? undefined,
     })),
