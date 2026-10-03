@@ -177,26 +177,41 @@ export async function saveIndexQueue(fd: FormData) {
   const counts = fd.getAll('partCount').map(String);
 
   const seen = new Set<string>();
+  const slotNo: number[] = []; // 각 행이 화면의 몇 번째 칸이었는지(오류 안내용)
   const rows: { work_id: string; label_part_id: string | null; part_count: number | null; sort: number }[] = [];
   ids.forEach((workId, i) => {
     if (!workId || seen.has(workId)) return; // 빈 칸과 중복은 건너뜀
     seen.add(workId);
     const n = parseInt(counts[i] ?? '', 10);
+    const label = labels[i] || null;
     rows.push({
       work_id: workId,
-      label_part_id: labels[i] || null,
-      part_count: Number.isFinite(n) && n > 0 ? n : null,
+      label_part_id: label,
+      // 라벨 파트가 없으면 파트 수는 쓰이지 않으므로 저장하지 않습니다.
+      part_count: label && Number.isFinite(n) && n > 0 ? n : null,
       sort: rows.length,
     });
+    slotNo.push(i + 1);
   });
 
   const db = adminDb();
 
-  // 존재하는 곡만 허용
   if (rows.length) {
-    const { data: found } = await db.from('works').select('id').in('id', rows.map((r) => r.work_id));
-    const ok = new Set((found ?? []).map((x: { id: string }) => x.id));
-    if (rows.some((r) => !ok.has(r.work_id))) fail(FEATURED, '존재하지 않는 곡이 포함되어 있습니다. 새로고침 후 다시 선택하세요.');
+    const { data: found } = await db.from('works').select('id, title, hidden, part_ids').in('id', rows.map((r) => r.work_id));
+    const byId = new Map<string, { title: string; hidden: boolean; part_ids: string[] | null }>();
+    for (const x of found ?? []) byId.set(x.id, x);
+
+    rows.forEach((r, k) => {
+      const no = slotNo[k];
+      const w = byId.get(r.work_id);
+      if (!w) fail(FEATURED, `${no}번째 칸: 존재하지 않는 곡입니다. 새로고침 후 다시 선택하세요.`);
+      if (w.hidden) {
+        fail(FEATURED, `${no}번째 칸: "${w.title}"은(는) 숨김 상태라 홈 화면에 나오지 않습니다. 곡 관리에서 숨김을 풀거나 다른 곡을 고르세요.`);
+      }
+      if (r.label_part_id && !(w.part_ids ?? []).includes(r.label_part_id)) {
+        fail(FEATURED, `${no}번째 칸: 라벨 파트는 "${w.title}"의 참여 파트 중에서 골라 주세요.`);
+      }
+    });
   }
 
   const { data: before } = await db.from('index_queue').select('*').order('sort', { ascending: true });
@@ -215,6 +230,7 @@ export async function saveIndexQueue(fd: FormData) {
   await logEdit(me, 'update', 'index_queue', '-', before, rows);
   redirect(`${FEATURED}?ok=1`);
 }
+
 
 /* ---------------- 게시(상단바 버튼용: 화면 이동 없이 결과만 돌려줍니다) ---------------- */
 export async function publishSiteInline(_prev: unknown, _fd: FormData) {

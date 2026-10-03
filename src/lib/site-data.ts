@@ -27,6 +27,8 @@ async function load(): Promise<SiteData | null> {
   if (!g.data?.length) return null; // 아직 초기 데이터가 없음 → 샘플 사용
 
   const setting = (key: string) => rows(st).find((x) => x.key === key)?.value;
+  const visibleWorks = rows(w).filter((x) => !x.hidden);
+  const visibleIds = new Set(visibleWorks.map((x) => x.id));
 
   return {
     groups: rows(g).map((x) => ({ id: x.id, no: x.num, name: x.name, en: x.en, desc: x.descr })),
@@ -37,7 +39,7 @@ async function load(): Promise<SiteData | null> {
       id: x.id, name: x.name, typeIds: x.type_ids, useAvatar: x.use_avatar,
       avatarUrl: x.avatar_url ?? undefined, showWhenEmpty: x.show_when_empty,
     })),
-    works: rows(w).map((x) => ({
+    works: visibleWorks.map((x) => ({
       id: x.id, title: x.title, youtubeId: x.youtube_id, date: x.work_date, duration: x.duration,
       thumbUrl: x.thumb_url ?? undefined, artistIds: x.artist_ids, usageIds: x.usage_ids,
       partIds: x.part_ids, mainPartId: x.main_part_id ?? undefined, hidden: x.hidden, feat: x.feat ?? undefined,
@@ -52,7 +54,7 @@ async function load(): Promise<SiteData | null> {
     })),
     notice: setting('notice') ?? SAMPLE.notice,
     links: setting('links') ?? SAMPLE.links,
-    indexQueue: rows(iq).map((x) => ({
+    indexQueue: rows(iq).filter((x) => visibleIds.has(x.work_id)).map((x) => ({
       workId: x.work_id, labelPartId: x.label_part_id ?? undefined, partCount: x.part_count ?? undefined,
     })),
   };
