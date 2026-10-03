@@ -169,10 +169,14 @@ export async function saveArtist(fd: FormData) {
   const avatarUp = await uploadImage(fd.get('avatarFile'), 'artists');
   if (avatarUp.error) fail(back, avatarUp.error);
 
+  const linkRaw = str(fd, 'linkUrl');
+  const linkUrl = linkRaw ? normalizeClipUrl(linkRaw) : '';
+  if (linkRaw && !linkUrl) fail(back, '아티스트 링크는 https:// 로 시작하는 주소를 넣어 주세요.');
   const row = {
     name, type_ids: list(fd, 'typeIds'), use_avatar: flag(fd, 'useAvatar'),
     avatar_url: avatarUp.url || avatar || null, show_when_empty: flag(fd, 'showWhenEmpty'),
     hide_in_strip: flag(fd, 'hideInStrip'),
+    link_url: linkUrl || null,
   };
   const db = adminDb();
 

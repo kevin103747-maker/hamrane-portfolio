@@ -70,13 +70,21 @@ function ArtistModal({ id, onClose }: { id: string; onClose: () => void }) {
   const a = s.artistById.get(id);
   if (!a) return null;
   const list = s.artistWorks(id);
+  const href = a.linkUrl && /^https?:\/\//i.test(a.linkUrl) ? a.linkUrl : '';
   return (
     <div className="box" onClick={(e) => e.stopPropagation()}>
       <div className="mh">
         <Avatar artist={a} />
         <div>
           <small>ARTIST</small>
-          <h3>{a.name}<span className="cnt">{list.length}곡</span></h3>
+          <h3>
+            {href ? (
+              <a className="hr-alink" href={href} target="_blank" rel="noopener noreferrer" title="채널·방송국으로 이동">
+                {a.name} <Icon name="external" />
+              </a>
+            ) : a.name}
+            <span className="cnt">{list.length}곡</span>
+          </h3>
         </div>
         <button className="hr-x" onClick={onClose} aria-label="닫기"><Icon name="close" /></button>
       </div>

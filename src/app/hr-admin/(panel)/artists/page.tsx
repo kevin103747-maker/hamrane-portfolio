@@ -11,7 +11,7 @@ import { saveArtist } from '../actions';
 
 type Row = {
   id: string; name: string; type_ids: string[] | null; use_avatar: boolean | null;
-  avatar_url: string | null; show_when_empty: boolean | null; hide_in_strip: boolean | null;
+  avatar_url: string | null; show_when_empty: boolean | null; hide_in_strip: boolean | null; link_url: string | null;
 };
 const norm = (s: string) => s.replace(/\s+/g, '').toLowerCase();
 
@@ -99,6 +99,7 @@ export default async function ArtistsPage({
         <label className="hr-chk"><input type="checkbox" name="useAvatar" defaultChecked={cur?.use_avatar ?? false} />프로필 이미지 사용</label>
         <label>프로필 이미지 파일 올리기(JPG·PNG·WebP, 4MB 이하. 올리면 아래 주소보다 우선합니다)<input type="file" name="avatarFile" accept="image/jpeg,image/png,image/webp" /></label>
         <label>프로필 이미지 주소(선택)<input name="avatarUrl" placeholder="https://..." defaultValue={cur?.avatar_url ?? ''} /></label>
+        <label>아티스트 링크(유튜브·방송국 등, 선택 — 팝업에서 이름을 누르면 이동합니다)<input name="linkUrl" placeholder="https://www.youtube.com/@..." defaultValue={cur?.link_url ?? ''} /></label>
         <label className="hr-chk"><input type="checkbox" name="showWhenEmpty" defaultChecked={cur?.show_when_empty ?? false} />작업물이 없어도 포트폴리오 아티스트 칸에 표시</label>
         <label className="hr-chk"><input type="checkbox" name="hideInStrip" defaultChecked={cur?.hide_in_strip ?? false} />포트폴리오 아티스트 칸에서 숨기기 (곡이 있어도 숨김. 곡 카드의 이름 표시와 곡 목록에는 영향 없음)</label>
         {!cur && <p className="hr-adm-sub">새 아티스트는 목록 맨 뒤에 추가됩니다. 순서는 아래 목록에서 바꿀 수 있습니다.</p>}

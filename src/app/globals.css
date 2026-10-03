@@ -764,3 +764,18 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 .hr-tchip { padding: 2px 9px; border-radius: 999px; border: 1px solid rgba(128,128,128,.4); background: transparent; color: inherit; cursor: pointer; font-size: 12px; }
 .hr-tchip[aria-pressed="true"] { background: rgba(59,130,246,.25); border-color: rgba(59,130,246,.85); font-weight: 600; }
 .hr-tchip:disabled { opacity: .5; cursor: default; }
+
+/* 아티스트 팝업: 이름 링크 */
+.hr-alink { display: inline-flex; align-items: center; gap: 6px; }
+.hr-alink:hover { color: var(--mint); text-decoration: underline; text-underline-offset: 4px; }
+.hr-alink .ico { width: 16px; height: 16px; opacity: .7; }
+
+/* 포트폴리오: 페이지 이동 */
+.all-anchor { scroll-margin-top: 150px; }
+.hr-pgn { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 40px; flex-wrap: wrap; }
+.hr-pgn button { min-width: 40px; height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--text-2); font: 500 13px var(--f-mono); transition: .2s; }
+.hr-pgn button:hover:not(:disabled) { color: var(--text); border-color: var(--mint); }
+.hr-pgn button.on { color: var(--mint); border-color: color-mix(in oklab, var(--mint) 40%, transparent); background: var(--mint-soft); }
+.hr-pgn button:disabled { opacity: .35; cursor: default; }
+.hr-pgn .gap { color: var(--text-3); padding: 0 4px; }
+@media (max-width: 1080px) { .all-anchor { scroll-margin-top: 20px; } }
