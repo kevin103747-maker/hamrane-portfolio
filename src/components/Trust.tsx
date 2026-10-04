@@ -17,7 +17,7 @@ export function StatusBadge({ status }: { status: StatusSettings }) {
 export function StatsLine({ stats }: { stats: Stats | null }) {
   if (!stats) return null;
   return (
-    <ul className="hr-stats" aria-label="작업 현황">
+    <ul className="hr-wk" aria-label="작업 현황">
       <li>누적 작업 <b><Scramble text={stats.works.toLocaleString('ko-KR')} /></b>곡</li>
       <li>함께한 아티스트 <b><Scramble text={stats.artists.toLocaleString('ko-KR')} delay={150} /></b>명</li>
       {stats.latest && <li>최근 작업 <b><Ago date={stats.latest} delay={300} /></b></li>}
