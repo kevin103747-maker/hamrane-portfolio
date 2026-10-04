@@ -5,7 +5,7 @@ import { tx } from '@/lib/i18n';
 import { PageHead, SectionHead } from '@/components/Heads';
 import { RateBoard, type BoardGroup } from '@/components/RateBoard';
 import { PackageList, type PackageView, type PkgLine } from '@/components/PackageList';
-import { FirstTimeNote, ProcessSteps, FaqList } from '@/components/Guide';
+import { FaqList } from '@/components/Guide';
 import { turnFor } from '@/lib/turnaround';
 import { getTurnaround } from '@/lib/turnaround-settings';
 import { getDiscounts } from '@/lib/discounts-settings';
@@ -63,6 +63,9 @@ export default async function Pricing() {
     };
   });
 
+  const hasFaq =
+    guide.faq.length > 0 || guide.steps.length > 0 || !!(guide.firstTime.title || guide.firstTime.body);
+
   return (
     <>
       <PageHead
@@ -75,9 +78,6 @@ export default async function Pricing() {
       </PageHead>
 
       <section><div className="wrap">
-        {guide.steps.length === 0 && <FirstTimeNote data={guide.firstTime} />}
-        <ProcessSteps steps={guide.steps} first={guide.firstTime} />
-
         <RateBoard groups={board} />
 
         <div className="hr-pt-end">
@@ -99,9 +99,9 @@ export default async function Pricing() {
         <PackageList items={packages} />
       </div></section>
 
-      {guide.faq.length > 0 && (
+      {hasFaq && (
         <section className="hr-faq-sec"><div className="wrap">
-          <FaqList faq={guide.faq} />
+          <FaqList faq={guide.faq} steps={guide.steps} first={guide.firstTime} />
         </div></section>
       )}
     </>

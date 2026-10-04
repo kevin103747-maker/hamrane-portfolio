@@ -1581,3 +1581,13 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
   .hr-pt-cta, .hr-pt-cta.sm { width: 100%; }
   .phead .hr-pt-cta { width: auto; }
 }
+
+/* ───── 외주 단가: FAQ 안의 진행 순서 · 패키지와 FAQ 사이 간격 ───── */
+section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
+.hr-faq-list .hr-faq-steps { padding: 0 0 16px; }
+.hr-faq-list .hr-faq-steps p { padding: 0; }
+.hr-faq-list .hr-faq-steps .hr-pr-first { margin-bottom: 14px; }
+.hr-faq-list .hr-faq-steps .hr-gd-steps { margin: 0; }
+@media (max-width: 640px) {
+  section.hr-faq-sec { padding-top: 40px; padding-bottom: 56px; }
+}
