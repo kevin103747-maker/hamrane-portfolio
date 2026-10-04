@@ -283,7 +283,7 @@ footer a:hover { color: var(--mint); }
   .grid, .feat, .modal .grid { grid-template-columns: 1fr; }
   .gnb .cta { display: none; }
   .modal { padding: 16px; }
-  .modal .mh, .vinfo, .mf, .mb { padding-left: 18px; padding-right: 18px; }
+  .modal .mh, .mb { padding-left: 18px; padding-right: 18px; }
   .cb { padding: 20px; gap: 14px; }
   .cb strong { font-size: 20px; }
   .cb.em strong { font-size: 15px; }
@@ -672,7 +672,7 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 /* 스크롤 연동 효과: 지원하지 않는 브라우저에서는 그냥 효과 없이 보입니다 */
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
-    .sh, .phead .wrap > *, .cat-nav, .chd, .it, .pc, .note,
+    .sh, .phead .wrap > *, .it, .note,
     .contact .cb, .artblk .artists, .grid > .card, .feat > .card {
       animation: hr-rise linear backwards;
       animation-timeline: view();
