@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-export type NavSection = { id: string; title: string; items: { href: string; label: string }[] };
+type NavSection = { id: string; title: string; items: { href: string; label: string }[] };
 
 const HOME = { href: '/hr-admin', label: '대시보드' };
 

@@ -6,7 +6,7 @@ import type { Discount } from '@/lib/types';
 import { feeLabel, type GroupTurn } from '@/lib/turnaround';
 import { volLabel, type GroupDiscView } from '@/lib/discounts';
 
-export type BoardItem = {
+type BoardItem = {
   id: string; name: string; desc: string; price: string; unit: string; tag?: string; discount?: Discount;
   turn?: GroupTurn; noDisc?: boolean;
 };

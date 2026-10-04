@@ -1,5 +1,5 @@
 // src/lib/turnaround.ts — 분야별 소요 기간·빠른 마감·당일 마감의 형식과 표시 규칙
-export type FeeType = 'pct' | 'won';
+type FeeType = 'pct' | 'won';
 export type Fee = { type: FeeType; value: number } | null;
 
 export type GroupTurn = {
@@ -21,7 +21,6 @@ export const feeLabel = (f: Fee) =>
   !f ? '추가요금 별도' : f.type === 'pct' ? `+${f.value}%` : `+${f.value.toLocaleString('ko-KR')}원`;
 
 /** 화면에 보여줄 정보가 하나라도 있는 분야만 표시합니다. */
-export const hasTurn = (t?: GroupTurn) => !!t && (!!t.avg || t.rush.on || t.same.on);
 
 type Rec = Record<string, unknown>;
 const rec = (v: unknown): Rec => (v && typeof v === 'object' ? (v as Rec) : {});

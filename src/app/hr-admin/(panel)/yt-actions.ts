@@ -3,7 +3,7 @@
 import { requireAdmin } from '@/lib/auth/guard';
 import { can } from '@/lib/auth/permissions';
 
-export type YtMeta =
+type YtMeta =
   | { ok: true; id: string; title: string; channel: string }
   | { ok: false; msg: string };
 

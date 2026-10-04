@@ -2,7 +2,7 @@
 'use client';
 import { useState } from 'react';
 
-export type ListField = { key: string; name: string; label: string; max: number; rows?: number; placeholder?: string };
+type ListField = { key: string; name: string; label: string; max: number; rows?: number; placeholder?: string };
 type Row = { id: number; v: Record<string, string> };
 
 let seq = 0;

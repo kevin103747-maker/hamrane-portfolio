@@ -1,7 +1,7 @@
 // src/components/admin/Section.tsx — 어드민 공용: 접이식 섹션 · 사용법 · 저장 안내
 import type { ReactNode } from 'react';
 
-export type Tone = 'work' | 'request' | 'price' | 'site';
+type Tone = 'work' | 'request' | 'price' | 'site';
 
 export function Section({
   title, badge, hint, tone, open, id, children,

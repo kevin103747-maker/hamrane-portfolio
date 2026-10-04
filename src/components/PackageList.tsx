@@ -7,7 +7,7 @@ import { Icon } from './Icons';
 import type { Discount } from '@/lib/types';
 
 export type PkgLine = { name: string; qty: number; collab?: boolean; who?: string };
-export type PkgRow = { label: string; lines: PkgLine[] };
+type PkgRow = { label: string; lines: PkgLine[] };
 export type PackageView = {
   id: string; no: string; tag: string; name: string; desc: string; total: string; discount?: Discount; rows: PkgRow[];
 };

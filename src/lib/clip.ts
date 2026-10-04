@@ -1,5 +1,5 @@
 // src/lib/clip.ts — SOOP·치지직 등 클립 링크 해석
-export type Clip = {
+type Clip = {
   platform: 'chzzk' | 'soop' | 'other';
   label: string;       // "치지직에서 보기" 같은 버튼 문구에 씁니다
   watchUrl: string;    // 원본 보기 링크

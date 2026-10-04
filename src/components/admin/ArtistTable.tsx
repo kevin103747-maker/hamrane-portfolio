@@ -6,7 +6,7 @@ import { ConfirmButton } from '@/components/admin/ConfirmButton';
 import { moveArtist, removeArtist } from '@/app/hr-admin/(panel)/actions';
 import { quickSetArtist, reorderArtists } from '@/app/hr-admin/(panel)/artists/quick-actions';
 
-export type ArtistRowData = {
+type ArtistRowData = {
   id: string; name: string; typeIds: string[]; hide: boolean; showWhenEmpty: boolean; works: number;
 };
 type TypeOpt = { id: string; name: string };

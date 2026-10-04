@@ -1,7 +1,7 @@
 // src/lib/admin-menu.ts — 어드민 메뉴의 단일 출처. 사이드바와 대시보드가 같이 읽습니다.
-export type Perm = 'works' | 'artists' | 'rates' | 'settings';
-export type MenuItem = { href: string; label: string; desc: string; perm: Perm };
-export type MenuSection = { id: string; title: string; sub: string; items: MenuItem[] };
+type Perm = 'works' | 'artists' | 'rates' | 'settings';
+type MenuItem = { href: string; label: string; desc: string; perm: Perm };
+type MenuSection = { id: string; title: string; sub: string; items: MenuItem[] };
 
 export const MENU: MenuSection[] = [
   {

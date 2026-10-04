@@ -2,7 +2,7 @@
 export type SocialKey = 'yt' | 'yt2' | 'soop' | 'chzzk' | 'x' | 'ig' | 'tt' | 'dc';
 type LinkField = 'youtube' | 'youtube2' | 'soop' | 'chzzk' | 'x' | 'instagram' | 'tiktok' | 'discordServer';
 
-export type Platform = {
+type Platform = {
   key: SocialKey;
   label: string;
   field: LinkField; // Links 안에서 주소가 저장되는 이름(= 어드민 입력란 이름)

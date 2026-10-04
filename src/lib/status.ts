@@ -1,5 +1,5 @@
 // src/lib/status.ts — 의뢰 상태의 형식·기본값. 조회는 status-settings.ts, 저장은 어드민 "의뢰 상태"에서 합니다.
-export type StatusState = 'open' | 'limited' | 'closed';
+type StatusState = 'open' | 'limited' | 'closed';
 
 export type StatusSettings = {
   state: StatusState | ''; // '' = 사이트에 표시하지 않음

@@ -2,21 +2,21 @@
 import { cache } from 'react';
 import { supabase } from './supabase';
 
-export type SeoSettings = {
+type SeoSettings = {
   title: string;
   description: string;
   shareTitle: string; // 비어 있으면 title 사용
   shareDescription: string; // 비어 있으면 description 사용
 };
-export type IntroSettings = { eyebrow: string; roles: string };
+type IntroSettings = { eyebrow: string; roles: string };
 
-export const DEFAULT_SEO: SeoSettings = {
+const DEFAULT_SEO: SeoSettings = {
   title: 'HamRanè — Composer & Music Producer',
   description: '작곡가 · 음악 프로듀서 햄버거라네(HamRanè)의 포트폴리오와 외주 단가 안내.',
   shareTitle: '',
   shareDescription: '',
 };
-export const DEFAULT_INTRO: IntroSettings = {
+const DEFAULT_INTRO: IntroSettings = {
   eyebrow: 'COMPOSER & MUSIC PRODUCER',
   roles: '작곡 · 편곡 · 믹싱 · 마스터링',
 };
