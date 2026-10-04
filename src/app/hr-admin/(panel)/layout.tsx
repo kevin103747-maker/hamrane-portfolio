@@ -26,6 +26,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
     ...(can(me, 'settings')
       ? [
           { href: '/hr-admin/groups', label: '분야·파트', group: 3 },
+          { href: '/hr-admin/status', label: '의뢰 상태', group: 3 },
           { href: '/hr-admin/guide', label: '의뢰 안내', group: 3 },
           { href: '/hr-admin/settings', label: '설정', group: 3 },
         ]

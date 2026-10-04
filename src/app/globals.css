@@ -1123,3 +1123,25 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 .hr-ge-btn:hover:not(:disabled) { color: var(--mint); border-color: var(--mint); }
 .hr-ge-btn:disabled { opacity: .35; cursor: default; }
 .hr-ge-add { justify-self: start; height: 36px; padding: 0 16px; }
+
+/* ───── 의뢰 상태 · 작업 현황 · 404/오류 버튼 ───── */
+.hr-trust { margin-top: 18px; display: grid; gap: 10px; justify-items: start; }
+.hr-st { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 13px; color: var(--text-2); }
+.contact-sec .hr-st { margin-bottom: 14px; }
+.hr-st-pill { --st: var(--mint); display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 12px; border-radius: 99px;
+  font-size: 13px; font-weight: 600; color: var(--st);
+  border: 1px solid color-mix(in oklab, var(--st) 40%, transparent);
+  background: color-mix(in oklab, var(--st) 12%, transparent); }
+.hr-st-pill i { width: 7px; height: 7px; border-radius: 50%; background: var(--st); }
+.hr-st-open .hr-st-pill i { box-shadow: 0 0 0 3px color-mix(in oklab, var(--st) 25%, transparent); }
+.hr-st-limited .hr-st-pill { --st: #e0a82e; }
+[data-theme='light'] .hr-st-limited .hr-st-pill { --st: #a8741a; }
+.hr-st-closed .hr-st-pill { --st: var(--text-3); }
+.hr-st-date { font: 400 11px var(--f-mono); color: var(--text-3); }
+.hr-stats { list-style: none; display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 13px; color: var(--text-3); }
+.hr-stats b { margin: 0 2px; font: 600 14px var(--f-sp); color: var(--text); }
+
+.hr-lost { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 8px; }
+.hr-lost a, .hr-lost button { height: 40px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--line-2);
+  display: inline-flex; align-items: center; font-size: 13.5px; font-weight: 600; color: var(--text-2); transition: .2s; }
+.hr-lost a:hover, .hr-lost button:hover { color: var(--mint); border-color: var(--mint); }

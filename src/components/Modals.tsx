@@ -1,7 +1,6 @@
 // src/components/Modals.tsx
 'use client';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-// 3번 줄: 이 한 줄만 남깁니다
 import { ModalCtx } from './ModalContext';
 import { useSite } from './SiteProvider';
 import { Avatar } from './Avatar';
@@ -10,6 +9,7 @@ import { Thumb } from './Thumb';
 import { WorkCard } from './WorkCard';
 import { orderParts } from '@/lib/work-parts';
 import { parseClip } from '@/lib/clip';
+import { COPY } from '@/lib/copy';
 
 type Open = { kind: 'work' | 'artist'; id: string } | null;
 
@@ -100,7 +100,7 @@ function ArtistModal({ id, onClose }: { id: string; onClose: () => void }) {
         {list.length ? (
           <div className="grid">{list.map((w) => <WorkCard key={w.id} work={w} parts={false} />)}</div>
         ) : (
-          <p className="hr-empty">아직 등록된 작업물이 없습니다.</p>
+          <p className="hr-empty">{COPY.emptyArtist}</p>
         )}
       </div>
     </div>

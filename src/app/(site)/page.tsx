@@ -2,14 +2,22 @@
 import Link from 'next/link';
 import { getSiteData } from '@/lib/site-data';
 import { getPageSettings } from '@/lib/page-settings';
+import { getStatusSettings } from '@/lib/status-settings';
+import { computeStats } from '@/lib/stats';
 import { IndexReel } from '@/components/IndexReel';
 import { RecentMarquee } from '@/components/RecentMarquee';
 import { SectionHead } from '@/components/Heads';
 import { SocialLinks } from '@/components/SocialLinks';
 import { ScrollHint } from '@/components/ScrollHint';
+import { StatusBadge, StatsLine } from '@/components/Trust';
 
 export default async function Home() {
-  const [{ links }, { intro }] = await Promise.all([getSiteData(), getPageSettings()]);
+  const [{ links, works }, { intro }, status] = await Promise.all([
+    getSiteData(),
+    getPageSettings(),
+    getStatusSettings(),
+  ]);
+  const stats = status.showStats ? computeStats(works) : null;
   return (
     <>
       <section className="hero hx-hero">
@@ -28,6 +36,12 @@ export default async function Home() {
               <Link className="hr-hero-cta" href="/pricing#process">
                 의뢰가 처음이신가요? <b>진행 방식 보기</b> →
               </Link>
+              {(status.state || stats) && (
+                <div className="hr-trust">
+                  <StatusBadge status={status} />
+                  <StatsLine stats={stats} />
+                </div>
+              )}
             </div>
           </div>
           <SocialLinks links={links} />

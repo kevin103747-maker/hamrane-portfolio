@@ -5,6 +5,7 @@ import { matches, type Filter } from '@/lib/filters';
 import type { Work } from '@/lib/types';
 import { useSite } from './SiteProvider';
 import { WorkCard } from './WorkCard';
+import { COPY } from '@/lib/copy';
 
 const PAGE_SIZE = 12; // 한 페이지에 보여줄 작업물 수 (4열 × 3줄)
 
@@ -276,15 +277,16 @@ export function PortfolioView() {
           {shown.length
             ? shown.map((w) => <WorkCard key={w.id} work={w} />)
             : (
-              <div className="empty">
-                {feats.length ? '위 대표작 외 추가 작업물이 없습니다.' : '조건에 맞는 작업물이 없습니다.'}
-                {active && (
-                  <>
-                    <br />
-                    <button className="hr-empty-btn" onClick={reset}>필터 초기화</button>
-                  </>
-                )}
-              </div>
+             <div className="empty">
+  {feats.length ? COPY.emptyExtra : active ? COPY.emptySearch : COPY.emptyAll}
+  {active && (
+    <>
+      <br />
+      <button className="hr-empty-btn" onClick={reset}>{COPY.resetFilters}</button>
+    </>
+  )}
+</div>
+
             )}
         </div>
         <Pager page={page} pages={pages} onGo={goPage} />

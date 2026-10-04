@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { getSiteData } from '@/lib/site-data';
 import { getGuideSettings } from '@/lib/guide-settings';
+import { getStatusSettings } from '@/lib/status-settings';
 import { SiteProvider } from '@/components/SiteProvider';
 import { ModalProvider } from '@/components/Modals';
 import { Header } from '@/components/Header';
@@ -10,7 +11,7 @@ import { PointerFx } from '@/components/PointerFx';
 import { BackToTop } from '@/components/BackToTop';
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
-  const [data, guide] = await Promise.all([getSiteData(), getGuideSettings()]);
+  const [data, guide, status] = await Promise.all([getSiteData(), getGuideSettings(), getStatusSettings()]);
   return (
     <SiteProvider data={data}>
       <ModalProvider>
@@ -19,7 +20,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
           <PointerFx />
           <BackToTop />
           {children}
-          <Contact guide={guide.contact} />
+          <Contact guide={guide.contact} status={status} />
           <footer>
             <div className="wrap">
               <span>© 2026 HamRanè</span>

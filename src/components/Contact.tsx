@@ -4,16 +4,31 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { ChannelIcon, Icon } from './Icons';
 import { useSite } from './SiteProvider';
+import { StatusBadge } from './Trust';
 import { inquiryTemplate, type ContactGuide } from '@/lib/guide';
+import type { StatusSettings } from '@/lib/status';
+import { COPY } from '@/lib/copy';
 
-export function Contact({ guide: G }: { guide: ContactGuide }) {
+type Key = 'dc' | 'em' | 'tp';
+
+export function Contact({ guide: G, status }: { guide: ContactGuide; status: StatusSettings }) {
   const { links } = useSite();
-  const [copied, setCopied] = useState<'' | 'dc' | 'em' | 'tp'>('');
-  const copy = (k: 'dc' | 'em' | 'tp', v: string) => {
-    navigator.clipboard?.writeText(v);
-    setCopied(k);
-    setTimeout(() => setCopied(''), 1400);
+  const [done, setDone] = useState<{ k: Key; ok: boolean } | null>(null);
+
+  // 복사에 실패하면(권한·보안 문맥 문제 등) "복사됨"이 아니라 실패했다고 알립니다.
+  const copy = async (k: Key, v: string) => {
+    let ok = false;
+    try {
+      await navigator.clipboard.writeText(v);
+      ok = true;
+    } catch {
+      ok = false;
+    }
+    setDone({ k, ok });
+    setTimeout(() => setDone(null), 1800);
   };
+  const label = (k: Key, idle: string) => (done?.k === k ? (done.ok ? COPY.copied : COPY.copyFail) : idle);
+
   const dcBody = (
     <>
       <span className="ic"><ChannelIcon name="dc" src={links.icons?.discord} /></span>
@@ -28,6 +43,8 @@ export function Contact({ guide: G }: { guide: ContactGuide }) {
         <Link className="lk" href="/pricing">단가 안내 보기 <Icon name="arrow" /></Link>
       </div>
 
+      <StatusBadge status={status} />
+
       {hasGuide && (
         <div className="hr-ct-guide">
           <div>
@@ -37,7 +54,7 @@ export function Contact({ guide: G }: { guide: ContactGuide }) {
           </div>
           {G.fields.length > 0 && (
             <button type="button" className="hr-ct-copy" onClick={() => copy('tp', inquiryTemplate(G.fields))}>
-              {copied === 'tp' ? '복사됨' : '문의 양식 복사'}
+              {label('tp', '문의 양식 복사')}
             </button>
           )}
         </div>
@@ -50,13 +67,13 @@ export function Contact({ guide: G }: { guide: ContactGuide }) {
           </a>
         ) : (
           <button className="cb dc" onClick={() => copy('dc', links.discordId)}>
-            {dcBody}<span className="go">{copied === 'dc' ? '복사됨' : '복사'}</span>
+            {dcBody}<span className="go">{label('dc', '복사')}</span>
           </button>
         )}
         <button className="cb em" onClick={() => copy('em', links.email)}>
           <span className="ic"><Icon name="copy" className="" /></span>
           <div><small>E-MAIL</small><strong>{links.email}</strong></div>
-          <span className="go">{copied === 'em' ? '복사됨' : '복사'}</span>
+          <span className="go">{label('em', '복사')}</span>
         </button>
       </div>
     </div></section>
