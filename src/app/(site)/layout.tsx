@@ -6,6 +6,7 @@ import { ModalProvider } from '@/components/Modals';
 import { Header } from '@/components/Header';
 import { Contact } from '@/components/Contact';
 import { PointerFx } from '@/components/PointerFx';
+import { BackToTop } from '@/components/BackToTop';
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
   const data = await getSiteData();
@@ -15,6 +16,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
         <div className="app">
          <Header />
          <PointerFx />
+         <BackToTop />
           {children}
           <Contact />
           <footer>

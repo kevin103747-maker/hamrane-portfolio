@@ -80,7 +80,43 @@ export function PortfolioView() {
   const [sort, setSort] = useState<'new' | 'old'>('new');
   const [expanded, setExpanded] = useState(false);
   const [pg, setPg] = useState<{ key: string; n: number }>({ key: '', n: 1 });
+  const [hydrated, setHydrated] = useState(false); // 주소에서 필터를 읽어오기 전에는 주소를 건드리지 않습니다
   const allRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  /* 접속 시 주소(?q=&group=&part=&usage=&type=&sort=&page=)에서 필터를 복원합니다.
+     서버 렌더링과 어긋나지 않도록 마운트 직후 한 번만 읽습니다. */
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    const list = (k: string, valid: { id: string }[]) =>
+      (p.get(k) ?? '').split(',').filter((id) => valid.some((v) => v.id === id));
+    const part = s.parts.find((x) => x.id === p.get('part'));
+    const g = part ? part.groupId : (s.groups.find((x) => x.id === p.get('group'))?.id ?? null);
+    const pt = part?.id ?? null;
+    const qq = (p.get('q') ?? '').slice(0, 100);
+    const u = list('usage', s.usageTypes);
+    const a = list('type', s.artistTypes);
+    const so: 'new' | 'old' = p.get('sort') === 'old' ? 'old' : 'new';
+    const n = Math.max(1, parseInt(p.get('page') ?? '1', 10) || 1);
+    setQ(qq); setGroupId(g); setPartId(pt); setUsage(u); setAType(a); setSort(so);
+    if (n > 1) setPg({ key: JSON.stringify([qq, g, pt, u, a, so]), n });
+    setHydrated(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /* "/" 키로 검색창에 바로 이동합니다(입력 중이거나 팝업이 열려 있으면 무시). */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+      if (document.querySelector('.modal')) return;
+      e.preventDefault();
+      searchRef.current?.focus();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   const filter: Filter = { q, groupId, partId, usage, aType };
   const dir = <X,>(l: X[]) => (sort === 'old' ? [...l].reverse() : l);
@@ -111,6 +147,21 @@ export function PortfolioView() {
     setPg({ key: filterKey, n: Math.max(1, Math.min(pages, n)) });
     allRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
+
+  /* 필터가 바뀔 때마다 주소를 갱신합니다(히스토리를 쌓지 않고 교체). 곡 팝업의 ?work= 는 그대로 보존됩니다. */
+  useEffect(() => {
+    if (!hydrated) return;
+    const u = new URL(window.location.href);
+    const put = (k: string, v: string) => (v ? u.searchParams.set(k, v) : u.searchParams.delete(k));
+    put('q', q.trim());
+    put('group', groupId ?? '');
+    put('part', partId ?? '');
+    put('usage', usage.join(','));
+    put('type', aType.join(','));
+    put('sort', sort === 'old' ? 'old' : '');
+    put('page', page > 1 ? String(page) : '');
+    window.history.replaceState(null, '', u.pathname + u.search + u.hash);
+  }, [hydrated, q, groupId, partId, usage, aType, sort, page]);
 
   const scopeKey = partId ?? groupId ?? 'all';
   const scopeName = partId ? s.partName(partId) : groupId ? s.groupName(groupId) : '';
@@ -147,7 +198,18 @@ export function PortfolioView() {
               <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" strokeWidth="2" />
               <path d="m20 20-4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
             </svg>
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="곡 제목, 아티스트 검색" />
+            <input
+              ref={searchRef}
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key !== 'Escape') return;
+                if (q) setQ('');
+                else e.currentTarget.blur();
+              }}
+              aria-keyshortcuts="/"
+              placeholder="곡 제목, 아티스트 검색"
+            />
           </label>
           <div className="chips">
             <button className={`chip${!groupId ? ' on' : ''}`} onClick={() => { setGroupId(null); setPartId(null); }}>전체</button>
@@ -213,7 +275,17 @@ export function PortfolioView() {
         <div className="grid">
           {shown.length
             ? shown.map((w) => <WorkCard key={w.id} work={w} />)
-            : <div className="empty">{feats.length ? '위 대표작 외 추가 작업물이 없습니다.' : '조건에 맞는 작업물이 없습니다.'}</div>}
+            : (
+              <div className="empty">
+                {feats.length ? '위 대표작 외 추가 작업물이 없습니다.' : '조건에 맞는 작업물이 없습니다.'}
+                {active && (
+                  <>
+                    <br />
+                    <button className="hr-empty-btn" onClick={reset}>필터 초기화</button>
+                  </>
+                )}
+              </div>
+            )}
         </div>
         <Pager page={page} pages={pages} onGo={goPage} />
       </div>

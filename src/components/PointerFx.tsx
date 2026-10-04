@@ -28,13 +28,9 @@ export function PointerFx() {
       const e = last;
       if (!e) return;
 
-      // 1) 배경 빛 위치
-      root.style.setProperty('--cx', `${e.clientX}px`);
-      root.style.setProperty('--cy', `${e.clientY}px`);
-
       const t = e.target instanceof Element ? e.target : null;
 
-      // 2) 카드 기울기 + 하이라이트 위치
+      // 1) 카드 기울기 + 하이라이트 위치
       const c = (t?.closest('.card') as HTMLElement | null) ?? null;
       if (c !== card) { clear(card, CARD_VARS); card = c; }
       if (c) {
@@ -45,16 +41,6 @@ export function PointerFx() {
         c.style.setProperty('--rx', `${(0.5 - py) * TILT * 2}deg`);
         c.style.setProperty('--gx', `${px * 100}%`);
         c.style.setProperty('--gy', `${py * 100}%`);
-      }
-
-      // 3) 자석 버튼
-      const m = (t?.closest('.cta, .ask') as HTMLElement | null) ?? null;
-      if (m !== mag) { clear(mag, MAG_VARS); mag = m; }
-      if (m) {
-        const r = m.getBoundingClientRect();
-        const lim = (v: number) => Math.max(-MAG, Math.min(MAG, v * 0.25));
-        m.style.setProperty('--tx', `${lim(e.clientX - (r.left + r.width / 2))}px`);
-        m.style.setProperty('--ty', `${lim(e.clientY - (r.top + r.height / 2))}px`);
       }
     };
 
