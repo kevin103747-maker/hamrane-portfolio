@@ -1,55 +1,39 @@
-// src/app/hr-admin/(panel)/layout.tsx — 대시보드 공통 틀(상단 메뉴). 입구에서 한 번 더 권한을 확인합니다.
+// src/app/hr-admin/(panel)/layout.tsx — 대시보드 공통 틀(상단바 + 좌측 메뉴). 입구에서 한 번 더 권한을 확인합니다.
+import Link from 'next/link';
 import { requireAdmin } from '@/lib/auth/guard';
 import { can } from '@/lib/auth/permissions';
-import { AdminNav, type NavItem } from '@/components/admin/AdminNav';
+import { visibleMenu } from '@/lib/admin-menu';
+import { AdminNav } from '@/components/admin/AdminNav';
 import { PublishButton } from '@/components/admin/PublishButton';
 import { signOut } from '../actions';
 
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
   const me = await requireAdmin();
 
-  const items: NavItem[] = [
-    { href: '/hr-admin', label: '대시보드', group: 0 },
-    ...(can(me, 'works')
-      ? [
-          { href: '/hr-admin/works', label: '곡', group: 1 },
-          { href: '/hr-admin/featured', label: '대표곡', group: 1 },
-          { href: '/hr-admin/featured/scopes', label: '분야별 대표곡', group: 1 },
-        ]
-      : []),
-    ...(can(me, 'artists') ? [{ href: '/hr-admin/artists', label: '아티스트', group: 1 }] : []),
-    ...(can(me, 'rates')
-      ? [
-          { href: '/hr-admin/rates', label: '단가표', group: 2 },
-          { href: '/hr-admin/rates/packages', label: '패키지', group: 2 },
-          { href: '/hr-admin/rates', label: '단가표', group: 2 },
-          { href: '/hr-admin/rates/packages', label: '패키지', group: 2 },
-          { href: '/hr-admin/turnaround', label: '소요·마감', group: 2 },
-          { href: '/hr-admin/turnaround', label: '소요·마감', group: 2 },
-          { href: '/hr-admin/discounts', label: '할인 규칙', group: 2 },
-        ]
-      : []),
-    ...(can(me, 'settings')
-      ? [
-          { href: '/hr-admin/groups', label: '분야·파트', group: 3 },
-          { href: '/hr-admin/status', label: '의뢰 상태', group: 3 },
-          { href: '/hr-admin/guide', label: '의뢰 안내', group: 3 },
-          { href: '/hr-admin/settings', label: '설정', group: 3 },
-        ]
-      : []),
-  ];
+  // 클라이언트 컴포넌트에는 href·label만 넘깁니다.
+  const sections = visibleMenu((p) => can(me, p)).map((s) => ({
+    id: s.id,
+    title: s.title,
+    items: s.items.map(({ href, label }) => ({ href, label })),
+  }));
 
   return (
-    <div className="hr-panel">
-      <header className="hr-panel-top">
-        <AdminNav items={items} />
+    <div className="hr-panel hr-shell">
+      <header className="hr-panel-top hr-top2">
+        <Link href="/hr-admin" className="hr-top2-brand">HamRanè <small>ADMIN</small></Link>
         <div className="hr-panel-user">
           {can(me, 'publish') && <PublishButton />}
           <span>{me.name || '관리자'} · {me.role === 'master' ? '마스터' : '관리자'}</span>
           <form action={signOut}><button type="submit">로그아웃</button></form>
         </div>
       </header>
-      {children}
+
+      <div className="hr-shell-body">
+        <aside className="hr-side">
+          <AdminNav sections={sections} />
+        </aside>
+        <div className="hr-main">{children}</div>
+      </div>
     </div>
   );
 }
