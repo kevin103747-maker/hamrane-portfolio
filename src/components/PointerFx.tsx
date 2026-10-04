@@ -1,11 +1,9 @@
-// src/components/PointerFx.tsx — 마우스에 반응하는 효과(커서 빛, 카드 기울기, 자석 버튼)
+// src/components/PointerFx.tsx — 마우스에 반응하는 효과(카드 기울기, 하이라이트 위치)
 'use client';
 import { useEffect } from 'react';
 
 const TILT = 5; // 카드 최대 기울기(도)
-const MAG = 6;  // 자석 버튼 최대 이동(px)
 const CARD_VARS = ['--rx', '--ry', '--gx', '--gy'];
-const MAG_VARS = ['--tx', '--ty'];
 
 const clear = (el: HTMLElement | null, vars: string[]) => {
   if (el) vars.forEach((v) => el.style.removeProperty(v));
@@ -21,7 +19,6 @@ export function PointerFx() {
     let raf = 0;
     let last: PointerEvent | null = null;
     let card: HTMLElement | null = null;
-    let mag: HTMLElement | null = null;
 
     const frame = () => {
       raf = 0;
@@ -48,8 +45,7 @@ export function PointerFx() {
       last = e;
       if (!raf) raf = requestAnimationFrame(frame); // 프레임당 한 번만 계산
     };
-    const onLeave = () => { clear(card, CARD_VARS); clear(mag, MAG_VARS); card = null; mag = null; };
-
+    const onLeave = () => { clear(card, CARD_VARS); card = null; };
     window.addEventListener('pointermove', onMove, { passive: true });
     root.addEventListener('pointerleave', onLeave);
     return () => {
