@@ -1086,3 +1086,20 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 @media (max-width: 560px) {
   .hr-gd-steps { grid-template-columns: 1fr; }
 }
+
+/* 홈 첫 화면: 의뢰 안내 링크 */
+.hr-hero-cta {
+  display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 6px;
+  margin-top: 16px; padding: 8px 16px; font-size: 14px; color: var(--text-2);
+  border: 1px solid var(--line-2); border-radius: 99px; transition: .2s;
+}
+.hr-hero-cta b { font-weight: 600; color: var(--mint); }
+.hr-hero-cta:hover { color: var(--text); border-color: var(--mint); }
+
+/* 헤더에 가리지 않게 #process 이동 위치를 조금 내립니다 */
+.hr-gd-steps-wrap { scroll-margin-top: 90px; }
+
+/* 홈 첫 화면 순차 등장에 합류(움직임 줄이기 설정이면 꺼짐) */
+@media (prefers-reduced-motion: no-preference) {
+  .hx-id-text .hr-hero-cta { animation: hr-rise .8s cubic-bezier(.2,.7,.2,1) .42s backwards; }
+}

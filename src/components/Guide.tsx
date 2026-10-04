@@ -12,7 +12,7 @@ export function FirstTimeNote() {
 
 export function ProcessSteps() {
   return (
-    <section className="hr-gd-steps-wrap" aria-label="의뢰 진행 순서">
+    <section className="hr-gd-steps-wrap" id="process" aria-label="의뢰 진행 순서">
       <div className="hr-gd-label">의뢰는 이렇게 진행됩니다</div>
       <ol className="hr-gd-steps">
         {STEPS.map((s, i) => (

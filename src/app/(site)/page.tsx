@@ -1,4 +1,5 @@
 // src/app/(site)/page.tsx
+import Link from 'next/link';
 import { getSiteData } from '@/lib/site-data';
 import { getPageSettings } from '@/lib/page-settings';
 import { IndexReel } from '@/components/IndexReel';
@@ -24,6 +25,9 @@ export default async function Home() {
               <p className="hx-roles">
                 {intro.roles}<i>/</i>
               </p>
+              <Link className="hr-hero-cta" href="/pricing#process">
+                의뢰가 처음이신가요? <b>진행 방식 보기</b> →
+              </Link>
             </div>
           </div>
           <SocialLinks links={links} />
