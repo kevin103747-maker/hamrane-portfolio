@@ -789,3 +789,52 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
   .hr-mq { overflow-x: auto; }
   .hr-mq-group[aria-hidden='true'] { display: none; }
 }
+
+/* ───── 모션 (움직임 줄이기 설정을 켠 사용자에게는 모두 꺼집니다) ───── */
+@keyframes hr-rise { from { opacity: 0; transform: translateY(22px); } }
+@keyframes hr-page-in { from { opacity: 0; transform: translateY(12px); } }
+@keyframes hr-fade { from { opacity: 0; } }
+@keyframes hr-pop { from { opacity: 0; transform: translateY(14px) scale(.97); } }
+@keyframes hr-prog { to { transform: scaleX(1); } }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* 페이지 이동 */
+  .hr-page { animation: hr-page-in .45s cubic-bezier(.2,.7,.2,1) backwards; }
+
+  /* 홈 첫 화면: 차례로 등장 */
+  .hx-av { animation: hr-rise .8s cubic-bezier(.2,.7,.2,1) backwards; }
+  .hx-id-text .hr-eyebrow { animation: hr-rise .8s cubic-bezier(.2,.7,.2,1) .12s backwards; }
+  .hx-id-text h1 { animation: hr-rise .8s cubic-bezier(.2,.7,.2,1) .22s backwards; }
+  .hx-id-text .hx-roles { animation: hr-rise .8s cubic-bezier(.2,.7,.2,1) .32s backwards; }
+
+  /* 모달 */
+  .modal { animation: hr-fade .2s ease-out backwards; }
+  .modal .box { animation: hr-pop .28s cubic-bezier(.2,.8,.2,1) backwards; }
+
+  /* 카드 썸네일 확대 */
+  .card .ph img { transition: transform .6s cubic-bezier(.2,.7,.2,1); }
+  .card:hover .ph img { transform: scale(1.05); }
+}
+
+/* 스크롤 연동 효과: 지원하지 않는 브라우저에서는 그냥 효과 없이 보입니다 */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .sh, .phead .wrap > *, .cat-nav, .chd, .it, .pc, .note,
+    .contact .cb, .artblk .artists, .grid > .card, .feat > .card {
+      animation: hr-rise linear backwards;
+      animation-timeline: view();
+      animation-range: entry 0% entry 40%;
+    }
+  }
+}
+
+/* 스크롤 진행 바 */
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .gnb::after {
+      content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px;
+      background: var(--mint); transform: scaleX(0); transform-origin: 0 50%;
+      animation: hr-prog linear both; animation-timeline: scroll(root);
+    }
+  }
+}
