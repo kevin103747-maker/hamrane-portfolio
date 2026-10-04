@@ -1,6 +1,7 @@
 // src/app/(site)/layout.tsx — 공개 사이트 전용 껍데기(헤더/문의/푸터)
 import Link from 'next/link';
 import { getSiteData } from '@/lib/site-data';
+import { getGuideSettings } from '@/lib/guide-settings';
 import { SiteProvider } from '@/components/SiteProvider';
 import { ModalProvider } from '@/components/Modals';
 import { Header } from '@/components/Header';
@@ -9,16 +10,16 @@ import { PointerFx } from '@/components/PointerFx';
 import { BackToTop } from '@/components/BackToTop';
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
-  const data = await getSiteData();
+  const [data, guide] = await Promise.all([getSiteData(), getGuideSettings()]);
   return (
     <SiteProvider data={data}>
       <ModalProvider>
         <div className="app">
-         <Header />
-         <PointerFx />
-         <BackToTop />
+          <Header />
+          <PointerFx />
+          <BackToTop />
           {children}
-          <Contact />
+          <Contact guide={guide.contact} />
           <footer>
             <div className="wrap">
               <span>© 2026 HamRanè</span>

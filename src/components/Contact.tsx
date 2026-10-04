@@ -4,9 +4,9 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { ChannelIcon, Icon } from './Icons';
 import { useSite } from './SiteProvider';
-import { CONTACT_GUIDE as G } from '@/lib/guide';
+import { inquiryTemplate, type ContactGuide } from '@/lib/guide';
 
-export function Contact() {
+export function Contact({ guide: G }: { guide: ContactGuide }) {
   const { links } = useSite();
   const [copied, setCopied] = useState<'' | 'dc' | 'em' | 'tp'>('');
   const copy = (k: 'dc' | 'em' | 'tp', v: string) => {
@@ -20,6 +20,7 @@ export function Contact() {
       <div><small>DISCORD</small><strong>{links.discordId}</strong></div>
     </>
   );
+  const hasGuide = !!(G.lead || G.reply || G.ask || G.fields.length);
   return (
     <section className="contact-sec" id="contact"><div className="wrap">
       <div className="sh">
@@ -27,16 +28,20 @@ export function Contact() {
         <Link className="lk" href="/pricing">단가 안내 보기 <Icon name="arrow" /></Link>
       </div>
 
-      <div className="hr-ct-guide">
-        <div>
-          <p><b>{G.lead}</b> {G.reply}</p>
-          <p className="ask-line">{G.ask}</p>
-          <div className="hr-ct-fields">{G.fields.map((f) => <span key={f}>{f}</span>)}</div>
+      {hasGuide && (
+        <div className="hr-ct-guide">
+          <div>
+            {(G.lead || G.reply) && <p>{G.lead && <b>{G.lead}</b>} {G.reply}</p>}
+            {G.ask && <p className="ask-line">{G.ask}</p>}
+            {G.fields.length > 0 && <div className="hr-ct-fields">{G.fields.map((f) => <span key={f}>{f}</span>)}</div>}
+          </div>
+          {G.fields.length > 0 && (
+            <button type="button" className="hr-ct-copy" onClick={() => copy('tp', inquiryTemplate(G.fields))}>
+              {copied === 'tp' ? '복사됨' : '문의 양식 복사'}
+            </button>
+          )}
         </div>
-        <button type="button" className="hr-ct-copy" onClick={() => copy('tp', G.template)}>
-          {copied === 'tp' ? '복사됨' : '문의 양식 복사'}
-        </button>
-      </div>
+      )}
 
       <div className="contact">
         {links.discordUrl ? (

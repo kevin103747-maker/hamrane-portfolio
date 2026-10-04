@@ -1103,3 +1103,23 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 @media (prefers-reduced-motion: no-preference) {
   .hx-id-text .hr-hero-cta { animation: hr-rise .8s cubic-bezier(.2,.7,.2,1) .42s backwards; }
 }
+
+/* 진행 단계 수가 달라져도 알아서 줄을 맞춥니다(앞서 만든 4열 고정 규칙을 대체) */
+.hr-gd-steps { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+
+/* 자주 묻는 질문 답변의 줄바꿈 유지 */
+.hr-gd-faq details p { white-space: pre-line; }
+
+/* 어드민: 의뢰 안내 목록 편집 */
+.hr-ge { display: grid; gap: 12px; }
+.hr-ge-empty { font-size: 13px; color: var(--text-3); }
+.hr-ge-row { display: grid; gap: 10px; padding: 14px 16px; border: 1px solid var(--line-2); border-radius: 12px; }
+.hr-ge-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.hr-ge-tools { display: flex; gap: 6px; }
+.hr-ge-btn {
+  height: 30px; min-width: 30px; padding: 0 10px; font-size: 13px; color: var(--text-2);
+  border: 1px solid var(--line-2); border-radius: 8px; transition: .2s;
+}
+.hr-ge-btn:hover:not(:disabled) { color: var(--mint); border-color: var(--mint); }
+.hr-ge-btn:disabled { opacity: .35; cursor: default; }
+.hr-ge-add { justify-self: start; height: 36px; padding: 0 16px; }
