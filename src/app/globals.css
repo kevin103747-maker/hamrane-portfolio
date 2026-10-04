@@ -1137,7 +1137,6 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 .hr-st-limited .hr-st-pill { --st: #e0a82e; }
 [data-theme='light'] .hr-st-limited .hr-st-pill { --st: #a8741a; }
 .hr-st-closed .hr-st-pill { --st: var(--text-3); }
-.hr-st-date { font: 400 11px var(--f-mono); color: var(--text-3); }
 .hr-stats { list-style: none; display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 13px; color: var(--text-3); }
 .hr-stats b { margin: 0 2px; font: 600 14px var(--f-sp); color: var(--text); }
 

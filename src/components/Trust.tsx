@@ -5,12 +5,10 @@ import { Ago } from './Ago';
 
 export function StatusBadge({ status }: { status: StatusSettings }) {
   if (!status.state) return null;
-  const d = status.updatedAt.match(/^\d{4}-(\d{2})-(\d{2})$/);
   return (
     <div className={`hr-st hr-st-${status.state}`}>
-      <span className="hr-st-pill"><i aria-hidden="true" />{STATUS_LABEL[status.state]}</span>
+      <span className="hr-st-pill"><i aria-hidden="true" />현재 {STATUS_LABEL[status.state]}</span>
       {status.note && <span className="hr-st-note">{status.note}</span>}
-      {d && <span className="hr-st-date">{d[1]}.{d[2]} 기준</span>}
     </div>
   );
 }
