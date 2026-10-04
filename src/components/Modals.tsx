@@ -13,7 +13,7 @@ import { parseClip } from '@/lib/clip';
 
 type Open = { kind: 'work' | 'artist'; id: string } | null;
 
-function WorkModal({ id, onClose }: { id: string; onClose: () => void }) {
+function WorkModal({ id, onClose, onNav }: { id: string; onClose: () => void; onNav: (d: number) => void }) {
   const s = useSite();
   const w = s.works.find((x) => x.id === id);
   if (!w) return null;
@@ -62,9 +62,16 @@ function WorkModal({ id, onClose }: { id: string; onClose: () => void }) {
           </a>
         )}
       </div>
+      {s.works.length > 1 && (
+        <div className="hr-nav">
+          <button onClick={() => onNav(-1)} title="← 키">‹ 이전 곡</button>
+          <button onClick={() => onNav(1)} title="→ 키">다음 곡 ›</button>
+        </div>
+      )}
     </div>
   );
 }
+
 
 function ArtistModal({ id, onClose }: { id: string; onClose: () => void }) {
   const s = useSite();
@@ -112,26 +119,35 @@ export function ModalProvider({ children }: { children: ReactNode }) {
   const s = useSite();
   const [open, setOpen] = useState<Open>(null);
   const lastFocus = useRef<HTMLElement | null>(null);
-  const openWork = useCallback((id: string) => {
-  lastFocus.current = document.activeElement as HTMLElement | null;
-  setOpen({ kind: 'work', id });
-  syncUrl(id);
-}, []);
-  const openArtist = useCallback((id: string) => {
-  lastFocus.current = document.activeElement as HTMLElement | null;
-  setOpen({ kind: 'artist', id });
-  syncUrl(null);
-}, []);
-  const close = useCallback(() => {
-  setOpen(null);
-  syncUrl(null);
-  lastFocus.current?.focus?.();
-}, []);
 
+  const openWork = useCallback((id: string) => {
+    lastFocus.current = document.activeElement as HTMLElement | null;
+    setOpen({ kind: 'work', id });
+    syncUrl(id);
+  }, []);
+  const openArtist = useCallback((id: string) => {
+    lastFocus.current = document.activeElement as HTMLElement | null;
+    setOpen({ kind: 'artist', id });
+    syncUrl(null);
+  }, []);
+  const close = useCallback(() => {
+    setOpen(null);
+    syncUrl(null);
+    lastFocus.current?.focus?.();
+  }, []);
   const value = useMemo(() => ({ openWork, openArtist }), [openWork, openArtist]);
 
+  // 곡 모달에서 이전/다음 곡으로 이동합니다(목록 끝에서는 반대편으로 이어집니다).
+  const nav = useCallback((d: number) => {
+    if (!open || open.kind !== 'work' || s.works.length < 2) return;
+    const i = s.works.findIndex((w) => w.id === open.id);
+    if (i < 0) return;
+    const next = s.works[(i + d + s.works.length) % s.works.length];
+    setOpen({ kind: 'work', id: next.id });
+    syncUrl(next.id);
+  }, [open, s.works]);
+
   // 공유 링크(?work=ID)로 들어온 경우, 처음 한 번만 해당 곡 모달을 엽니다.
-  // 숨김 처리됐거나 없는 ID면 모달을 열지 않고 주소만 정리합니다.
   const booted = useRef(false);
   useEffect(() => {
     if (booted.current) return;
@@ -144,7 +160,11 @@ export function ModalProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') close();
+      else if (e.key === 'ArrowLeft') nav(-1);
+      else if (e.key === 'ArrowRight') nav(1);
+    };
     window.addEventListener('keydown', onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -152,14 +172,16 @@ export function ModalProvider({ children }: { children: ReactNode }) {
       window.removeEventListener('keydown', onKey);
       document.body.style.overflow = prev;
     };
-  }, [open, close]);
+  }, [open, close, nav]);
 
   return (
     <ModalCtx.Provider value={value}>
       {children}
       {open && (
         <div className="modal" role="dialog" aria-modal="true" onClick={close}>
-          {open.kind === 'work' ? <WorkModal id={open.id} onClose={close} /> : <ArtistModal id={open.id} onClose={close} />}
+          {open.kind === 'work'
+            ? <WorkModal key={open.id} id={open.id} onClose={close} onNav={nav} />
+            : <ArtistModal id={open.id} onClose={close} />}
         </div>
       )}
     </ModalCtx.Provider>

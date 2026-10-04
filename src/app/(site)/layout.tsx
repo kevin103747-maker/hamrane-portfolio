@@ -5,6 +5,7 @@ import { SiteProvider } from '@/components/SiteProvider';
 import { ModalProvider } from '@/components/Modals';
 import { Header } from '@/components/Header';
 import { Contact } from '@/components/Contact';
+import { PointerFx } from '@/components/PointerFx';
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
   const data = await getSiteData();
@@ -12,7 +13,8 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
     <SiteProvider data={data}>
       <ModalProvider>
         <div className="app">
-          <Header />
+         <Header />
+         <PointerFx />
           {children}
           <Contact />
           <footer>
