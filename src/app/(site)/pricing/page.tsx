@@ -1,8 +1,9 @@
-// src/app/pricing/page.tsx
+// src/app/(site)/pricing/page.tsx
 import { getSiteData } from '@/lib/site-data';
 import { tx } from '@/lib/i18n';
 import { PageHead, SectionHead } from '@/components/Heads';
 import { Price, Until } from '@/components/Price';
+import { RateBoard, type BoardGroup } from '@/components/RateBoard';
 import { Icon } from '@/components/Icons';
 
 export const metadata = { title: 'Pricing' };
@@ -15,32 +16,37 @@ export default async function Pricing() {
   const groups = d.groups.filter((g) => d.rateItems.some((i) => i.groupId === g.id));
   // 화면의 분야 번호는 보이는 분야 기준으로 01부터 다시 매깁니다.
   const no = (n: number) => String(n + 1).padStart(2, '0');
+
+  // 클라이언트 컴포넌트에는 글자만 담은 단순한 데이터로 넘깁니다.
+  const board: BoardGroup[] = groups.map((g, n) => ({
+    id: g.id,
+    no: no(n),
+    name: tx(g.name),
+    en: g.en,
+    desc: tx(g.desc),
+    items: d.rateItems
+      .filter((i) => i.groupId === g.id)
+      .map((i) => ({
+        id: i.id, name: tx(i.name), desc: tx(i.desc), price: i.price, unit: tx(i.unit), tag: i.tag, discount: i.discount,
+      })),
+  }));
+
   return (
     <>
-      <PageHead crumb="PRICING" title="외주 단가" en="Pricing" desc="파트별 기본 단가입니다. 필요한 파트만 골라 의뢰하실 수 있습니다." />
+      <PageHead
+        crumb="PRICING"
+        title="외주 단가"
+        en="Pricing"
+        desc="파트별 기본 단가입니다. 곡의 난이도와 작업량에 따라 달라지므로, 곡을 보내주시면 확인 후 정확한 견적을 드립니다."
+      />
       <section><div className="wrap">
-        <nav className="cat-nav">{groups.map((g, n) => <a key={g.id} href={`#cat-${g.id}`}><small>{no(n)}</small>{tx(g.name)}</a>)}</nav>
-        <div className="rates">
-          {groups.map((g, n) => (
-            <article className="cat" id={`cat-${g.id}`} key={g.id}>
-              <div className="chd"><span className="no">{no(n)}</span><h3>{tx(g.name)}<span>{g.en}</span></h3><p>{tx(g.desc)}</p></div>
-              <ul className="items">
-                {d.rateItems.filter((i) => i.groupId === g.id).map((i) => (
-                  <li className="it" key={i.id}>
-                    <b>{tx(i.name)}{i.tag && <em>{i.tag}</em>}</b>
-                    <p>{tx(i.desc)}</p>
-                    <div className="amt"><Price price={i.price} discount={i.discount} /><i>{tx(i.unit)} · VAT 포함<Until discount={i.discount} /></i></div>
-                  </li>
-                ))}
-              </ul>
-            </article>
-          ))}
-        </div>
+        <RateBoard groups={board} />
         <p className="note"><i>NOTE</i>{tx(d.notice)}</p>
       </div></section>
 
       <section className="blk"><div className="wrap">
         <SectionHead n="EXAMPLES" title="패키지 예시" sub="Packages" />
+        <p className="hr-rt-cap">예시 구성이며, 실제 금액은 곡의 난이도와 작업량에 따라 달라집니다.</p>
         <div className="pk">
           {d.packages.map((p) => (
             <div className="pc" key={p.id}>
