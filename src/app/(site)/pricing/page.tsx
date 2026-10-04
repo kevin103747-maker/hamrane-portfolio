@@ -7,11 +7,13 @@ import { Price, Until } from '@/components/Price';
 import { RateBoard, type BoardGroup } from '@/components/RateBoard';
 import { FirstTimeNote, ProcessSteps, FaqList } from '@/components/Guide';
 import { Icon } from '@/components/Icons';
+import { turnFor } from '@/lib/turnaround';
+import { getTurnaround } from '@/lib/turnaround-settings';
 
 export const metadata = { title: 'Pricing' };
 
 export default async function Pricing() {
-  const [d, guide] = await Promise.all([getSiteData(), getGuideSettings()]);
+  const [d, guide, turnaround] = await Promise.all([getSiteData(), getGuideSettings(), getTurnaround()]);
   const item = (id: string) => d.rateItems.find((i) => i.id === id);
   const gname = (id: string) => { const g = d.groups.find((x) => x.id === id); return g ? tx(g.name) : ''; };
   // 단가 항목이 하나라도 있는 분야만 표시합니다. (리믹스처럼 포트폴리오 전용 분야는 단가 항목을 넣지 않으면 숨겨집니다.)
@@ -30,7 +32,9 @@ export default async function Pricing() {
       .filter((i) => i.groupId === g.id)
       .map((i) => ({
         id: i.id, name: tx(i.name), desc: tx(i.desc), price: i.price, unit: tx(i.unit), tag: i.tag, discount: i.discount,
+        turn: turnFor(turnaround, g.id, i.id),
       })),
+
   }));
 
   return (

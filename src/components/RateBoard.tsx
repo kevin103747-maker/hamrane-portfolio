@@ -3,35 +3,33 @@
 import { useEffect, useState } from 'react';
 import { Price, Until } from './Price';
 import type { Discount } from '@/lib/types';
-import { feeLabel, hasTurn, type GroupTurn } from '@/lib/turnaround';
+import { feeLabel, type GroupTurn } from '@/lib/turnaround';
 
 export type BoardItem = {
   id: string; name: string; desc: string; price: string; unit: string; tag?: string; discount?: Discount;
+  turn?: GroupTurn;
 };
-export type BoardGroup = { id: string; no: string; name: string; en: string; desc: string; items: BoardItem[]; turn?: GroupTurn };
+export type BoardGroup = { id: string; no: string; name: string; en: string; desc: string; items: BoardItem[] };
 
 // 안내 박스에 나오는 "금액에 영향을 주는 요소". 실제 작업 기준에 맞게 고쳐 쓰세요.
 const FACTORS = ['곡 길이·구성', '악기·트랙 수', '장르와 레퍼런스', '작업 기간', '수정 횟수'];
 
-function TurnInfo({ t }: { t: GroupTurn }) {
+function TurnLine({ t }: { t: GroupTurn }) {
   return (
-    <>
-      <dl className="hr-tn" aria-label="소요 기간과 마감 옵션">
-        <div className="hr-tn-i">
-          <dt>평균 소요</dt>
-          <dd>{t.avg || '문의'}</dd>
-        </div>
-        <div className={`hr-tn-i ${t.rush.on ? 'ok' : 'no'}`}>
-          <dt>빠른 마감</dt>
-          <dd>{t.rush.on ? <>{t.rush.days}<em>{feeLabel(t.rush.fee)}</em></> : '불가'}</dd>
-        </div>
-        <div className={`hr-tn-i ${t.same.on ? 'ok' : 'no'}`}>
-          <dt>당일 마감</dt>
-          <dd>{t.same.on ? <>가능<em>{feeLabel(t.same.fee)}</em></> : '불가'}</dd>
-        </div>
-      </dl>
-      {(t.rush.on || t.same.on) && <p className="hr-tn-note">빠른·당일 마감은 추가 요금이 붙습니다.</p>}
-    </>
+    <dl className="hr-tl" aria-label="소요 기간과 마감 옵션">
+      <div>
+        <dt>평균</dt>
+        <dd>{t.avg || '문의'}</dd>
+      </div>
+      <div className={t.rush.on ? 'ok' : 'no'}>
+        <dt>빠른 마감</dt>
+        <dd>{t.rush.on ? <>{t.rush.days}<em>{feeLabel(t.rush.fee)}</em></> : '불가'}</dd>
+      </div>
+      <div className={t.same.on ? 'ok' : 'no'}>
+        <dt>당일 마감</dt>
+        <dd>{t.same.on ? <>가능<em>{feeLabel(t.same.fee)}</em></> : '불가'}</dd>
+      </div>
+    </dl>
   );
 }
 
@@ -104,7 +102,10 @@ export function RateBoard({ groups }: { groups: BoardGroup[] }) {
             <h3>{g.name}<span>{g.en}</span></h3>
             {g.desc && <p>{g.desc}</p>}
           </div>
-          {g.turn && hasTurn(g.turn) && <TurnInfo t={g.turn} />}
+          {g.items.some((x) => x.turn && (x.turn.rush.on || x.turn.same.on)) && (
+  <p className="hr-tn-note">빠른·당일 마감은 작업마다 가능 여부와 기간이 다르며, 추가 요금이 붙습니다.</p>
+)}
+
           <ul className="hr-rt-grid">
             {g.items.map((i) => (
               <li key={i.id} className="hr-rt-card">
@@ -118,6 +119,7 @@ export function RateBoard({ groups }: { groups: BoardGroup[] }) {
                   <strong><Price price={i.price} discount={i.discount} /></strong>
                   <i>{i.unit} · VAT 포함<Until discount={i.discount} /></i>
                 </div>
+                {i.turn && <TurnLine t={i.turn} />}
               </li>
             ))}
           </ul>

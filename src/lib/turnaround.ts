@@ -49,3 +49,11 @@ export function parseTurnaround(raw: unknown): TurnaroundSettings {
   }
   return out;
 }
+
+/** 세부 작업(단가 항목)별 설정을 저장할 때 쓰는 키. 분야 id와 겹치지 않게 접두어를 붙입니다. */
+export const itemKey = (id: string) => `item:${id}`;
+
+/** 작업에 따로 설정한 값이 있으면 그것을, 없으면 분야 기본값을 씁니다. */
+export function turnFor(all: TurnaroundSettings, groupId: string, itemId: string): GroupTurn | undefined {
+  return all[itemKey(itemId)] ?? all[groupId];
+}
