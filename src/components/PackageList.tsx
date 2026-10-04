@@ -11,7 +11,7 @@ export type PackageView = {
   id: string; no: string; tag: string; name: string; desc: string; total: string; discount?: Discount; rows: PkgRow[];
 };
 
-const PEEK = 4; // 접힌 상태에서 먼저 보여줄 상품 수
+const PEEK = 4; // 접힌 상태에서 먼저 보여줄 상품 수. 더 줄이고 싶으면 3으로 낮추세요.
 
 function Card({ p }: { p: PackageView }) {
   const [open, setOpen] = useState(false);
@@ -22,19 +22,22 @@ function Card({ p }: { p: PackageView }) {
   // 숨겨질 상품이 1개뿐이면 접지 않고 전부 보여줍니다.
   const collapsible = count > PEEK + 1;
   const folded = collapsible && !open;
+  const rest = count - PEEK;
+  const toggle = () => setOpen((v) => !v);
 
   let seen = 0;
   const rows = p.rows.map((r) => ({
     r,
     lines: r.lines.map((l) => ({ l, extra: collapsible && seen++ >= PEEK })),
   }));
+  // "+N개 더" 칩을 붙일 줄: 접힌 상태에서 마지막으로 보이는 분야 줄
+  const lastShown = rows.reduce((acc, row, i) => (row.lines.some((x) => !x.extra) ? i : acc), 0);
 
   return (
     <article className="hr-pk2">
       <div className="hr-pk2-side">
         <div className="hr-pk2-top"><span>EX {p.no}</span><em>{p.tag}</em></div>
         <h3>{p.name}</h3>
-        {p.desc && <p className="hr-pk2-pd">{p.desc}</p>}
         <div className="hr-pk2-est">
           <small>EST.</small>
           <strong><Price price={p.total} discount={p.discount} /></strong>
@@ -48,15 +51,17 @@ function Card({ p }: { p: PackageView }) {
           <b>총 {count}개 상품</b>
           <span>{p.rows.length}개 분야</span>
           {collab > 0 && <span className="collab">협업 {collab}개 포함</span>}
+          {folded && <span className="part">현재 {PEEK}개만 표시 중</span>}
         </p>
         <p className="hr-pk2-mix" aria-label="분야별 상품 수">
           {p.rows.map((r) => (
             <span key={r.label}>{r.label}<b>{r.lines.length}</b></span>
           ))}
         </p>
+        {p.desc && <p className="hr-pk2-pd">{p.desc}</p>}
 
         <div id={bodyId} className="hr-pk2-body" data-folded={folded}>
-          {rows.map(({ r, lines }) => (
+          {rows.map(({ r, lines }, ri) => (
             <div
               key={r.label}
               className={['hr-pk2-row', lines.every((x) => x.extra) ? 'is-extra' : ''].filter(Boolean).join(' ')}
@@ -73,32 +78,40 @@ function Card({ p }: { p: PackageView }) {
                     {l.collab && <small className="c">협업{l.who ? ` · ${l.who}` : ''}</small>}
                   </li>
                 ))}
+                {folded && ri === lastShown && (
+                  <li className="hr-pk2-ghost">
+                    {/* 마우스 사용자를 위한 보조 칩입니다. 키보드·스크린리더는 아래 버튼을 씁니다. */}
+                    <button type="button" tabIndex={-1} aria-hidden="true" onClick={toggle}>
+                      +{rest}개 더
+                    </button>
+                  </li>
+                )}
               </ul>
             </div>
           ))}
         </div>
-
-        {collapsible && (
-          <button
-            type="button"
-            className="hr-pk2-more"
-            aria-expanded={open}
-            aria-controls={bodyId}
-            onClick={() => setOpen(!open)}
-          >
-            {open ? (
-              <span>구성 접기</span>
-            ) : (
-              <span>
-                <span className="n">+{count - PEEK}</span> 현재 {PEEK}개 / 총 {count}개 표시 중 · 눌러서 전체 구성 보기
-              </span>
-            )}
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M3 6l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-        )}
       </div>
+
+      {collapsible && (
+        <button
+          type="button"
+          className="hr-pk2-more"
+          aria-expanded={open}
+          aria-controls={bodyId}
+          onClick={toggle}
+        >
+          {open ? (
+            <span>구성 접기</span>
+          ) : (
+            <span>
+              <span className="n">+{rest}</span> 나머지 {rest}개 상품 포함 · 눌러서 전체 구성 보기
+            </span>
+          )}
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M3 6l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      )}
     </article>
   );
 }

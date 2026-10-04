@@ -1343,3 +1343,21 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 .hr-bd p.no { color: var(--text-3); }
 .hr-bd .lab { font: 600 11px var(--f-mono); letter-spacing: .04em; color: var(--text-3); }
 .hr-bd small { font-size: 12px; line-height: 1.55; color: var(--text-3); white-space: normal; }
+
+/* ───── 패키지 카드 개선: 더 작게, 더 분명하게 ───── */
+.hr-pk2-side { padding: 20px 22px; }
+.hr-pk2-detail { gap: 10px; padding: 20px 22px; }
+.hr-pk2-pd { font-size: 13.5px; line-height: 1.55; color: var(--text-2); }
+.hr-pk2-sum .part { padding: 2px 10px; border-radius: 99px; background: var(--mint); color: var(--mint-ink); font: 600 11.5px var(--f-mono); }
+.hr-pk2-row { padding-top: 6px; }
+.hr-pk2-row li { padding: 4px 10px; }
+
+/* 보이는 마지막 항목 뒤에 붙는 "+N개 더" 칩 */
+.hr-pk2-row li.hr-pk2-ghost { padding: 0; border: 0; background: none; }
+.hr-pk2-ghost button { height: 100%; padding: 4px 11px; border: 1.5px dashed var(--mint); border-radius: 8px; background: var(--mint-soft); color: var(--text); font: 600 12.5px var(--f-mono); cursor: pointer; }
+.hr-pk2-ghost button:hover { border-style: solid; background: var(--mint); color: var(--mint-ink); }
+
+/* 접기·펼치기 버튼: 카드 하단 전체 폭의 띠 */
+.hr-pk2 > .hr-pk2-more { grid-column: 1 / -1; border: 0; border-top: 1.5px dashed var(--mint); border-radius: 0; min-height: 48px; }
+.hr-pk2 > .hr-pk2-more[aria-expanded='true'] { background: transparent; border-top: 1px solid var(--line); color: var(--text-2); font-weight: 500; }
+.hr-pk2 > .hr-pk2-more[aria-expanded='true']:hover { background: var(--mint-soft); color: var(--text); }
