@@ -1,6 +1,7 @@
 // src/components/Modals.tsx
 'use client';
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+// 3번 줄: 이 한 줄만 남깁니다
 import { ModalCtx } from './ModalContext';
 import { useSite } from './SiteProvider';
 import { Avatar } from './Avatar';
@@ -9,7 +10,6 @@ import { Thumb } from './Thumb';
 import { WorkCard } from './WorkCard';
 import { orderParts } from '@/lib/work-parts';
 import { parseClip } from '@/lib/clip';
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 type Open = { kind: 'work' | 'artist'; id: string } | null;
 
