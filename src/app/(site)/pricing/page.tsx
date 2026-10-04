@@ -85,10 +85,7 @@ export default async function Pricing() {
 
       <section className="blk"><div className="wrap">
         <SectionHead n="EXAMPLES" title="패키지 예시" sub="Packages" />
-        <p className="hr-rt-cap">
-          예시 구성이며, 실제 금액은 곡의 난이도와 작업량에 따라 달라집니다. 구성이 많은 패키지는
-          &quot;전체 구성 보기&quot; 버튼을 눌러 포함된 상품을 모두 확인하세요.
-        </p>
+        <p className="hr-rt-cap">예시 구성이며, 실제 금액은 곡의 난이도와 작업량에 따라 달라집니다.</p>
         <PackageList items={packages} />
       </div></section>
 

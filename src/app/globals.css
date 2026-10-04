@@ -1361,3 +1361,9 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 .hr-pk2 > .hr-pk2-more { grid-column: 1 / -1; border: 0; border-top: 1.5px dashed var(--mint); border-radius: 0; min-height: 48px; }
 .hr-pk2 > .hr-pk2-more[aria-expanded='true'] { background: transparent; border-top: 1px solid var(--line); color: var(--text-2); font-weight: 500; }
 .hr-pk2 > .hr-pk2-more[aria-expanded='true']:hover { background: var(--mint-soft); color: var(--text); }
+
+/* ───── 패키지 카드 정리: 선과 알약을 줄여 한결 조용하게 ───── */
+.hr-pk2-body { gap: 4px; }
+.hr-pk2-row { border-top: 0; padding-top: 2px; }
+.hr-pk2-row li { border-color: transparent; background: var(--card-2); }
+.hr-pk2-row li.collab { border: 1px dashed var(--line-2); }

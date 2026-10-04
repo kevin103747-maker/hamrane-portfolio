@@ -23,15 +23,12 @@ function Card({ p }: { p: PackageView }) {
   const collapsible = count > PEEK + 1;
   const folded = collapsible && !open;
   const rest = count - PEEK;
-  const toggle = () => setOpen((v) => !v);
 
   let seen = 0;
   const rows = p.rows.map((r) => ({
     r,
     lines: r.lines.map((l) => ({ l, extra: collapsible && seen++ >= PEEK })),
   }));
-  // "+N개 더" 칩을 붙일 줄: 접힌 상태에서 마지막으로 보이는 분야 줄
-  const lastShown = rows.reduce((acc, row, i) => (row.lines.some((x) => !x.extra) ? i : acc), 0);
 
   return (
     <article className="hr-pk2">
@@ -51,17 +48,11 @@ function Card({ p }: { p: PackageView }) {
           <b>총 {count}개 상품</b>
           <span>{p.rows.length}개 분야</span>
           {collab > 0 && <span className="collab">협업 {collab}개 포함</span>}
-          {folded && <span className="part">현재 {PEEK}개만 표시 중</span>}
-        </p>
-        <p className="hr-pk2-mix" aria-label="분야별 상품 수">
-          {p.rows.map((r) => (
-            <span key={r.label}>{r.label}<b>{r.lines.length}</b></span>
-          ))}
         </p>
         {p.desc && <p className="hr-pk2-pd">{p.desc}</p>}
 
         <div id={bodyId} className="hr-pk2-body" data-folded={folded}>
-          {rows.map(({ r, lines }, ri) => (
+          {rows.map(({ r, lines }) => (
             <div
               key={r.label}
               className={['hr-pk2-row', lines.every((x) => x.extra) ? 'is-extra' : ''].filter(Boolean).join(' ')}
@@ -78,14 +69,6 @@ function Card({ p }: { p: PackageView }) {
                     {l.collab && <small className="c">협업{l.who ? ` · ${l.who}` : ''}</small>}
                   </li>
                 ))}
-                {folded && ri === lastShown && (
-                  <li className="hr-pk2-ghost">
-                    {/* 마우스 사용자를 위한 보조 칩입니다. 키보드·스크린리더는 아래 버튼을 씁니다. */}
-                    <button type="button" tabIndex={-1} aria-hidden="true" onClick={toggle}>
-                      +{rest}개 더
-                    </button>
-                  </li>
-                )}
               </ul>
             </div>
           ))}
@@ -98,13 +81,13 @@ function Card({ p }: { p: PackageView }) {
           className="hr-pk2-more"
           aria-expanded={open}
           aria-controls={bodyId}
-          onClick={toggle}
+          onClick={() => setOpen((v) => !v)}
         >
           {open ? (
             <span>구성 접기</span>
           ) : (
             <span>
-              <span className="n">+{rest}</span> 나머지 {rest}개 상품 포함 · 눌러서 전체 구성 보기
+              <span className="n">+{rest}</span> 상품이 더 있어요 · 눌러서 전체 보기
             </span>
           )}
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
