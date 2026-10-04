@@ -1012,3 +1012,77 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 @media (prefers-reduced-motion: no-preference) {
   .hr-rt-panel:not([hidden]) { animation: hr-fade .25s ease-out backwards; }
 }
+
+/* ───── 의뢰 안내: 처음 의뢰 문구 / 진행 순서 / 자주 묻는 질문 ───── */
+.hr-gd-first {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px;
+  padding: 16px 20px; margin-bottom: 20px;
+  background: var(--mint-soft); border: 1px solid var(--line-2); border-radius: 14px;
+}
+.hr-gd-first b { font-size: 15px; color: var(--mint); }
+.hr-gd-first p { font-size: 14px; line-height: 1.6; color: var(--text-2); }
+
+.hr-gd-label { margin-bottom: 10px; font-size: 15px; font-weight: 700; }
+.hr-gd-steps {
+  list-style: none; margin: 0 0 30px; padding: 0;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+}
+.hr-gd-steps li {
+  position: relative; display: flex; flex-direction: column; gap: 6px;
+  padding: 18px 18px 16px; background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+}
+.hr-gd-steps li:not(:last-child)::after {
+  content: '›'; position: absolute; right: -10px; top: 18px; z-index: 1;
+  font-size: 20px; line-height: 1; color: var(--text-3);
+}
+.hr-gd-no { font: 600 12px var(--f-mono); letter-spacing: .08em; color: var(--mint); }
+.hr-gd-steps b { font-size: 16px; font-weight: 600; }
+.hr-gd-steps p { font-size: 13px; line-height: 1.6; color: var(--text-2); }
+.hr-gd-steps .nt {
+  margin-top: 4px; padding-top: 8px; border-top: 1px dashed var(--line-2);
+  font-size: 12px; line-height: 1.55; color: var(--text-3); white-space: normal;
+}
+
+.hr-gd-faq { display: grid; gap: 10px; }
+.hr-gd-faq details { background: var(--card); border: 1px solid var(--line); border-radius: 12px; transition: border-color .2s; }
+.hr-gd-faq details[open] { border-color: var(--line-2); }
+.hr-gd-faq summary {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  padding: 16px 20px; font-size: 15px; font-weight: 600; cursor: pointer; list-style: none;
+}
+.hr-gd-faq summary::-webkit-details-marker { display: none; }
+.hr-gd-faq summary::after { content: '+'; font-size: 22px; line-height: 1; color: var(--mint); transition: transform .2s; }
+.hr-gd-faq details[open] summary::after { transform: rotate(45deg); }
+.hr-gd-faq details p { padding: 0 20px 18px; font-size: 14px; line-height: 1.7; color: var(--text-2); }
+
+/* 문의 영역 안내 박스 */
+.hr-ct-guide {
+  display: grid; grid-template-columns: 1fr auto; gap: 14px 24px; align-items: center;
+  margin-bottom: 14px; padding: 18px 20px;
+  background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+}
+.hr-ct-guide p { font-size: 14px; line-height: 1.65; color: var(--text-2); }
+.hr-ct-guide p b { color: var(--text); font-weight: 600; }
+.hr-ct-guide .ask-line { margin-top: 8px; }
+.hr-ct-fields { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.hr-ct-fields span {
+  padding: 3px 10px; font-size: 12px; color: var(--text-2);
+  border: 1px solid var(--line-2); border-radius: 99px; white-space: normal;
+}
+.hr-ct-copy {
+  height: 40px; padding: 0 18px; font-size: 14px; font-weight: 600; white-space: nowrap;
+  color: var(--mint); border: 1px solid var(--mint); border-radius: 99px; transition: .2s;
+}
+.hr-ct-copy:hover { background: var(--mint); color: var(--mint-ink); }
+
+@media (max-width: 980px) {
+  .hr-gd-steps { grid-template-columns: repeat(2, 1fr); }
+  .hr-gd-steps li::after { display: none; }
+}
+@media (max-width: 860px) {
+  .hr-ct-guide { grid-template-columns: 1fr; }
+  .hr-ct-copy { justify-self: start; }
+}
+@media (max-width: 560px) {
+  .hr-gd-steps { grid-template-columns: 1fr; }
+}

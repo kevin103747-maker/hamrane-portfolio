@@ -4,6 +4,7 @@ import { tx } from '@/lib/i18n';
 import { PageHead, SectionHead } from '@/components/Heads';
 import { Price, Until } from '@/components/Price';
 import { RateBoard, type BoardGroup } from '@/components/RateBoard';
+import { FirstTimeNote, ProcessSteps, FaqList } from '@/components/Guide';
 import { Icon } from '@/components/Icons';
 
 export const metadata = { title: 'Pricing' };
@@ -40,6 +41,8 @@ export default async function Pricing() {
         desc="파트별 기본 단가입니다. 곡의 난이도와 작업량에 따라 달라지므로, 곡을 보내주시면 확인 후 정확한 견적을 드립니다."
       />
       <section><div className="wrap">
+        <FirstTimeNote />
+        <ProcessSteps />
         <RateBoard groups={board} />
         <p className="note"><i>NOTE</i>{tx(d.notice)}</p>
       </div></section>
@@ -64,6 +67,11 @@ export default async function Pricing() {
             </div>
           ))}
         </div>
+      </div></section>
+
+      <section><div className="wrap">
+        <SectionHead n="FAQ" title="자주 묻는 질문" sub="FAQ" />
+        <FaqList />
       </div></section>
     </>
   );

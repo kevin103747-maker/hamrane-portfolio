@@ -4,11 +4,12 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { ChannelIcon, Icon } from './Icons';
 import { useSite } from './SiteProvider';
+import { CONTACT_GUIDE as G } from '@/lib/guide';
 
 export function Contact() {
   const { links } = useSite();
-  const [copied, setCopied] = useState<'' | 'dc' | 'em'>('');
-  const copy = (k: 'dc' | 'em', v: string) => {
+  const [copied, setCopied] = useState<'' | 'dc' | 'em' | 'tp'>('');
+  const copy = (k: 'dc' | 'em' | 'tp', v: string) => {
     navigator.clipboard?.writeText(v);
     setCopied(k);
     setTimeout(() => setCopied(''), 1400);
@@ -25,6 +26,18 @@ export function Contact() {
         <div><span className="n">CONTACT</span><h2>문의<span>1:1 Direct</span></h2></div>
         <Link className="lk" href="/pricing">단가 안내 보기 <Icon name="arrow" /></Link>
       </div>
+
+      <div className="hr-ct-guide">
+        <div>
+          <p><b>{G.lead}</b> {G.reply}</p>
+          <p className="ask-line">{G.ask}</p>
+          <div className="hr-ct-fields">{G.fields.map((f) => <span key={f}>{f}</span>)}</div>
+        </div>
+        <button type="button" className="hr-ct-copy" onClick={() => copy('tp', G.template)}>
+          {copied === 'tp' ? '복사됨' : '문의 양식 복사'}
+        </button>
+      </div>
+
       <div className="contact">
         {links.discordUrl ? (
           <a className="cb dc" href={links.discordUrl} target="_blank" rel="noopener noreferrer">
