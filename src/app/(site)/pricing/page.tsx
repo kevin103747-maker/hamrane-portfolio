@@ -3,10 +3,9 @@ import { getSiteData } from '@/lib/site-data';
 import { getGuideSettings } from '@/lib/guide-settings';
 import { tx } from '@/lib/i18n';
 import { PageHead, SectionHead } from '@/components/Heads';
-import { Price, Until } from '@/components/Price';
 import { RateBoard, type BoardGroup } from '@/components/RateBoard';
+import { PackageList, type PackageView, type PkgLine } from '@/components/PackageList';
 import { FirstTimeNote, ProcessSteps, FaqList } from '@/components/Guide';
-import { Icon } from '@/components/Icons';
 import { turnFor } from '@/lib/turnaround';
 import { getTurnaround } from '@/lib/turnaround-settings';
 import { getDiscounts } from '@/lib/discounts-settings';
@@ -16,9 +15,10 @@ import { BundleBox } from '@/components/BundleBox';
 export const metadata = { title: 'Pricing' };
 
 export default async function Pricing() {
-  const [d, guide, turnaround, discounts] = await Promise.all([getSiteData(), getGuideSettings(), getTurnaround(), getDiscounts()]);
+  const [d, guide, turnaround, discounts] = await Promise.all([
+    getSiteData(), getGuideSettings(), getTurnaround(), getDiscounts(),
+  ]);
   const item = (id: string) => d.rateItems.find((i) => i.id === id);
-  const gname = (id: string) => { const g = d.groups.find((x) => x.id === id); return g ? tx(g.name) : ''; };
   // 단가 항목이 하나라도 있는 분야만 표시합니다. (리믹스처럼 포트폴리오 전용 분야는 단가 항목을 넣지 않으면 숨겨집니다.)
   const groups = d.groups.filter((g) => d.rateItems.some((i) => i.groupId === g.id));
   // 화면의 분야 번호는 보이는 분야 기준으로 01부터 다시 매깁니다.
@@ -41,6 +41,28 @@ export default async function Pricing() {
       })),
   }));
 
+  // 패키지: 분야별로 묶고, 협업·외부 상품은 점선 칩으로 구분해 같은 줄(또는 새 줄)에 넣습니다.
+  const packages: PackageView[] = d.packages.map((p) => {
+    const rows = new Map<string, PkgLine[]>();
+    const push = (label: string, line: PkgLine) => rows.set(label, [...(rows.get(label) ?? []), line]);
+
+    for (const g of d.groups) {
+      for (const id of p.itemIds) {
+        const it = item(id);
+        if (it && it.groupId === g.id) push(tx(g.name), { name: tx(it.name), qty: p.qty?.[id] ?? 1 });
+      }
+    }
+    for (const e of p.extras ?? []) {
+      push(e.group?.trim() || '추가 구성', { name: e.name, qty: 1, collab: true, who: e.who });
+    }
+
+    return {
+      id: p.id, no: p.no, tag: p.tag, name: tx(p.name), desc: tx(p.desc),
+      total: p.total, discount: p.discount,
+      rows: Array.from(rows, ([label, lines]) => ({ label, lines })),
+    };
+  });
+
   return (
     <>
       <PageHead
@@ -52,7 +74,7 @@ export default async function Pricing() {
       <section><div className="wrap">
         <FirstTimeNote data={guide.firstTime} />
         <ProcessSteps steps={guide.steps} />
-                <RateBoard groups={board} />
+        <RateBoard groups={board} />
         <BundleBox
           tiers={discounts.bundle}
           yes={groups.filter((g) => discounts.groups[g.id]?.bundle).map((g) => tx(g.name))}
@@ -63,24 +85,11 @@ export default async function Pricing() {
 
       <section className="blk"><div className="wrap">
         <SectionHead n="EXAMPLES" title="패키지 예시" sub="Packages" />
-        <p className="hr-rt-cap">예시 구성이며, 실제 금액은 곡의 난이도와 작업량에 따라 달라집니다.</p>
-        <div className="pk">
-          {d.packages.map((p) => (
-            <div className="pc" key={p.id}>
-              <div className="top"><span>EX {p.no}</span><em>{p.tag}</em></div>
-              <h3>{tx(p.name)}</h3>
-              <p className="pd">{tx(p.desc)}</p>
-              <ul className="rec">
-                {p.itemIds.map((id) => { const it = item(id); return it && <li key={id}><span>{tx(it.name)}</span><span>{gname(it.groupId)}</span></li>; })}
-              </ul>
-              <div className="sum">
-                <small>EST.</small>
-                <div className="tot"><strong><Price price={p.total} discount={p.discount} /></strong><div className="vat">VAT 포함<Until discount={p.discount} /></div></div>
-              </div>
-              <a className="ask" href="#contact">이 구성으로 문의 <Icon name="arrow" /></a>
-            </div>
-          ))}
-        </div>
+        <p className="hr-rt-cap">
+          예시 구성이며, 실제 금액은 곡의 난이도와 작업량에 따라 달라집니다. 구성이 많은 패키지는
+          &quot;전체 구성 보기&quot; 버튼을 눌러 포함된 상품을 모두 확인하세요.
+        </p>
+        <PackageList items={packages} />
       </div></section>
 
       {guide.faq.length > 0 && (
