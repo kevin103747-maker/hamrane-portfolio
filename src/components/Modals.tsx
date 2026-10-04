@@ -9,6 +9,7 @@ import { Thumb } from './Thumb';
 import { WorkCard } from './WorkCard';
 import { orderParts } from '@/lib/work-parts';
 import { parseClip } from '@/lib/clip';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 type Open = { kind: 'work' | 'artist'; id: string } | null;
 
@@ -99,12 +100,33 @@ function ArtistModal({ id, onClose }: { id: string; onClose: () => void }) {
   );
 }
 
+/** 주소창의 ?work= 값을 모달 상태와 맞춥니다(페이지 이동 없이 주소만 교체). */
+function syncUrl(workId: string | null) {
+  const u = new URL(window.location.href);
+  if (workId) u.searchParams.set('work', workId);
+  else u.searchParams.delete('work');
+  window.history.replaceState(null, '', u.pathname + u.search + u.hash);
+}
+
 export function ModalProvider({ children }: { children: ReactNode }) {
+  const s = useSite();
   const [open, setOpen] = useState<Open>(null);
-  const openWork = useCallback((id: string) => setOpen({ kind: 'work', id }), []);
-  const openArtist = useCallback((id: string) => setOpen({ kind: 'artist', id }), []);
-  const close = useCallback(() => setOpen(null), []);
+  const openWork = useCallback((id: string) => { setOpen({ kind: 'work', id }); syncUrl(id); }, []);
+  const openArtist = useCallback((id: string) => { setOpen({ kind: 'artist', id }); syncUrl(null); }, []);
+  const close = useCallback(() => { setOpen(null); syncUrl(null); }, []);
   const value = useMemo(() => ({ openWork, openArtist }), [openWork, openArtist]);
+
+  // 공유 링크(?work=ID)로 들어온 경우, 처음 한 번만 해당 곡 모달을 엽니다.
+  // 숨김 처리됐거나 없는 ID면 모달을 열지 않고 주소만 정리합니다.
+  const booted = useRef(false);
+  useEffect(() => {
+    if (booted.current) return;
+    booted.current = true;
+    const id = new URLSearchParams(window.location.search).get('work');
+    if (!id) return;
+    if (s.works.some((w) => w.id === id)) setOpen({ kind: 'work', id });
+    else syncUrl(null);
+  }, [s.works]);
 
   useEffect(() => {
     if (!open) return;
