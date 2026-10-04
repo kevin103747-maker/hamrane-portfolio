@@ -28,17 +28,12 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(SITE_URL),
     title: { default: seo.title, template: '%s — HamRanè' },
     description: seo.description,
+    alternates: { canonical: './' },
     ...(Object.keys(verification).length ? { verification } : {}),
     openGraph: {
       type: 'website',
       siteName: 'HamRanè',
       locale: 'ko_KR',
-      url: '/',
-      title: shareTitle,
-      description: shareDesc,
-    },
-    twitter: {
-      card: 'summary_large_image',
       title: shareTitle,
       description: shareDesc,
     },
