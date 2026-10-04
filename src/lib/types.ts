@@ -12,7 +12,6 @@ export type Work = {
 };
 export type Discount = { on: boolean; rate?: number; price?: string; endDate?: string }; // endDate: YYYY-MM-DD (KST)
 export type RateItem = { id: string; groupId: string; name: Text; desc: Text; price: string; unit: Text; tag?: string; discount?: Discount };
-export type Pkg = { id: string; no: string; tag: string; name: Text; desc: Text; itemIds: string[]; total: string; discount?: Discount };
 export type QueueItem = { workId: string; labelPartId?: string; partCount?: number };
 export type Links = {
   youtube: string; soop: string; x: string; discordServer: string; discordUrl: string;
@@ -23,4 +22,9 @@ export type Links = {
 export type SiteData = {
   groups: Group[]; parts: Part[]; usageTypes: Tag[]; artistTypes: Tag[]; artists: Artist[]; works: Work[];
   rateItems: RateItem[]; packages: Pkg[]; notice: Text; links: Links; indexQueue: QueueItem[];
+};
+export type PkgExtra = { name: string; group?: string; who?: string }; // 내 단가표에 없는 협업·외부 상품
+export type Pkg = {
+  id: string; no: string; tag: string; name: Text; desc: Text; itemIds: string[]; total: string; discount?: Discount;
+  qty?: Record<string, number>; extras?: PkgExtra[];
 };

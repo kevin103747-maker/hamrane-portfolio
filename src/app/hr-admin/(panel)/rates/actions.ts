@@ -164,17 +164,44 @@ export async function savePackage(fd: FormData) {
   const totalIn = str(fd, 'total');
   const itemIds = list(fd, 'itemIds');
 
+  // 수량: 선택한 항목만 저장하고, 1이면 저장하지 않습니다.
+  const qty: Record<string, number> = {};
+  for (const iid of itemIds) {
+    const n = Number(str(fd, `qty_${iid}`) || '1');
+    if (!Number.isInteger(n) || n < 1 || n > 99) fail(back, '수량은 1~99 사이의 정수로 입력하세요.');
+    if (n > 1) qty[iid] = n;
+  }
+
+  // 협업·외부 상품: 이름·분야·담당 입력칸이 같은 순서로 넘어옵니다.
+  const exName = fd.getAll('exName').map(String);
+  const exGroup = fd.getAll('exGroup').map(String);
+  const exWho = fd.getAll('exWho').map(String);
+  const extras: { name: string; group?: string; who?: string }[] = [];
+  exName.forEach((raw, i) => {
+    const n = raw.trim();
+    const group = (exGroup[i] ?? '').trim();
+    const who = (exWho[i] ?? '').trim();
+    if (!n && !group && !who) return; // 빈 줄은 건너뜀
+    if (!n) fail(back, '협업·외부 상품은 이름을 입력해야 합니다.');
+    if (n.length > 30) fail(back, `협업 상품 이름은 30자 이내로 입력하세요. (${n})`);
+    if (group.length > 20 || who.length > 20) fail(back, '분야 표기와 담당은 각각 20자 이내로 입력하세요.');
+    extras.push({ name: n, ...(group ? { group } : {}), ...(who ? { who } : {}) });
+  });
+  if (extras.length > 12) fail(back, '협업·외부 상품은 최대 12개까지 넣을 수 있습니다.');
+
   if (!num) fail(back, '번호를 입력하세요. (예: 01)');
   if (!tag) fail(back, '태그를 입력하세요. (예: ORIGINAL)');
   if (!name) fail(back, '이름을 입력하세요.');
   if (!validMoney(totalIn) || digits(totalIn) <= 0) fail(back, '합계는 0보다 큰 숫자로 입력하세요.');
-  if (!itemIds.length) fail(back, '포함할 항목을 하나 이상 선택하세요.');
+  if (!itemIds.length && !extras.length) fail(back, '포함할 항목을 하나 이상 선택하거나 협업 상품을 추가하세요.');
   const total = money(totalIn);
   const discount = buildDiscount(fd, total, back);
 
   const db = adminDb();
-  const { data: found } = await db.from('rate_items').select('id').in('id', itemIds);
-  if ((found ?? []).length !== new Set(itemIds).size) fail(back, '존재하지 않는 항목이 포함되어 있습니다. 새로고침 후 다시 선택하세요.');
+  if (itemIds.length) {
+    const { data: found } = await db.from('rate_items').select('id').in('id', itemIds);
+    if ((found ?? []).length !== new Set(itemIds).size) fail(back, '존재하지 않는 항목이 포함되어 있습니다. 새로고침 후 다시 선택하세요.');
+  }
 
   let before: Record<string, unknown> | null = null;
   if (id) {
@@ -188,6 +215,8 @@ export async function savePackage(fd: FormData) {
     name: merge(before?.name, name),
     descr: merge(before?.descr, desc),
     item_ids: itemIds,
+    qty,
+    extras,
     total,
     discount,
     sort: await pickSort(fd, 'packages', before?.sort as number | undefined),

@@ -1239,3 +1239,79 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 .hr-sc-chip:hover { color: var(--text); }
 .hr-sc-chip.on { background: var(--mint); border-color: var(--mint); color: var(--mint-ink); }
 .hr-sc-chip.on b { color: var(--mint-ink); }
+
+/* ───── 분야별 소요 기간·마감 배지 ───── */
+.hr-tn { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; padding: 0; }
+.hr-tn-i { display: flex; align-items: baseline; gap: 8px; padding: 8px 12px; border: 1px solid var(--line-2); border-radius: 10px; background: var(--card); }
+.hr-tn-i dt { font: 500 11px var(--f-mono); letter-spacing: .04em; color: var(--text-3); }
+.hr-tn-i dd { margin: 0; display: flex; align-items: baseline; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text); }
+.hr-tn-i dd em { font: 600 12px var(--f-mono); font-style: normal; color: var(--mint); }
+.hr-tn-i.no { background: transparent; border-style: dashed; }
+.hr-tn-i.no dd { color: var(--text-3); font-weight: 500; }
+.hr-tn-note { margin: 8px 0 0; font-size: 12.5px; color: var(--text-3); }
+
+/* ───── 패키지 카드(가로형) ───── */
+.hr-pk2-list { display: grid; gap: 14px; }
+.hr-pk2 { display: grid; grid-template-columns: minmax(240px, 300px) 1fr; border: 1px solid var(--line-2); border-radius: 16px; background: var(--card); overflow: hidden; }
+.hr-pk2-side { display: flex; flex-direction: column; gap: 10px; padding: 22px; background: var(--card-2); border-right: 1px solid var(--line); }
+.hr-pk2-top { display: flex; justify-content: space-between; align-items: center; font: 500 11px var(--f-mono); letter-spacing: .08em; color: var(--text-3); }
+.hr-pk2-top em { font-style: normal; color: var(--mint); }
+.hr-pk2 h3 { font-size: 20px; font-weight: 700; letter-spacing: -.02em; }
+.hr-pk2-pd { font-size: 13.5px; line-height: 1.55; color: var(--text-2); }
+.hr-pk2-est { margin-top: auto; padding-top: 10px; display: grid; gap: 2px; }
+.hr-pk2-est small { font: 500 11px var(--f-mono); letter-spacing: .08em; color: var(--text-3); }
+.hr-pk2-est strong { font-size: 24px; font-weight: 700; letter-spacing: -.02em; }
+.hr-pk2-est strong small { margin-left: 2px; font: 500 13px var(--f-kr); letter-spacing: 0; color: var(--text-2); }
+.hr-pk2-est i { font-style: normal; font-size: 12px; color: var(--text-3); }
+.hr-pk2 .pdisc { display: grid; gap: 2px; }
+.hr-pk2 .pdisc .old { font-size: 13px; font-weight: 400; color: var(--text-3); }
+.hr-pk2 .pdisc .now { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; }
+.hr-pk2 .pdisc .rate { font: 600 12px var(--f-mono); color: var(--mint); }
+.hr-pk2-ask { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 42px; border-radius: 10px; background: var(--mint); color: var(--mint-ink); font-size: 14px; font-weight: 600; }
+.hr-pk2-ask:hover { background: var(--mint-2); }
+
+.hr-pk2-detail { display: flex; flex-direction: column; gap: 12px; min-width: 0; padding: 22px; }
+.hr-pk2-sum { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; font-size: 13px; color: var(--text-2); }
+.hr-pk2-sum b { font-size: 16px; color: var(--text); }
+.hr-pk2-sum .collab { color: var(--mint); }
+.hr-pk2-mix { display: flex; flex-wrap: wrap; gap: 6px; }
+.hr-pk2-mix span { display: inline-flex; align-items: baseline; gap: 6px; padding: 3px 10px; border-radius: 99px; background: var(--mint-soft); font-size: 12.5px; color: var(--text); }
+.hr-pk2-mix span b { font: 600 11px var(--f-mono); color: var(--mint); }
+.hr-pk2-body { display: grid; gap: 8px; }
+.hr-pk2-row { display: grid; grid-template-columns: 92px 1fr; gap: 10px; align-items: start; padding-top: 8px; border-top: 1px solid var(--line); }
+.hr-pk2-g { padding-top: 5px; font: 500 12px var(--f-mono); color: var(--text-3); }
+.hr-pk2-row ul { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.hr-pk2-row li { display: inline-flex; align-items: baseline; gap: 6px; padding: 5px 11px; border: 1px solid var(--line-2); border-radius: 8px; background: var(--card-2); font-size: 13.5px; }
+.hr-pk2-row li.collab { border-style: dashed; }
+.hr-pk2-row li .q { font: 600 11px var(--f-mono); color: var(--mint); }
+.hr-pk2-row li .c { font-size: 11px; color: var(--text-3); }
+.hr-pk2-body[data-folded='true'] .is-extra { display: none; }
+
+.hr-pk2-more { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 44px; padding: 8px 16px; border: 1.5px dashed var(--mint); border-radius: 10px; background: var(--mint-soft); color: var(--text); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.hr-pk2-more:hover { border-style: solid; background: var(--mint); color: var(--mint-ink); }
+.hr-pk2-more:focus-visible { outline: 2px solid var(--mint); outline-offset: 2px; }
+.hr-pk2-more .n { display: inline-block; margin-right: 6px; padding: 1px 8px; border-radius: 99px; background: var(--mint); color: var(--mint-ink); font: 700 12px var(--f-mono); }
+.hr-pk2-more:hover .n { background: var(--mint-ink); color: var(--mint); }
+.hr-pk2-more svg { flex: none; transition: transform .2s; }
+.hr-pk2-more[aria-expanded='true'] svg { transform: rotate(180deg); }
+@media (prefers-reduced-motion: no-preference) {
+  .hr-pk2-more[aria-expanded='false'] svg { animation: hr-nudge 1.6s ease-in-out infinite; }
+}
+@keyframes hr-nudge { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(3px); } }
+
+@media (max-width: 820px) {
+  .hr-pk2 { grid-template-columns: 1fr; }
+  .hr-pk2-side { border-right: 0; border-bottom: 1px solid var(--line); }
+  .hr-pk2-est { margin-top: 0; }
+  .hr-pk2-row { grid-template-columns: 1fr; gap: 4px; }
+  .hr-pk2-g { padding-top: 0; }
+}
+
+/* ───── 어드민: 소요·마감, 패키지 수량·협업 상품 ───── */
+.hr-fee { display: flex; gap: 6px; }
+.hr-fee select { width: 64px; }
+.hr-pkq { display: flex; align-items: center; gap: 10px; }
+.hr-pkq-n { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-3); }
+.hr-pkq-n input { width: 64px; }
+.hr-ex-row { display: grid; grid-template-columns: 2fr 1.2fr 1.2fr auto; gap: 8px; margin-top: 8px; }
+@media (max-width: 720px) { .hr-ex-row { grid-template-columns: 1fr 1fr; } }

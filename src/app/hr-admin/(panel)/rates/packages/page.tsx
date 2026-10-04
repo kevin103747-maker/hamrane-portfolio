@@ -5,6 +5,7 @@ import { requireAdmin } from '@/lib/auth/guard';
 import { can } from '@/lib/auth/permissions';
 import { adminDb } from '@/lib/auth/admin-db';
 import { DiscountFields } from '@/components/admin/DiscountFields';
+import { ExtrasEditor, type Extra } from '@/components/admin/ExtrasEditor';
 import { savePackage, removePackage } from '../actions';
 
 const txt = (v: unknown): string =>
@@ -40,12 +41,19 @@ export default async function PackagesPage({
   const pkgs = p.data ?? [];
   const cur = edit ? pkgs.find((x) => x.id === edit) : undefined;
   const picked: string[] = cur?.item_ids ?? [];
+  const qtyMap = (cur?.qty ?? {}) as Record<string, number>;
+  const extras: Extra[] = ((cur?.extras ?? []) as Partial<Extra>[]).map((e) => ({
+    name: e.name ?? '', group: e.group ?? '', who: e.who ?? '',
+  }));
   const nameOf = (id: string) => txt(items.find((x) => x.id === id)?.name) || id;
 
   return (
     <div className="hr-pn-body">
       <h1>패키지</h1>
-      <p>단가표 아래에 나오는 구성 예시입니다. 합계는 직접 입력합니다. 항목은 단가표에 있는 것 중에서 고릅니다. 항목 가격을 바꿔도 합계는 자동으로 바뀌지 않습니다.</p>
+      <p>
+        단가표 아래에 나오는 구성 예시입니다. 합계는 직접 입력합니다. 항목 가격을 바꿔도 합계는 자동으로 바뀌지 않습니다.
+        단가표에 있는 항목은 체크하고 수량을 정하고, 다른 작업자의 몫처럼 내 단가표에 없는 상품은 아래 &quot;협업·외부 상품&quot;에 직접 적습니다.
+      </p>
 
       {ok && <p role="status">저장했습니다. 공개 사이트에는 상단의 &quot;게시&quot; 버튼을 눌러야 반영됩니다.</p>}
       {err && <p role="alert">{err}</p>}
@@ -91,15 +99,23 @@ export default async function PackagesPage({
               <legend>{grp.num} {txt(grp.name)}</legend>
               <div className="hr-chks">
                 {rows.map((x) => (
-                  <label key={x.id} className="hr-chk">
-                    <input type="checkbox" name="itemIds" value={x.id} defaultChecked={picked.includes(x.id)} />
-                    {txt(x.name)}
-                  </label>
+                  <div key={x.id} className="hr-pkq">
+                    <label className="hr-chk">
+                      <input type="checkbox" name="itemIds" value={x.id} defaultChecked={picked.includes(x.id)} />
+                      {txt(x.name)}
+                    </label>
+                    <label className="hr-pkq-n">
+                      수량
+                      <input type="number" name={`qty_${x.id}`} min={1} max={99} defaultValue={qtyMap[x.id] ?? 1} />
+                    </label>
+                  </div>
                 ))}
               </div>
             </fieldset>
           );
         })}
+
+        <ExtrasEditor initial={extras} max={12} />
 
         <DiscountFields d={cur?.discount as Disc} />
 
@@ -112,25 +128,30 @@ export default async function PackagesPage({
       <section className="hr-card">
         <h2>등록된 패키지</h2>
         {pkgs.length === 0 && <p>패키지가 없습니다.</p>}
-        {pkgs.map((x) => (
-          <div key={x.id} className="hr-rt-row">
-            <div>
-              <b>EX {x.num} · {txt(x.name)} · {x.tag}</b>
-              <small>
-                {x.total}원 · {(x.item_ids as string[]).map(nameOf).join(', ')}
-                {x.discount ? ` · ${discLabel(x.discount as Disc)}` : ''}
-              </small>
+        {pkgs.map((x) => {
+          const q = (x.qty ?? {}) as Record<string, number>;
+          const ex = (x.extras ?? []) as { name: string }[];
+          return (
+            <div key={x.id} className="hr-rt-row">
+              <div>
+                <b>EX {x.num} · {txt(x.name)} · {x.tag}</b>
+                <small>
+                  {x.total}원 · {(x.item_ids as string[]).map((id) => `${nameOf(id)}${q[id] > 1 ? ` ×${q[id]}` : ''}`).join(', ')}
+                  {ex.length ? ` · 협업 ${ex.length}개(${ex.map((e) => e.name).join(', ')})` : ''}
+                  {x.discount ? ` · ${discLabel(x.discount as Disc)}` : ''}
+                </small>
+              </div>
+              <div className="hr-rt-tools">
+                <Link href={`/hr-admin/rates/packages?edit=${encodeURIComponent(x.id)}#form`}>수정</Link>
+                <form action={removePackage}>
+                  <input type="hidden" name="id" value={x.id} />
+                  <label><input type="checkbox" required /> 삭제 확인</label>
+                  <button type="submit">삭제</button>
+                </form>
+              </div>
             </div>
-            <div className="hr-rt-tools">
-              <Link href={`/hr-admin/rates/packages?edit=${encodeURIComponent(x.id)}#form`}>수정</Link>
-              <form action={removePackage}>
-                <input type="hidden" name="id" value={x.id} />
-                <label><input type="checkbox" required /> 삭제 확인</label>
-                <button type="submit">삭제</button>
-              </form>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </section>
     </div>
   );

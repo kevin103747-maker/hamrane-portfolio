@@ -53,6 +53,8 @@ async function load(): Promise<SiteData | null> {
     packages: rows(k).map((x) => ({
       id: x.id, no: x.num, tag: x.tag, name: x.name, desc: x.descr, itemIds: x.item_ids,
       total: x.total, discount: x.discount ?? undefined,
+      qty: x.qty ?? {}, extras: x.extras ?? [],
+
     })),
     notice: setting('notice') ?? SAMPLE.notice,
     links: setting('links') ?? SAMPLE.links,
