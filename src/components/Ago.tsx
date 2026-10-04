@@ -2,6 +2,7 @@
 // 계산을 방문자의 브라우저에서 하므로, 사이트를 다시 게시하지 않아도 날마다 정확해집니다.
 'use client';
 import { useEffect, useState } from 'react';
+import { Scramble } from './Scramble';
 
 function ago(date: string): string | null {
   const m = date.match(/^(\d{4})\D+(\d{1,2})(?:\D+(\d{1,2}))?/);
@@ -26,7 +27,7 @@ function ago(date: string): string | null {
   return `${Math.floor(months / 12)}년 전`;
 }
 
-export function Ago({ date }: { date: string }) {
+export function Ago({ date, delay = 0 }: { date: string; delay?: number }) {
   // 서버가 보낸 화면과 어긋나지 않도록, 처음에는 날짜만 그리고 마운트 후에 상대 시간을 붙입니다.
   const [text, setText] = useState<string | null>(null);
   useEffect(() => {
@@ -34,7 +35,7 @@ export function Ago({ date }: { date: string }) {
   }, [date]);
   return (
     <>
-      {date}
+      <Scramble text={date} delay={delay} />
       {text && <span className="hr-ago"> ({text})</span>}
     </>
   );

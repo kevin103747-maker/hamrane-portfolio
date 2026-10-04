@@ -1169,3 +1169,17 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 @media (max-width: 720px) {
   .gnb .logo .lg { height: 22px; }
 }
+
+/* ───── 작업 현황: 숫자가 섞이다 고정되는 효과 ───── */
+.hr-scr { position: relative; display: inline-block; font-variant-numeric: tabular-nums; }
+/* 효과가 시작되기 전에는 숨겨서 최종 숫자가 잠깐 비치지 않게 합니다.
+   자바스크립트가 동작하지 않으면 1초 뒤 저절로 나타납니다. */
+.hr-scr[data-st='idle'] { opacity: 0; animation: hr-scr-fb 0s 1s forwards; }
+@keyframes hr-scr-fb { to { opacity: 1; } }
+.hr-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.hr-ago { font-weight: 400; color: var(--text-3); animation: hr-ago-in .5s 1.6s both; }
+@keyframes hr-ago-in { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .hr-ago { animation: none; }
+}
