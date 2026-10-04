@@ -1145,3 +1145,18 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 .hr-lost a, .hr-lost button { height: 40px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--line-2);
   display: inline-flex; align-items: center; font-size: 13.5px; font-weight: 600; color: var(--text-2); transition: .2s; }
 .hr-lost a:hover, .hr-lost button:hover { color: var(--mint); border-color: var(--mint); }
+
+/* ───── 작업 현황 숫자 올라가는 효과 ───── */
+@property --n { syntax: '<integer>'; inherits: false; initial-value: 0; }
+
+.hr-cnt { --n: var(--to); counter-reset: hr-c var(--n);
+  animation: hr-count 1.4s cubic-bezier(.2, .7, .2, 1) .25s both; }
+.hr-cnt::after { content: counter(hr-c); }
+.hr-cnt-real { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@keyframes hr-count { from { --n: 0; } }
+
+.hr-ago { font-weight: 400; color: var(--text-3); }
+
+@media (prefers-reduced-motion: reduce) {
+  .hr-cnt { animation: none; }
+}
