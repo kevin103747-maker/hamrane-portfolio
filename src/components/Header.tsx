@@ -26,7 +26,12 @@ export function Header() {
   return (
     <header className="gnb">
       <div className="wrap">
-        <Link className="logo" href="/"><i />HamRanè</Link>
+        <Link className="logo" href="/" aria-label="HamRanè 홈">
+  {/* eslint-disable-next-line @next/next/no-img-element */}
+  <img className="lg lg-dark" src="/logo-on-dark.png" alt="" width={480} height={96} />
+  {/* eslint-disable-next-line @next/next/no-img-element */}
+  <img className="lg lg-light" src="/logo-on-light.png" alt="" width={480} height={96} />
+</Link>
         <nav className="menu">{MENU.map(([h, n]) => item(h, n))}</nav>
         <div className="right">
           <a className="crew" href={links.crewUrl} target="_blank" rel="noopener noreferrer">Team VIRTUALITY Sounds <Icon name="arrow" className="" /></a>

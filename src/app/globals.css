@@ -1159,3 +1159,13 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 @media (prefers-reduced-motion: reduce) {
   .hr-cnt { animation: none; }
 }
+
+/* ───── 헤더 로고 이미지 (테마별) ───── */
+.gnb .logo { display: inline-flex; align-items: center; }
+.gnb .logo .lg { display: block; height: 26px; width: auto; }
+.gnb .logo .lg-light { display: none; }
+[data-theme='light'] .gnb .logo .lg-dark { display: none; }
+[data-theme='light'] .gnb .logo .lg-light { display: block; }
+@media (max-width: 720px) {
+  .gnb .logo .lg { height: 22px; }
+}
