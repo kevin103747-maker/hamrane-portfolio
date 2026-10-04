@@ -299,11 +299,9 @@ export async function saveIndexQueue(fd: FormData) {
   if (rows.length > HOME_FEATURED_MAX) fail(FEATURED, `홈 대표곡은 최대 ${HOME_FEATURED_MAX}곡까지 지정할 수 있습니다.`);
 
   const db = adminDb();
-  // ↓ 이하는 기존 코드 그대로
-
-  const db = adminDb();
 
   if (rows.length) {
+
     const { data: found } = await db.from('works').select('id, title, hidden, part_ids').in('id', rows.map((r) => r.work_id));
     const byId = new Map<string, { title: string; hidden: boolean; part_ids: string[] | null }>();
     for (const x of found ?? []) byId.set(x.id, x);
