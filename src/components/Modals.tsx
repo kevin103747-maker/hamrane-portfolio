@@ -25,7 +25,7 @@ function WorkModal({ id, onClose }: { id: string; onClose: () => void }) {
           <small>{s.usageNames(w) || 'WORK'}</small>
           <h3>{w.title}</h3>
         </div>
-        <button className="hr-x" onClick={onClose} aria-label="닫기"><Icon name="close" /></button>
+        <button className="hr-x" onClick={onClose} aria-label="닫기" autoFocus><Icon name="close" /></button>
       </div>
       <div className="hr-video">
         {w.youtubeId ? (
@@ -87,7 +87,7 @@ function ArtistModal({ id, onClose }: { id: string; onClose: () => void }) {
             <span className="cnt">{list.length}곡</span>
           </h3>
         </div>
-        <button className="hr-x" onClick={onClose} aria-label="닫기"><Icon name="close" /></button>
+        <button className="hr-x" onClick={onClose} aria-label="닫기" autoFocus><Icon name="close" /></button>
       </div>
       <div className="mb">
         {list.length ? (
@@ -111,9 +111,23 @@ function syncUrl(workId: string | null) {
 export function ModalProvider({ children }: { children: ReactNode }) {
   const s = useSite();
   const [open, setOpen] = useState<Open>(null);
-  const openWork = useCallback((id: string) => { setOpen({ kind: 'work', id }); syncUrl(id); }, []);
-  const openArtist = useCallback((id: string) => { setOpen({ kind: 'artist', id }); syncUrl(null); }, []);
-  const close = useCallback(() => { setOpen(null); syncUrl(null); }, []);
+  const lastFocus = useRef<HTMLElement | null>(null);
+  const openWork = useCallback((id: string) => {
+  lastFocus.current = document.activeElement as HTMLElement | null;
+  setOpen({ kind: 'work', id });
+  syncUrl(id);
+}, []);
+  const openArtist = useCallback((id: string) => {
+  lastFocus.current = document.activeElement as HTMLElement | null;
+  setOpen({ kind: 'artist', id });
+  syncUrl(null);
+}, []);
+  const close = useCallback(() => {
+  setOpen(null);
+  syncUrl(null);
+  lastFocus.current?.focus?.();
+}, []);
+
   const value = useMemo(() => ({ openWork, openArtist }), [openWork, openArtist]);
 
   // 공유 링크(?work=ID)로 들어온 경우, 처음 한 번만 해당 곡 모달을 엽니다.

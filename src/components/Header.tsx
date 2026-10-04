@@ -32,9 +32,11 @@ export function Header() {
           <a className="crew" href={links.crewUrl} target="_blank" rel="noopener noreferrer">Team VIRTUALITY Sounds <Icon name="arrow" className="" /></a>
           <span className="vsep" />
           <a className="cta" href="#contact">문의하기</a>
-          <select className="lang" aria-label="언어" value={DEFAULT_LOCALE} onChange={(e) => router.push(localePath(e.target.value, path))}>
-            {LOCALES.map((l) => <option key={l.code} value={l.code}>{l.label}</option>)}
-          </select>
+          {LOCALES.length > 1 && (
+  <select className="lang" aria-label="언어" value={DEFAULT_LOCALE} onChange={(e) => router.push(localePath(e.target.value, path))}>
+    {LOCALES.map((l) => <option key={l.code} value={l.code}>{l.label}</option>)}
+  </select>
+)}
           <button className="theme-switch" onClick={toggleTheme} aria-label="테마 전환"><Icon name="sun" className="sun" /><Icon name="moon" className="moon" /></button>
           <button className="burger" aria-label="메뉴" aria-expanded={open} onClick={() => setOpen(!open)}><Icon name="menu" /></button>
         </div>

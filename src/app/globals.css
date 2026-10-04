@@ -782,3 +782,10 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 
 /* 사진 없는 아티스트 칩: 글자가 왼쪽 테두리에 붙지 않도록 여백 확보 */
 .hr-artist.noav { padding-left: 16px; padding-right: 14px; }
+
+/* 움직임 줄이기 설정을 켠 사용자: 마퀴 자동 스크롤 중지 */
+@media (prefers-reduced-motion: reduce) {
+  .hr-mq-track { animation: none; }
+  .hr-mq { overflow-x: auto; }
+  .hr-mq-group[aria-hidden='true'] { display: none; }
+}
