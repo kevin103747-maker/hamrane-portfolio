@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { getSiteData } from '@/lib/site-data';
 import { getPageSettings } from '@/lib/page-settings';
 import { getStatusSettings } from '@/lib/status-settings';
+import { getSocialOrder } from '@/lib/social-settings';
 import { computeStats } from '@/lib/stats';
 import { IndexReel } from '@/components/IndexReel';
 import { RecentMarquee } from '@/components/RecentMarquee';
@@ -12,10 +13,11 @@ import { ScrollHint } from '@/components/ScrollHint';
 import { StatusBadge, StatsLine } from '@/components/Trust';
 
 export default async function Home() {
-  const [{ links, works }, { intro }, status] = await Promise.all([
+  const [{ links, works }, { intro }, status, socialOrder] = await Promise.all([
     getSiteData(),
     getPageSettings(),
     getStatusSettings(),
+    getSocialOrder(),
   ]);
   const stats = status.showStats ? computeStats(works) : null;
   return (
@@ -44,7 +46,7 @@ export default async function Home() {
               )}
             </div>
           </div>
-          <SocialLinks links={links} />
+          <SocialLinks links={links} order={socialOrder} />
         </div>
       </section>
 

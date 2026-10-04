@@ -1,34 +1,34 @@
 // src/components/SocialLinks.tsx
 import type { Links } from '@/lib/types';
+import { DEFAULT_ORDER, PLATFORMS, type SocialKey } from '@/lib/social';
 import { ChannelIcon } from './Icons';
 
-/** 채널 바로가기(아이콘 버튼). 주소가 비어 있는 채널은 흐리게 표시되고 눌러도 이동하지 않습니다. */
-export function SocialLinks({ links }: { links: Links }) {
-  const items = [
-    { key: 'yt', label: 'YouTube', href: links.youtube, icon: links.icons?.youtube },
-    { key: 'soop', label: 'SOOP', href: links.soop, icon: links.icons?.soop },
-    { key: 'x', label: 'X', href: links.x, icon: links.icons?.x },
-    { key: 'dc', label: 'Discord', href: links.discordServer, icon: links.icons?.discord },
-  ];
+/** 채널 바로가기(아이콘 버튼). 어드민에서 정한 순서대로 나오며, 주소가 비어 있는 채널은 표시하지 않습니다. */
+export function SocialLinks({ links, order = DEFAULT_ORDER }: { links: Links; order?: SocialKey[] }) {
+  const items = order
+    .map((k) => PLATFORMS.find((p) => p.key === k))
+    .flatMap((p) => {
+      if (!p) return [];
+      const href = (links[p.field] ?? '').trim();
+      return href && href !== '#' ? [{ p, href }] : [];
+    });
+  if (!items.length) return null;
+
   return (
     <nav className="hx-soc" aria-label="채널 바로가기">
-      {items.map((i) => {
-        const ok = !!i.href && i.href !== '#';
-        return (
-          <a
-            key={i.key}
-            className={`hx-soc-a ${ok ? '' : 'off'}`}
-            href={ok ? i.href : undefined}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={i.label}
-            title={i.label}
-            aria-disabled={!ok}
-          >
-            <ChannelIcon name={i.key} src={i.icon} size={20} />
-          </a>
-        );
-      })}
+      {items.map(({ p, href }) => (
+        <a
+          key={p.key}
+          className="hx-soc-a"
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={p.label}
+          title={p.label}
+        >
+          <ChannelIcon name={p.key} src={p.icon ? links.icons?.[p.icon] : undefined} size={20} />
+        </a>
+      ))}
     </nav>
   );
 }

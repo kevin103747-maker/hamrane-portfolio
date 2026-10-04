@@ -1,10 +1,11 @@
-// src/app/hr-admin/(panel)/settings/actions.ts — 사이트 설정(채널 링크, 연락처, 공지, 제목·설명, 홈 문구) 저장
+// src/app/hr-admin/(panel)/settings/actions.ts — 사이트 설정(채널 링크·순서, 연락처, 공지, 제목·설명, 홈 문구) 저장
 'use server';
 import { redirect } from 'next/navigation';
 import { requireAdmin } from '@/lib/auth/guard';
 import { adminDb } from '@/lib/auth/admin-db';
 import { can, logEdit } from '@/lib/auth/permissions';
 import { uploadImage } from '@/lib/auth/upload';
+import { PLATFORMS, normalizeOrder } from '@/lib/social';
 
 const BACK = '/hr-admin/settings';
 const str = (fd: FormData, k: string) => String(fd.get(k) ?? '').trim();
@@ -14,13 +15,11 @@ function fail(msg: string): never {
   redirect(`${BACK}?err=${encodeURIComponent(msg)}`);
 }
 
-const URL_FIELDS = [
-  ['youtube', '유튜브'],
-  ['soop', 'SOOP'],
-  ['x', 'X'],
-  ['discordServer', '디스코드 프로필 링크'],
-  ['crewUrl', '크루 주소'],
-] as const;
+// 채널 주소(홈 아이콘)는 social.ts의 채널 목록에서 만들고, 크루 주소만 따로 더합니다.
+const URL_FIELDS: readonly (readonly [string, string])[] = [
+  ...PLATFORMS.map((p) => [p.field, p.label] as const),
+  ['crewUrl', '크루 주소'] as const,
+];
 
 // [폼 이름, 화면 이름, 최대 글자 수]
 const TEXT_FIELDS = [
@@ -43,6 +42,9 @@ export async function saveSettings(fd: FormData) {
   }
   // 홈 아이콘(discordServer)과 문의 카드(discordUrl)가 같은 프로필 링크를 씁니다.
   v.discordUrl = v.discordServer;
+
+  // 채널 바로가기 순서(화면에 보이던 순서 그대로 전달됩니다)
+  const socialOrder = { order: normalizeOrder(fd.getAll('socialOrder').map(String)) };
 
   const discordId = str(fd, 'discordId');
   const email = str(fd, 'email');
@@ -71,11 +73,12 @@ export async function saveSettings(fd: FormData) {
   const { data: rows } = await db
     .from('site_settings')
     .select('key, value')
-    .in('key', ['links', 'notice', 'seo', 'intro']);
+    .in('key', ['links', 'notice', 'seo', 'intro', 'social_order']);
   const oldLinks = rows?.find((r) => r.key === 'links')?.value ?? {};
   const oldNotice = rows?.find((r) => r.key === 'notice')?.value;
   const oldSeo = rows?.find((r) => r.key === 'seo')?.value;
   const oldIntro = rows?.find((r) => r.key === 'intro')?.value;
+  const oldSocialOrder = rows?.find((r) => r.key === 'social_order')?.value;
 
   // 기존 값(icons 등)을 보존하고 입력한 항목만 덮어씁니다.
   const links = { ...oldLinks, ...v, discordId, email, ...(profileUp.url ? { profileUrl: profileUp.url } : {}) };
@@ -90,6 +93,7 @@ export async function saveSettings(fd: FormData) {
       { key: 'notice', value: noticeValue },
       { key: 'seo', value: seo },
       { key: 'intro', value: intro },
+      { key: 'social_order', value: socialOrder },
     ],
     { onConflict: 'key' },
   );
@@ -99,5 +103,6 @@ export async function saveSettings(fd: FormData) {
   await logEdit(me, 'update', 'site_settings', 'notice', oldNotice ?? null, noticeValue);
   await logEdit(me, 'update', 'site_settings', 'seo', oldSeo ?? null, seo);
   await logEdit(me, 'update', 'site_settings', 'intro', oldIntro ?? null, intro);
+  await logEdit(me, 'update', 'site_settings', 'social_order', oldSocialOrder ?? null, socialOrder);
   redirect(`${BACK}?ok=1`);
 }

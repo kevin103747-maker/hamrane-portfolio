@@ -6,6 +6,10 @@ import { getSiteData } from '@/lib/site-data';
 import { getPageSettings } from '@/lib/page-settings';
 import { CountedField } from '@/components/admin/CountedField';
 import { saveSettings } from './actions';
+import { getSocialOrder } from '@/lib/social-settings';
+import { PLATFORMS } from '@/lib/social';
+import { SocialEditor } from '@/components/admin/SocialEditor';
+
 
 // 문자열 또는 { ko: "..." } 형태 모두 글자로 바꿉니다.
 const txt = (v: unknown): string =>
@@ -21,11 +25,16 @@ export default async function SettingsPage({
   const { ok, err } = await searchParams;
   const { links, notice } = await getSiteData();
   const { seo, intro } = await getPageSettings();
+  const socialOrder = await getSocialOrder();
+  const socialValues = Object.fromEntries(
+    PLATFORMS.map((p) => [p.field, p.field === 'discordServer' ? links.discordServer || links.discordUrl : (links[p.field] ?? '')]),
+  ) as Record<string, string>;
+
 
   return (
     <div className="hr-pn-body">
       <h1>사이트 설정</h1>
-      <p>채널 링크, 연락처, 단가표 안내 문구, 사이트 제목·설명, 홈 소개 문구를 바꿉니다. 비워 둔 채널 아이콘은 홈에서 흐리게 표시되고 눌러도 이동하지 않습니다.</p>
+      <p>채널 링크, 연락처, 단가표 안내 문구, 사이트 제목·설명, 홈 소개 문구를 바꿉니다. 주소를 비운 채널은 홈에서 표시되지 않습니다.</p>
 
       {ok && <p role="status">저장했습니다. 공개 사이트에는 상단의 &quot;게시&quot; 버튼을 눌러야 반영됩니다.</p>}
       {err && <p role="alert">{err}</p>}
@@ -107,15 +116,10 @@ export default async function SettingsPage({
         </fieldset>
 
         <fieldset>
-          <legend>채널 링크 (홈 화면 아이콘)</legend>
-          <label>유튜브<input name="youtube" defaultValue={links.youtube} placeholder="https://youtube.com/@..." /></label>
-          <label>SOOP<input name="soop" defaultValue={links.soop} placeholder="https://ch.sooplive.co.kr/..." /></label>
-          <label>X<input name="x" defaultValue={links.x} placeholder="https://x.com/..." /></label>
-          <label>
-            디스코드 프로필 링크 (홈 아이콘과 문의 카드에 같이 쓰입니다)
-            <input name="discordServer" defaultValue={links.discordServer || links.discordUrl} placeholder="https://discord.com/users/숫자ID" />
-          </label>
+          <legend>채널 링크 (홈 화면 아이콘 · 위/아래 버튼으로 순서 변경)</legend>
+          <SocialEditor initialOrder={socialOrder} values={socialValues} />
         </fieldset>
+
 
         <fieldset>
           <legend>문의 연락처</legend>

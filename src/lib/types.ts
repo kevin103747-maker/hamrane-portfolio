@@ -17,6 +17,7 @@ export type QueueItem = { workId: string; labelPartId?: string; partCount?: numb
 export type Links = {
   youtube: string; soop: string; x: string; discordServer: string; discordUrl: string;
   discordId: string; email: string; crewUrl: string; profileUrl?: string;
+  youtube2?: string; chzzk?: string; instagram?: string; tiktok?: string;
   icons?: Partial<Record<'youtube' | 'soop' | 'x' | 'discord', string>>;
 };
 export type SiteData = {

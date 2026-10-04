@@ -1182,3 +1182,7 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 @media (prefers-reduced-motion: reduce) {
   .hr-ago { animation: none; }
 }
+
+/* ───── 채널 바로가기: 개수가 늘어나도 줄바꿈 ───── */
+.hx-soc { flex-wrap: wrap; }
+.hx-soc-a img { display: block; }
