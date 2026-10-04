@@ -4,12 +4,13 @@ import { useEffect, useState } from 'react';
 import { Price, Until } from './Price';
 import type { Discount } from '@/lib/types';
 import { feeLabel, type GroupTurn } from '@/lib/turnaround';
+import { volLabel, type GroupDiscView } from '@/lib/discounts';
 
 export type BoardItem = {
   id: string; name: string; desc: string; price: string; unit: string; tag?: string; discount?: Discount;
-  turn?: GroupTurn;
+  turn?: GroupTurn; noDisc?: boolean;
 };
-export type BoardGroup = { id: string; no: string; name: string; en: string; desc: string; items: BoardItem[] };
+export type BoardGroup = { id: string; no: string; name: string; en: string; desc: string; items: BoardItem[]; disc?: GroupDiscView };
 
 // 안내 박스에 나오는 "금액에 영향을 주는 요소". 실제 작업 기준에 맞게 고쳐 쓰세요.
 const FACTORS = ['곡 길이·구성', '악기·트랙 수', '장르와 레퍼런스', '작업 기간', '수정 횟수'];
@@ -32,6 +33,26 @@ function TurnLine({ t }: { t: GroupTurn }) {
     </dl>
   );
 }
+
+function DiscBox({ v }: { v: GroupDiscView }) {
+  return (
+    <div className="hr-dc" aria-label="할인 안내">
+      {v.volume.length > 0 && (
+        <div className="hr-dc-i">
+          <b>수량 할인</b>
+          <span>{v.volume.map(volLabel).join(' · ')}</span>
+        </div>
+      )}
+      {v.bundle && (
+        <div className={`hr-dc-i${v.bundle === 'no' ? ' no' : ''}`}>
+          <b>묶음 할인</b>
+          <span>{v.bundle === 'yes' ? '여러 분야를 함께 의뢰하면 할인 대상' : '이 분야는 묶음 할인에서 제외'}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 export function RateBoard({ groups }: { groups: BoardGroup[] }) {
   const [cur, setCur] = useState(groups[0]?.id ?? '');
@@ -106,6 +127,7 @@ export function RateBoard({ groups }: { groups: BoardGroup[] }) {
   <p className="hr-tn-note">빠른·당일 마감은 작업마다 가능 여부와 기간이 다르며, 추가 요금이 붙습니다.</p>
 )}
 
+          {g.disc && <DiscBox v={g.disc} />}
           <ul className="hr-rt-grid">
             {g.items.map((i) => (
               <li key={i.id} className="hr-rt-card">
@@ -120,6 +142,7 @@ export function RateBoard({ groups }: { groups: BoardGroup[] }) {
                   <i>{i.unit} · VAT 포함<Until discount={i.discount} /></i>
                 </div>
                 {i.turn && <TurnLine t={i.turn} />}
+                {g.disc && i.noDisc && <p className="hr-dc-ex">수량·묶음 할인 제외 작업</p>}
               </li>
             ))}
           </ul>

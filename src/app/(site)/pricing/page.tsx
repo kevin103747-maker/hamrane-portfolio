@@ -9,11 +9,14 @@ import { FirstTimeNote, ProcessSteps, FaqList } from '@/components/Guide';
 import { Icon } from '@/components/Icons';
 import { turnFor } from '@/lib/turnaround';
 import { getTurnaround } from '@/lib/turnaround-settings';
+import { getDiscounts } from '@/lib/discounts-settings';
+import { groupView } from '@/lib/discounts';
+import { BundleBox } from '@/components/BundleBox';
 
 export const metadata = { title: 'Pricing' };
 
 export default async function Pricing() {
-  const [d, guide, turnaround] = await Promise.all([getSiteData(), getGuideSettings(), getTurnaround()]);
+  const [d, guide, turnaround, discounts] = await Promise.all([getSiteData(), getGuideSettings(), getTurnaround(), getDiscounts()]);
   const item = (id: string) => d.rateItems.find((i) => i.id === id);
   const gname = (id: string) => { const g = d.groups.find((x) => x.id === id); return g ? tx(g.name) : ''; };
   // 단가 항목이 하나라도 있는 분야만 표시합니다. (리믹스처럼 포트폴리오 전용 분야는 단가 항목을 넣지 않으면 숨겨집니다.)
@@ -28,13 +31,14 @@ export default async function Pricing() {
     name: tx(g.name),
     en: g.en,
     desc: tx(g.desc),
+    disc: groupView(discounts, g.id),
     items: d.rateItems
       .filter((i) => i.groupId === g.id)
       .map((i) => ({
         id: i.id, name: tx(i.name), desc: tx(i.desc), price: i.price, unit: tx(i.unit), tag: i.tag, discount: i.discount,
         turn: turnFor(turnaround, g.id, i.id),
+        noDisc: discounts.excluded.includes(i.id),
       })),
-
   }));
 
   return (
@@ -48,7 +52,12 @@ export default async function Pricing() {
       <section><div className="wrap">
         <FirstTimeNote data={guide.firstTime} />
         <ProcessSteps steps={guide.steps} />
-        <RateBoard groups={board} />
+                <RateBoard groups={board} />
+        <BundleBox
+          tiers={discounts.bundle}
+          yes={groups.filter((g) => discounts.groups[g.id]?.bundle).map((g) => tx(g.name))}
+          no={groups.filter((g) => !discounts.groups[g.id]?.bundle).map((g) => tx(g.name))}
+        />
         <p className="note"><i>NOTE</i>{tx(d.notice)}</p>
       </div></section>
 

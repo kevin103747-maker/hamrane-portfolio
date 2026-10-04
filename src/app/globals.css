@@ -1326,3 +1326,20 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 
 /* 어드민: 작업별 설정 칸 */
 .hr-tn-item { margin-top: 14px; padding: 12px; border: 1px dashed var(--line-2); border-radius: 10px; }
+
+/* ───── 수량 할인 · 묶음 할인 안내 ───── */
+.hr-dc { display: flex; flex-direction: column; gap: 6px; margin: 12px 0 0; padding: 12px 14px; border: 1px solid var(--line-2); border-radius: 10px; background: var(--mint-soft); }
+.hr-dc-i { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 13px; color: var(--text); }
+.hr-dc-i b { font: 600 11px var(--f-mono); letter-spacing: .04em; color: var(--mint); }
+.hr-dc-i.no, .hr-dc-i.no b { color: var(--text-3); }
+.hr-dc-ex { margin: 8px 0 0; font-size: 12px; color: var(--text-3); }
+
+.hr-bd { margin-top: 18px; padding: 18px 20px; border: 1.5px dashed var(--mint); border-radius: 14px; background: var(--card); display: grid; gap: 10px; }
+.hr-bd h4 { font-size: 16px; font-weight: 700; letter-spacing: -.02em; }
+.hr-bd-tiers { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.hr-bd-tiers li { display: inline-flex; align-items: baseline; gap: 8px; padding: 6px 12px; border-radius: 99px; background: var(--mint-soft); font-size: 13.5px; }
+.hr-bd-tiers em { font: 700 13px var(--f-mono); font-style: normal; color: var(--mint); }
+.hr-bd p { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 13.5px; color: var(--text); }
+.hr-bd p.no { color: var(--text-3); }
+.hr-bd .lab { font: 600 11px var(--f-mono); letter-spacing: .04em; color: var(--text-3); }
+.hr-bd small { font-size: 12px; line-height: 1.55; color: var(--text-3); white-space: normal; }

@@ -25,7 +25,8 @@ export default async function PanelLayout({ children }: { children: React.ReactN
           { href: '/hr-admin/rates', label: '단가표', group: 2 },
           { href: '/hr-admin/rates/packages', label: '패키지', group: 2 },
           { href: '/hr-admin/turnaround', label: '소요·마감', group: 2 },
-
+          { href: '/hr-admin/turnaround', label: '소요·마감', group: 2 },
+          { href: '/hr-admin/discounts', label: '할인 규칙', group: 2 },
         ]
       : []),
     ...(can(me, 'settings')
