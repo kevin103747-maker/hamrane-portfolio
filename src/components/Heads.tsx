@@ -1,13 +1,17 @@
 // src/components/Heads.tsx
+import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { Icon } from './Icons';
 
-export function PageHead({ crumb, title, en, desc }: { crumb: string; title: string; en: string; desc: string }) {
+export function PageHead({
+  crumb, title, en, desc, children,
+}: { crumb: string; title: string; en: string; desc: string; children?: ReactNode }) {
   return (
     <section className="phead"><div className="wrap">
       <div className="crumb"><Link href="/">HOME</Link>/<b>{crumb}</b></div>
       <h1>{title}<span>{en}</span></h1>
       <p>{desc}</p>
+      {children}
     </div></section>
   );
 }

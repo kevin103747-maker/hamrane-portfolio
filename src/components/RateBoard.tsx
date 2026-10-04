@@ -1,4 +1,4 @@
-// src/components/RateBoard.tsx — 단가표: 분야 탭 + 카드 격자 + 난이도 변동 안내
+// src/components/RateBoard.tsx — 단가표: 기본가 안내(접힘) + 분야 탭 + 카드 격자
 'use client';
 import { useEffect, useState } from 'react';
 import { Price, Until } from './Price';
@@ -12,7 +12,7 @@ export type BoardItem = {
 };
 export type BoardGroup = { id: string; no: string; name: string; en: string; desc: string; items: BoardItem[]; disc?: GroupDiscView };
 
-// 안내 박스에 나오는 "금액에 영향을 주는 요소". 실제 작업 기준에 맞게 고쳐 쓰세요.
+// 안내에 나오는 "금액에 영향을 주는 요소". 실제 작업 기준에 맞게 고쳐 쓰세요.
 const FACTORS = ['곡 길이·구성', '악기·트랙 수', '장르와 레퍼런스', '작업 기간', '수정 횟수'];
 
 function TurnLine({ t }: { t: GroupTurn }) {
@@ -53,7 +53,6 @@ function DiscBox({ v }: { v: GroupDiscView }) {
   );
 }
 
-
 export function RateBoard({ groups }: { groups: BoardGroup[] }) {
   const [cur, setCur] = useState(groups[0]?.id ?? '');
 
@@ -77,45 +76,58 @@ export function RateBoard({ groups }: { groups: BoardGroup[] }) {
 
   return (
     <div className="hr-rt">
-      <div className="hr-rt-info">
-        <div className="hr-rt-legend" aria-hidden="true">
-          <div className="hr-rt-gauge"><span /></div>
-          <div className="hr-rt-ends"><span>가볍고 단순한 곡</span><span>기본가</span><span>난이도 높은 곡</span></div>
-        </div>
-        <div className="hr-rt-txt">
-          <p>
-            <b>표기된 금액은 기준이 되는 기본가입니다.</b> 같은 분야여도 곡마다 작업량과 난이도가 크게 달라서,
-            곡을 확인한 뒤 기본가보다 낮아지기도 하고 높아지기도 합니다.
-          </p>
-          <div className="hr-rt-factors">
-            <small>금액에 영향을 주는 요소</small>
-            {FACTORS.map((f) => <span key={f}>{f}</span>)}
+      <div className="hr-rt-basisbar">
+        <details className="hr-tg hr-rt-basis">
+          <summary>
+            <span className="hr-tg-t">표기 금액은 기본가</span>
+            <span className="hr-tg-s">곡의 난이도에 따라 달라집니다</span>
+            <span className="hr-tg-act">
+              <span className="c">자세히</span><span className="o">접기</span>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M3 6l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+          </summary>
+          <div className="hr-tg-b hr-rt-basis-b">
+            <div className="hr-rt-legend" aria-hidden="true">
+              <div className="hr-rt-gauge"><span /></div>
+              <div className="hr-rt-ends"><span>가볍고 단순한 곡</span><span>기본가</span><span>난이도 높은 곡</span></div>
+            </div>
+            <div className="hr-rt-txt">
+              <p>
+                <b>표기된 금액은 기준이 되는 기본가입니다.</b> 같은 분야여도 곡마다 작업량과 난이도가 크게 달라서,
+                곡을 확인한 뒤 기본가보다 낮아지기도 하고 높아지기도 합니다.
+              </p>
+              <div className="hr-rt-factors">
+                <small>금액에 영향을 주는 요소</small>
+                {FACTORS.map((f) => <span key={f}>{f}</span>)}
+              </div>
+            </div>
           </div>
-        </div>
-        <a className="hr-rt-ask" href="#contact">곡 보내고 견적 받기 →</a>
+        </details>
+        <a className="hr-pt-cta sm" href="#contact">곡 보내고 견적 받기 →</a>
       </div>
 
       <div className="hr-rt-tabhead">
-  <b>분야 선택</b>
-  <span>총 {groups.length}개 분야 · 눌러서 단가를 확인하세요</span>
-</div>
-<div className="hr-rt-tabs" role="group" aria-label="분야 선택">
-  {groups.map((g) => (
-    <button
-      key={g.id}
-      type="button"
-      className={`hr-rt-tab${g.id === cur ? ' on' : ''}`}
-      aria-pressed={g.id === cur}
-      aria-controls={`cat-${g.id}`}
-      onClick={() => pick(g.id)}
-    >
-      <small>{g.no}</small>
-      {g.name}
-      <em>{g.items.length}</em>
-    </button>
-  ))}
-</div>
-
+        <b>분야 선택</b>
+        <span>총 {groups.length}개 분야 · 눌러서 단가를 확인하세요</span>
+      </div>
+      <div className="hr-rt-tabs" role="group" aria-label="분야 선택">
+        {groups.map((g) => (
+          <button
+            key={g.id}
+            type="button"
+            className={`hr-rt-tab${g.id === cur ? ' on' : ''}`}
+            aria-pressed={g.id === cur}
+            aria-controls={`cat-${g.id}`}
+            onClick={() => pick(g.id)}
+          >
+            <small>{g.no}</small>
+            {g.name}
+            <em>{g.items.length}</em>
+          </button>
+        ))}
+      </div>
 
       {groups.map((g) => (
         <section key={g.id} id={`cat-${g.id}`} className="hr-rt-panel" hidden={g.id !== cur} aria-label={g.name}>
@@ -123,9 +135,6 @@ export function RateBoard({ groups }: { groups: BoardGroup[] }) {
             <h3>{g.name}<span>{g.en}</span></h3>
             {g.desc && <p>{g.desc}</p>}
           </div>
-          {g.items.some((x) => x.turn && (x.turn.rush.on || x.turn.same.on)) && (
-  <p className="hr-tn-note">빠른·당일 마감은 작업마다 가능 여부와 기간이 다르며, 추가 요금이 붙습니다.</p>
-)}
 
           {g.disc && <DiscBox v={g.disc} />}
           <ul className="hr-rt-grid">
