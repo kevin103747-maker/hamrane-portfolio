@@ -1186,3 +1186,24 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 /* ───── 채널 바로가기: 개수가 늘어나도 줄바꿈 ───── */
 .hx-soc { flex-wrap: wrap; }
 .hx-soc-a img { display: block; }
+
+/* ───── 채널 아이콘: 이름표(아래에서 위로 떠오름) ───── */
+.hx-soc .hx-soc-a { position: relative; }
+.hx-soc .hx-soc-a::after {
+  content: attr(data-tip);
+  position: absolute; top: calc(100% + 8px); left: 50%;
+  transform: translate(-50%, 6px);
+  padding: 6px 10px; border-radius: 8px;
+  background: var(--card-2); color: var(--text); border: 1px solid var(--line-2);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .28);
+  font: 600 12px/1 var(--f-kr); white-space: nowrap;
+  opacity: 0; pointer-events: none; z-index: 30;
+  transition: opacity .18s ease, transform .24s cubic-bezier(.2, .7, .2, 1);
+}
+@media (hover: hover) {
+  .hx-soc .hx-soc-a:hover::after { opacity: 1; transform: translate(-50%, 0); }
+}
+.hx-soc .hx-soc-a:focus-visible::after { opacity: 1; transform: translate(-50%, 0); }
+@media (prefers-reduced-motion: reduce) {
+  .hx-soc .hx-soc-a::after { transform: translate(-50%, 0); transition: opacity .18s ease; }
+}
