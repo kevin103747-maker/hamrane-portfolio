@@ -53,20 +53,27 @@ export function RateBoard({ groups }: { groups: BoardGroup[] }) {
         <a className="hr-rt-ask" href="#contact">곡 보내고 견적 받기 →</a>
       </div>
 
-      <div className="hr-rt-tabs" role="group" aria-label="분야 선택">
-        {groups.map((g) => (
-          <button
-            key={g.id}
-            type="button"
-            className={`hr-rt-tab${g.id === cur ? ' on' : ''}`}
-            aria-pressed={g.id === cur}
-            aria-controls={`cat-${g.id}`}
-            onClick={() => pick(g.id)}
-          >
-            <small>{g.no}</small>{g.name}
-          </button>
-        ))}
-      </div>
+      <div className="hr-rt-tabhead">
+  <b>분야 선택</b>
+  <span>총 {groups.length}개 분야 · 눌러서 단가를 확인하세요</span>
+</div>
+<div className="hr-rt-tabs" role="group" aria-label="분야 선택">
+  {groups.map((g) => (
+    <button
+      key={g.id}
+      type="button"
+      className={`hr-rt-tab${g.id === cur ? ' on' : ''}`}
+      aria-pressed={g.id === cur}
+      aria-controls={`cat-${g.id}`}
+      onClick={() => pick(g.id)}
+    >
+      <small>{g.no}</small>
+      {g.name}
+      <em>{g.items.length}</em>
+    </button>
+  ))}
+</div>
+
 
       {groups.map((g) => (
         <section key={g.id} id={`cat-${g.id}`} className="hr-rt-panel" hidden={g.id !== cur} aria-label={g.name}>
@@ -87,7 +94,6 @@ export function RateBoard({ groups }: { groups: BoardGroup[] }) {
                   <strong><Price price={i.price} discount={i.discount} /></strong>
                   <i>{i.unit} · VAT 포함<Until discount={i.discount} /></i>
                 </div>
-                <div className="hr-rt-gauge" aria-hidden="true"><span /></div>
               </li>
             ))}
           </ul>

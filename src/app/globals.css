@@ -943,18 +943,35 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 .hr-rt-ends { display: flex; justify-content: space-between; margin-top: 8px; font: 500 11px var(--f-mono); color: var(--text-3); }
 .hr-rt-ends span:nth-child(2) { color: var(--mint); }
 
-/* 분야 탭 */
-.hr-rt-tabs { display: flex; gap: 8px; margin-bottom: 22px; padding-bottom: 4px; overflow-x: auto; scrollbar-width: none; }
-.hr-rt-tabs::-webkit-scrollbar { display: none; }
+/* 분야 탭: 줄바꿈으로 전부 펼쳐 보이게 */
+.hr-rt-tabhead { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+.hr-rt-tabhead b { font-size: 15px; font-weight: 700; }
+.hr-rt-tabhead span { font-size: 13px; color: var(--text-3); }
+
+.hr-rt-tabs { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 28px; }
 .hr-rt-tab {
-  flex: none; display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 18px;
-  font-size: 14px; color: var(--text-2); white-space: nowrap;
-  border: 1px solid var(--line-2); border-radius: 99px; transition: .2s;
+  display: inline-flex; align-items: center; gap: 10px; height: 52px; padding: 0 20px;
+  font-size: 16px; font-weight: 500; color: var(--text); white-space: nowrap;
+  background: var(--card); border: 1px solid var(--line-2); border-radius: 12px; transition: .2s;
 }
 .hr-rt-tab small { font: 500 11px var(--f-mono); color: var(--text-3); }
-.hr-rt-tab:hover { color: var(--text); border-color: var(--text-3); }
-.hr-rt-tab.on { background: var(--mint); border-color: var(--mint); color: var(--mint-ink); font-weight: 600; }
-.hr-rt-tab.on small { color: inherit; opacity: .7; }
+.hr-rt-tab em {
+  min-width: 22px; padding: 1px 7px; font: 600 11px var(--f-mono); font-style: normal; text-align: center;
+  color: var(--text-2); background: var(--card-2); border-radius: 99px;
+}
+.hr-rt-tab:hover { border-color: var(--mint); }
+.hr-rt-tab.on {
+  background: var(--mint); border-color: var(--mint); color: var(--mint-ink); font-weight: 700;
+  box-shadow: 0 6px 18px -8px var(--mint);
+}
+.hr-rt-tab.on small { color: inherit; opacity: .65; }
+.hr-rt-tab.on em { color: var(--mint-ink); background: rgba(12, 32, 22, .14); }
+
+@media (max-width: 600px) {
+  .hr-rt-tabhead { flex-direction: column; gap: 2px; }
+  .hr-rt-tab { height: 46px; padding: 0 14px; font-size: 15px; }
+}
+
 
 /* 분야 제목 */
 .hr-rt-head h3 { font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
@@ -977,7 +994,6 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 .hr-rt-price strong { font: 700 28px var(--f-sp); letter-spacing: -.02em; line-height: 1.15; }
 .hr-rt-price strong small { margin-left: 2px; font-size: 14px; font-weight: 500; color: var(--text-2); }
 .hr-rt-price i { font-size: 12px; font-style: normal; color: var(--text-3); }
-.hr-rt-card .hr-rt-gauge { margin-top: 14px; opacity: .85; }
 
 /* 할인 중일 때의 가격 표시 */
 .hr-rt-price .pdisc { display: flex; flex-direction: column; gap: 2px; }
