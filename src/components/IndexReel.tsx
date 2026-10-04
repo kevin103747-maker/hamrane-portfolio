@@ -31,9 +31,11 @@ export function IndexReel() {
   const cur = items[Math.min(idx, items.length - 1)];
 
   const label = ({ work, item }: Entry) => {
-    const pid = item.labelPartId ?? orderParts(work)[0];
+    const own = orderParts(work);
+    const pid = item.labelPartId && work.partIds.includes(item.labelPartId) ? item.labelPartId : own[0];
     if (!pid) return '';
-    const extra = item.labelPartId && item.partCount && item.partCount > 1 ? ` 외 ${item.partCount - 1}개 파트` : '';
+    // 파트 수는 따로 정하지 않고, 참여 파트 수로 자동 계산합니다.
+    const extra = work.partIds.length > 1 ? ` 외 ${work.partIds.length - 1}개 파트` : '';
     return s.partName(pid) + extra;
   };
   const sub = (w: Work) => [s.artistNames(w), s.usageNames(w)].filter(Boolean).join(' · ');

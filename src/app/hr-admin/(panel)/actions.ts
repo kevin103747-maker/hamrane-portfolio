@@ -8,6 +8,7 @@ import { can, logEdit } from '@/lib/auth/permissions';
 import { uploadImage } from '@/lib/auth/upload';
 import { ARTIST_PAGE_SIZE } from '@/lib/artist-admin';
 import { normalizeClipUrl } from '@/lib/clip';
+import { HOME_FEATURED_MAX } from '@/lib/featured';
 
 async function guard(key: string) {
   const me = await requireAdmin();
@@ -284,25 +285,21 @@ export async function saveIndexQueue(fd: FormData) {
 
   const ids = fd.getAll('workId').map(String);
   const labels = fd.getAll('labelPartId').map(String);
-  const counts = fd.getAll('partCount').map(String);
 
   const seen = new Set<string>();
   const slotNo: number[] = []; // 각 행이 화면의 몇 번째 칸이었는지(오류 안내용)
-  const rows: { work_id: string; label_part_id: string | null; part_count: number | null; sort: number }[] = [];
+  const rows: { work_id: string; label_part_id: string | null; part_count: null; sort: number }[] = [];
   ids.forEach((workId, i) => {
     if (!workId || seen.has(workId)) return; // 빈 칸과 중복은 건너뜀
     seen.add(workId);
-    const n = parseInt(counts[i] ?? '', 10);
-    const label = labels[i] || null;
-    rows.push({
-      work_id: workId,
-      label_part_id: label,
-      // 라벨 파트가 없으면 파트 수는 쓰이지 않으므로 저장하지 않습니다.
-      part_count: label && Number.isFinite(n) && n > 0 ? n : null,
-      sort: rows.length,
-    });
+    // 파트 수는 사이트에서 참여 파트 수로 자동 계산하므로 저장하지 않습니다.
+    rows.push({ work_id: workId, label_part_id: labels[i] || null, part_count: null, sort: rows.length });
     slotNo.push(i + 1);
   });
+  if (rows.length > HOME_FEATURED_MAX) fail(FEATURED, `홈 대표곡은 최대 ${HOME_FEATURED_MAX}곡까지 지정할 수 있습니다.`);
+
+  const db = adminDb();
+  // ↓ 이하는 기존 코드 그대로
 
   const db = adminDb();
 
@@ -349,4 +346,78 @@ export async function publishSiteInline(_prev: unknown, _fd: FormData) {
   await logEdit(me, 'publish', 'site', '-', null, null);
   const at = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(11, 16); // 한국 시간 시:분
   return { ok: true, msg: `게시했습니다 · ${at}` };
+}
+
+/* ---------------- 포트폴리오 분야별 대표곡 ---------------- */
+const SCOPES = '/hr-admin/featured/scopes';
+type FeatValue = { default?: string; groups?: string[]; parts?: string[] };
+
+export async function saveScopeFeatured(fd: FormData) {
+  const me = await guard('works');
+  const scope = str(fd, 'scope');
+  const kind = scope === 'all' ? 'all' : scope.startsWith('g:') ? 'g' : scope.startsWith('p:') ? 'p' : '';
+  const target = kind === 'g' || kind === 'p' ? scope.slice(2) : '';
+  if (!kind || (kind !== 'all' && !target)) fail(SCOPES, '대표곡을 지정할 범위를 알 수 없습니다.');
+  const back = `${SCOPES}?s=${encodeURIComponent(scope)}`;
+  const wanted = new Set(list(fd, 'workId'));
+
+  const db = adminDb();
+  const [wr, pr, gr] = await Promise.all([
+    db.from('works').select('id, title, part_ids, main_part_id, feat'),
+    db.from('parts').select('id, group_id'),
+    db.from('part_groups').select('id'),
+  ]);
+  if (wr.error) fail(back, `곡 목록을 불러오지 못했습니다: ${wr.error.message}`);
+  const parts = pr.data ?? [];
+  if (kind === 'g' && !(gr.data ?? []).some((x) => x.id === target)) fail(SCOPES, '존재하지 않는 분야입니다.');
+  if (kind === 'p' && !parts.some((x) => x.id === target)) fail(SCOPES, '존재하지 않는 파트입니다.');
+  const groupPartIds = new Set(parts.filter((x) => x.group_id === target).map((x) => x.id as string));
+
+  const known = new Set((wr.data ?? []).map((x) => x.id as string));
+  if ([...wanted].some((id) => !known.has(id))) fail(back, '존재하지 않는 곡이 포함되어 있습니다. 새로고침 후 다시 시도하세요.');
+
+  const changes: { id: string; before: FeatValue | null; after: FeatValue | null }[] = [];
+  for (const w of wr.data ?? []) {
+    const old = (w.feat ?? null) as FeatValue | null;
+    const own = (w.part_ids ?? []) as string[];
+    const had =
+      kind === 'all' ? !!old?.default
+        : kind === 'g' ? !!old?.groups?.includes(target)
+        : !!old?.parts?.includes(target);
+    const want = wanted.has(w.id);
+    if (had === want) continue; // 바뀐 곡만 처리(이미 지정된 곡은 그대로 유지)
+
+    const next: FeatValue = { ...(old ?? {}) };
+    if (want) {
+      if (kind === 'all') {
+        // 전체 탭의 핀 라벨은 곡의 강조 파트(없으면 첫 파트)로 자동 지정
+        const auto = w.main_part_id && own.includes(w.main_part_id) ? (w.main_part_id as string) : own[0];
+        if (!auto) fail(back, `"${w.title}"은(는) 참여 파트가 없어 전체 대표곡으로 지정할 수 없습니다.`);
+        next.default = auto;
+      } else if (kind === 'g') {
+        if (!own.some((id) => groupPartIds.has(id))) fail(back, `"${w.title}"은(는) 이 분야에 참여한 곡이 아닙니다.`);
+        next.groups = [...(old?.groups ?? []), target];
+      } else {
+        if (!own.includes(target)) fail(back, `"${w.title}"은(는) 이 파트에 참여한 곡이 아닙니다.`);
+        next.parts = [...(old?.parts ?? []), target];
+      }
+    } else if (kind === 'all') delete next.default;
+    else if (kind === 'g') next.groups = (old?.groups ?? []).filter((x) => x !== target);
+    else next.parts = (old?.parts ?? []).filter((x) => x !== target);
+
+    if (!next.groups?.length) delete next.groups;
+    if (!next.parts?.length) delete next.parts;
+    changes.push({ id: w.id as string, before: old, after: next.default || next.groups || next.parts ? next : null });
+  }
+
+  for (let i = 0; i < changes.length; i += 20) {
+    const res = await Promise.all(
+      changes.slice(i, i + 20).map((c) => db.from('works').update({ feat: c.after }).eq('id', c.id)),
+    );
+    const bad = res.find((r) => r.error);
+    if (bad?.error) fail(back, `저장 실패: ${bad.error.message}`);
+  }
+  for (const c of changes) await logEdit(me, 'update', 'works', c.id, { feat: c.before }, { feat: c.after });
+
+  redirect(`${back}&ok=${changes.length}`);
 }

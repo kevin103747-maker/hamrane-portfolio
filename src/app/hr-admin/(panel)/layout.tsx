@@ -14,6 +14,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
       ? [
           { href: '/hr-admin/works', label: '곡', group: 1 },
           { href: '/hr-admin/featured', label: '대표곡', group: 1 },
+          { href: '/hr-admin/featured/scopes', label: '분야별 대표곡', group: 1 },
         ]
       : []),
     ...(can(me, 'artists') ? [{ href: '/hr-admin/artists', label: '아티스트', group: 1 }] : []),
