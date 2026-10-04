@@ -6,6 +6,7 @@ import { can } from '@/lib/auth/permissions';
 import { adminDb } from '@/lib/auth/admin-db';
 import { DiscountFields } from '@/components/admin/DiscountFields';
 import { ExtrasEditor, type Extra } from '@/components/admin/ExtrasEditor';
+import { Section, Help, Flash } from '@/components/admin/Section';
 import { savePackage, removePackage } from '../actions';
 
 const txt = (v: unknown): string =>
@@ -50,13 +51,18 @@ export default async function PackagesPage({
   return (
     <div className="hr-pn-body">
       <h1>패키지</h1>
-      <p>
-        단가표 아래에 나오는 구성 예시입니다. 합계는 직접 입력합니다. 항목 가격을 바꿔도 합계는 자동으로 바뀌지 않습니다.
-        단가표에 있는 항목은 체크하고 수량을 정하고, 다른 작업자의 몫처럼 내 단가표에 없는 상품은 아래 &quot;협업·외부 상품&quot;에 직접 적습니다.
-      </p>
+      <p className="hr-lead">단가표 아래에 나오는 구성 예시입니다. 이름은 의뢰자가 할 법한 말로 적으세요.</p>
+      <Help>
+        <p>
+          <b>이름</b>은 사이트에서 질문형 카드의 문장이 됩니다. 예: &quot;오리지널 밴드곡이 만들고싶어요!&quot;
+        </p>
+        <p>
+          <b>합계는 직접 입력</b>합니다. 항목을 체크하거나 단가를 바꿔도 합계는 자동으로 바뀌지 않습니다.
+          단가표에 있는 상품은 체크하고 수량을 정하고, 다른 작업자의 몫처럼 내 단가표에 없는 상품은 &quot;협업·외부 상품&quot;에 직접 적습니다.
+        </p>
+      </Help>
 
-      {ok && <p role="status">저장했습니다. 공개 사이트에는 상단의 &quot;게시&quot; 버튼을 눌러야 반영됩니다.</p>}
-      {err && <p role="alert">{err}</p>}
+      <Flash ok={ok} err={err} />
 
       <form key={cur?.id ?? 'new'} id="form" action={savePackage} className="hr-card hr-f">
         <h2>{cur ? `패키지 수정 · ${txt(cur.name)}` : '새 패키지 추가'}</h2>
@@ -64,60 +70,80 @@ export default async function PackagesPage({
 
         <div className="hr-row">
           <label>
-            번호
-            <input name="num" defaultValue={cur?.num ?? String(pkgs.length + 1).padStart(2, '0')} required />
+            이름 (사이트에 보이는 질문 문장)
+            <input name="name" defaultValue={txt(cur?.name)} placeholder="오리지널 밴드곡이 만들고싶어요!" required />
           </label>
           <label>
             태그
             <input name="tag" defaultValue={cur?.tag ?? ''} placeholder="ORIGINAL" required />
           </label>
-          <label>
-            이름
-            <input name="name" defaultValue={txt(cur?.name)} required />
-          </label>
         </div>
-        <label>
-          설명
-          <input name="desc" defaultValue={txt(cur?.descr)} />
-        </label>
         <div className="hr-row">
           <label>
-            합계 (정가, 숫자만)
+            합계 (정가, 숫자만 · 직접 입력)
             <input name="total" inputMode="numeric" defaultValue={cur?.total ?? ''} required />
+          </label>
+          <label>
+            번호
+            <input name="num" defaultValue={cur?.num ?? String(pkgs.length + 1).padStart(2, '0')} required />
           </label>
           <label>
             순서 (비우면 맨 끝)
             <input type="number" name="sort" defaultValue={cur?.sort ?? ''} />
           </label>
         </div>
+        <label>
+          설명 (팝업 안에 보임)
+          <input name="desc" defaultValue={txt(cur?.descr)} />
+        </label>
 
-        {groups.map((grp) => {
-          const rows = items.filter((x) => x.group_id === grp.id);
-          if (!rows.length) return null;
-          return (
-            <fieldset key={grp.id}>
-              <legend>{grp.num} {txt(grp.name)}</legend>
-              <div className="hr-chks">
-                {rows.map((x) => (
-                  <div key={x.id} className="hr-pkq">
-                    <label className="hr-chk">
-                      <input type="checkbox" name="itemIds" value={x.id} defaultChecked={picked.includes(x.id)} />
-                      {txt(x.name)}
-                    </label>
-                    <label className="hr-pkq-n">
-                      수량
-                      <input type="number" name={`qty_${x.id}`} min={1} max={99} defaultValue={qtyMap[x.id] ?? 1} />
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </fieldset>
-          );
-        })}
+        <Section open title="포함할 상품" badge={`${picked.length}개 선택`} hint="단가표에서 체크하고 수량을 정합니다">
+          {groups.map((grp) => {
+            const rows = items.filter((x) => x.group_id === grp.id);
+            if (!rows.length) return null;
+            const n = rows.filter((x) => picked.includes(x.id)).length;
+            return (
+              <Section
+                key={grp.id}
+                open={n > 0}
+                title={`${grp.num} ${txt(grp.name)}`}
+                badge={n ? `${n}개 선택` : `${rows.length}개 중`}
+              >
+                <div className="hr-chks">
+                  {rows.map((x) => (
+                    <div key={x.id} className="hr-pkq">
+                      <label className="hr-chk">
+                        <input type="checkbox" name="itemIds" value={x.id} defaultChecked={picked.includes(x.id)} />
+                        {txt(x.name)}
+                      </label>
+                      <label className="hr-pkq-n">
+                        수량
+                        <input type="number" name={`qty_${x.id}`} min={1} max={99} defaultValue={qtyMap[x.id] ?? 1} />
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </Section>
+            );
+          })}
+        </Section>
 
-        <ExtrasEditor initial={extras} max={12} />
+        <Section
+          open={extras.length > 0}
+          title="협업·외부 상품"
+          badge={`${extras.length}개`}
+          hint="내 단가표에 없는 다른 작업자의 몫"
+        >
+          <ExtrasEditor initial={extras} max={12} />
+        </Section>
 
-        <DiscountFields d={cur?.discount as Disc} />
+        <Section
+          open={!!(cur?.discount as Disc)?.on}
+          title="이 패키지 할인 (선택)"
+          badge={(cur?.discount as Disc)?.on ? '켜짐' : '꺼짐'}
+        >
+          <DiscountFields d={cur?.discount as Disc} />
+        </Section>
 
         <div className="hr-act">
           {cur && <Link href="/hr-admin/rates/packages">수정 취소</Link>}
@@ -126,7 +152,7 @@ export default async function PackagesPage({
       </form>
 
       <section className="hr-card">
-        <h2>등록된 패키지</h2>
+        <h2>등록된 패키지 ({pkgs.length})</h2>
         {pkgs.length === 0 && <p>패키지가 없습니다.</p>}
         {pkgs.map((x) => {
           const q = (x.qty ?? {}) as Record<string, number>;

@@ -5,6 +5,7 @@ import { requireAdmin } from '@/lib/auth/guard';
 import { can } from '@/lib/auth/permissions';
 import { adminDb } from '@/lib/auth/admin-db';
 import { DiscountFields } from '@/components/admin/DiscountFields';
+import { Section, Help, Flash } from '@/components/admin/Section';
 import { saveRate, removeRate } from './actions';
 
 // 문자열 또는 { ko: "..." } 형태 모두 글자로 바꿉니다.
@@ -38,14 +39,24 @@ export default async function RatesPage({
   const groups = g.data ?? [];
   const items = r.data ?? [];
   const cur = edit ? items.find((x) => x.id === edit) : undefined;
+  const hasOptional = !!(cur?.descr || cur?.tag || cur?.sort);
 
   return (
     <div className="hr-pn-body">
       <h1>단가표</h1>
-      <p>파트별 기본 단가입니다. 패키지는 <Link href="/hr-admin/rates/packages">패키지 화면</Link>에서 관리합니다.</p>
+      <p className="hr-lead">
+        파트별 기본 단가입니다. 구성 예시는 <Link href="/hr-admin/rates/packages">패키지</Link>, 소요 기간은{' '}
+        <Link href="/hr-admin/turnaround">소요·마감</Link>, 수량·묶음 할인은{' '}
+        <Link href="/hr-admin/discounts">할인 규칙</Link>에서 관리합니다.
+      </p>
+      <Help title="이 화면에서 하는 일">
+        <p>
+          위쪽 폼에서 항목을 추가하거나 수정하고, 아래 목록에서 분야별로 확인합니다.
+          이벤트 할인은 이 항목 하나에만 붙는 기간 한정 할인입니다. 여러 곡이나 여러 분야에 걸리는 할인은 &quot;할인 규칙&quot;에서 정합니다.
+        </p>
+      </Help>
 
-      {ok && <p role="status">저장했습니다. 공개 사이트에는 상단의 &quot;게시&quot; 버튼을 눌러야 반영됩니다.</p>}
-      {err && <p role="alert">{err}</p>}
+      <Flash ok={ok} err={err} />
 
       <form key={cur?.id ?? 'new'} id="form" action={saveRate} className="hr-card hr-f">
         <h2>{cur ? `항목 수정 · ${txt(cur.name)}` : '새 항목 추가'}</h2>
@@ -65,10 +76,6 @@ export default async function RatesPage({
             <input name="name" defaultValue={txt(cur?.name)} required />
           </label>
         </div>
-        <label>
-          설명
-          <input name="desc" defaultValue={txt(cur?.descr)} />
-        </label>
         <div className="hr-row">
           <label>
             가격 (숫자만, 원 단위)
@@ -78,17 +85,32 @@ export default async function RatesPage({
             단위
             <input name="unit" defaultValue={txt(cur?.unit)} placeholder="곡당" required />
           </label>
-          <label>
-            태그 (선택)
-            <input name="tag" defaultValue={cur?.tag ?? ''} />
-          </label>
-          <label>
-            순서 (비우면 맨 끝)
-            <input type="number" name="sort" defaultValue={cur?.sort ?? ''} />
-          </label>
         </div>
 
-        <DiscountFields d={cur?.discount as Disc} />
+        <Section open={hasOptional} title="설명 · 태그 · 순서 (선택)">
+          <label>
+            설명
+            <input name="desc" defaultValue={txt(cur?.descr)} />
+          </label>
+          <div className="hr-row">
+            <label>
+              태그
+              <input name="tag" defaultValue={cur?.tag ?? ''} />
+            </label>
+            <label>
+              순서 (비우면 맨 끝)
+              <input type="number" name="sort" defaultValue={cur?.sort ?? ''} />
+            </label>
+          </div>
+        </Section>
+
+        <Section
+          open={!!(cur?.discount as Disc)?.on}
+          title="이벤트 할인 (선택)"
+          badge={(cur?.discount as Disc)?.on ? '켜짐' : '꺼짐'}
+        >
+          <DiscountFields d={cur?.discount as Disc} />
+        </Section>
 
         <div className="hr-act">
           {cur && <Link href="/hr-admin/rates">수정 취소</Link>}
@@ -96,11 +118,16 @@ export default async function RatesPage({
         </div>
       </form>
 
-      {groups.map((grp) => {
+      <h2 className="hr-h2">등록된 항목 ({items.length})</h2>
+      {groups.map((grp, gi) => {
         const rows = items.filter((x) => x.group_id === grp.id);
         return (
-          <section key={grp.id} className="hr-card">
-            <h2>{grp.num} {txt(grp.name)}</h2>
+          <Section
+            key={grp.id}
+            open={gi === 0 || cur?.group_id === grp.id}
+            title={`${grp.num} ${txt(grp.name)}`}
+            badge={`${rows.length}개`}
+          >
             {rows.length === 0 && <p>항목이 없습니다.</p>}
             {rows.map((x) => (
               <div key={x.id} className="hr-rt-row">
@@ -121,7 +148,7 @@ export default async function RatesPage({
                 </div>
               </div>
             ))}
-          </section>
+          </Section>
         );
       })}
     </div>

@@ -4,10 +4,17 @@ import { requireAdmin } from '@/lib/auth/guard';
 import { can } from '@/lib/auth/permissions';
 import { adminDb } from '@/lib/auth/admin-db';
 import { emptyTurn, itemKey, parseTurnaround, TURN_LIMITS, type GroupTurn } from '@/lib/turnaround';
+import { Section, Help, Flash } from '@/components/admin/Section';
 import { saveTurnaround } from './actions';
 
 const txt = (v: unknown): string =>
   typeof v === 'string' ? v : ((v as { ko?: string } | null)?.ko ?? '');
+
+/** 접힌 상태에서 보여줄 한 줄 요약 */
+const brief = (t: GroupTurn) =>
+  [t.avg || '기간 미입력', t.rush.on ? `빠른 ${t.rush.days || '가능'}` : '', t.same.on ? '당일 가능' : '']
+    .filter(Boolean)
+    .join(' · ');
 
 /** 입력칸 묶음. k = 분야 id 또는 "item:작업id" */
 function Fields({ k, t }: { k: string; t: GroupTurn }) {
@@ -71,48 +78,72 @@ export default async function TurnaroundPage({
     db.from('site_settings').select('value').eq('key', 'turnaround').maybeSingle(),
   ]);
   const items = r.data ?? [];
+  const all = g.data ?? [];
   // 단가표에 보이는 분야(단가 항목이 있는 분야)만 설정합니다.
   const used = new Set(items.map((x) => x.group_id as string));
-  const groups = (g.data ?? []).filter((x) => used.has(x.id as string));
+  const groups = all.filter((x) => used.has(x.id as string));
+  const hidden = all.filter((x) => !used.has(x.id as string));
   const cur = parseTurnaround(s.data?.value);
 
   return (
     <div className="hr-pn-body">
       <h1>소요 기간·마감</h1>
-      <p>
-        분야마다 <b>기본값</b>을 정하고, 다른 작업만 <b>&quot;따로 설정&quot;</b>을 켜서 그 작업만의 값을 넣습니다.
-        따로 설정하지 않은 작업은 분야 기본값을 따르고, 따로 설정한 작업은 기본값을 무시하고 자기 값만 씁니다.
-        가능하지 않은 옵션은 체크를 끄면 사이트에 &quot;불가&quot;로 표시됩니다. 추가 요금을 비우면 &quot;추가요금 별도&quot;로 표시됩니다.
-      </p>
+      <p className="hr-lead">분야마다 기본값을 정하고, 기본값과 다른 작업만 따로 설정합니다.</p>
+      <Help>
+        <p>
+          분야를 펼치면 위쪽에 <b>분야 기본값</b>, 아래쪽에 세부 작업 목록이 나옵니다.
+          세부 작업은 기본값과 다를 때만 펼쳐서 <b>&quot;이 작업은 따로 설정&quot;</b>을 체크하고 값을 넣으세요.
+          체크하지 않은 작업은 분야 기본값을 따르고, 체크하지 않은 채 입력한 값은 저장되지 않습니다.
+        </p>
+        <p>
+          가능하지 않은 옵션은 체크를 끄면 사이트에 &quot;불가&quot;로 표시됩니다.
+          추가 요금을 비우면 &quot;추가요금 별도&quot;로 표시됩니다.
+        </p>
+      </Help>
 
-      {ok && <p role="status">저장했습니다. 공개 사이트에는 상단의 &quot;게시&quot; 버튼을 눌러야 반영됩니다.</p>}
-      {err && <p role="alert">{err}</p>}
+      <Flash ok={ok} err={err} />
+      {hidden.length > 0 && (
+        <p className="hr-note">
+          단가표에 항목이 없어서 여기에 표시되지 않는 분야: {hidden.map((x) => txt(x.name)).join(', ')}
+        </p>
+      )}
 
       <form action={saveTurnaround} className="hr-card hr-f">
-        {groups.map((grp) => {
+        {groups.map((grp, gi) => {
           const gid = grp.id as string;
           const base = cur[gid] ?? emptyTurn();
           const rows = items.filter((x) => x.group_id === gid);
+          const own = rows.filter((it) => cur[itemKey(it.id as string)]).length;
           return (
-            <fieldset key={gid}>
-              <legend>{grp.num} {txt(grp.name)} · 분야 기본값</legend>
+            <Section
+              key={gid}
+              open={gi === 0}
+              title={`${grp.num} ${txt(grp.name)}`}
+              badge={`작업 ${rows.length}개`}
+              hint={`${brief(base)}${own ? ` · 따로 설정 ${own}개` : ''}`}
+            >
+              <p className="hr-sub">분야 기본값</p>
               <Fields k={gid} t={base} />
 
+              {rows.length > 0 && <p className="hr-sub">세부 작업 · 기본값과 다른 작업만 펼쳐서 설정</p>}
               {rows.map((it) => {
                 const key = itemKey(it.id as string);
-                const own = cur[key];
+                const o = cur[key];
                 return (
-                  <fieldset key={key} className="hr-tn-item">
-                    <legend>{txt(it.name)}</legend>
+                  <Section
+                    key={key}
+                    title={txt(it.name)}
+                    badge={o ? '따로 설정' : '기본값 따름'}
+                    hint={o ? brief(o) : undefined}
+                  >
                     <label className="hr-chk">
-                      <input type="checkbox" name={`own_${key}`} defaultChecked={!!own} /> 이 작업은 따로 설정
+                      <input type="checkbox" name={`own_${key}`} defaultChecked={!!o} /> 이 작업은 따로 설정
                     </label>
-                    <small>체크하지 않으면 위의 분야 기본값을 따릅니다. 체크하지 않은 채 입력한 값은 저장되지 않습니다.</small>
-                    <Fields k={key} t={own ?? base} />
-                  </fieldset>
+                    <Fields k={key} t={o ?? base} />
+                  </Section>
                 );
               })}
-            </fieldset>
+            </Section>
           );
         })}
         <div className="hr-act">
