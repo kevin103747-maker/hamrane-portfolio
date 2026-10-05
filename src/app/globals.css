@@ -1440,3 +1440,5 @@ section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
 
 /* 어드민: 협업 상품 금액 칸 */
 .hr-ex-row input[name="exPrice"] { max-width: 150px; }
+
+.hr-pb-a b.free { color: var(--mint-2); }

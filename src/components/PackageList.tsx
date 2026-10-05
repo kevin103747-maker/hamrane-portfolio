@@ -6,7 +6,7 @@ import { Price, Until } from './Price';
 import { Icon } from './Icons';
 import type { Discount } from '@/lib/types';
 
-/** unit: 개당 금액(숫자). 금액이 정해지지 않은 협업 상품 등은 null */
+/** unit: 개당 금액(숫자, 0이면 무료). 금액이 정해지지 않은 협업 상품 등은 null */
 export type PkgLine = { name: string; qty: number; unit: number | null; collab?: boolean; who?: string };
 type PkgRow = { label: string; lines: PkgLine[] };
 export type PackageView = {
@@ -34,7 +34,7 @@ function Modal({ p, onClose }: { p: PackageView; onClose: () => void }) {
     };
   }, [onClose]);
 
-  // 모든 항목에 금액이 있을 때만 합계를 계산해 보여줍니다.
+  // 모든 항목에 금액(0 포함)이 있을 때만 합계를 계산해 보여줍니다.
   const all = p.rows.flatMap((r) => r.lines);
   const complete = all.length > 0 && all.every((l) => l.unit != null);
   const sub = complete ? all.reduce((s, l) => s + (l.unit as number) * l.qty, 0) : 0;
@@ -80,13 +80,15 @@ function Modal({ p, onClose }: { p: PackageView; onClose: () => void }) {
                         {l.collab && <small className="hr-pb-c">협업{l.who ? ` · ${l.who}` : ''}</small>}
                       </span>
                       <span className="hr-pb-a">
-                        {l.unit != null ? (
+                        {l.unit == null ? (
+                          <em>별도 협의</em>
+                        ) : l.unit === 0 ? (
+                          <b className="free">무료</b>
+                        ) : (
                           <>
                             {l.qty > 1 && <i>{won(l.unit)}원 × {l.qty}</i>}
                             <b>{won(l.unit * l.qty)}원</b>
                           </>
-                        ) : (
-                          <em>별도 협의</em>
                         )}
                       </span>
                     </li>

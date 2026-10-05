@@ -166,7 +166,7 @@ export async function savePackage(fd: FormData) {
 
   // 수량: 선택한 항목만 저장하고, 1이면 저장하지 않습니다.
   const qty: Record<string, number> = {};
-  // 개당 금액: 입력한 항목만 저장합니다. 비우면 단가표 금액을 씁니다.
+  // 개당 금액: 입력한 항목만 저장합니다. 비우면 단가표 금액, 0이면 무료입니다.
   const prices: Record<string, string> = {};
   for (const iid of itemIds) {
     const n = Number(str(fd, `qty_${iid}`) || '1');
@@ -175,7 +175,7 @@ export async function savePackage(fd: FormData) {
 
     const pr = str(fd, `price_${iid}`);
     if (pr) {
-      if (!validMoney(pr) || digits(pr) <= 0) fail(back, '개당 금액은 0보다 큰 숫자로 입력하세요.');
+      if (!validMoney(pr)) fail(back, '개당 금액은 숫자로 입력하세요. (무료는 0, 단가표 금액을 쓰려면 비워 두세요)');
       prices[iid] = money(pr);
     }
   }
@@ -195,7 +195,7 @@ export async function savePackage(fd: FormData) {
     if (!n) fail(back, '협업·외부 상품은 이름을 입력해야 합니다.');
     if (n.length > 30) fail(back, `협업 상품 이름은 30자 이내로 입력하세요. (${n})`);
     if (group.length > 20 || who.length > 20) fail(back, '분야 표기와 담당은 각각 20자 이내로 입력하세요.');
-    if (price && (!validMoney(price) || digits(price) <= 0)) fail(back, `협업 상품 금액은 0보다 큰 숫자로 입력하세요. (${n})`);
+    if (price && !validMoney(price)) fail(back, `협업 상품 금액은 숫자로 입력하세요. (무료는 0) (${n})`);
     extras.push({
       name: n,
       ...(group ? { group } : {}),
