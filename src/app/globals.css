@@ -647,7 +647,7 @@ footer a:hover { color: var(--mint); }
 /* 카드 */
 .hr-rt-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
 .hr-rt-card {
-  display: flex; flex-direction: column; padding: 20px 20px 18px;
+  position: relative; display: flex; flex-direction: column; padding: 20px 20px 18px;
   background: var(--card); border: 1px solid var(--line); border-radius: 14px; transition: border-color .2s;
 }
 .hr-rt-card:hover { border-color: var(--line-2); }
@@ -1018,7 +1018,6 @@ section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
 @media (prefers-reduced-motion: reduce) { .ml > span { transition: none; } }
 
 /* ───── 단가 카드: 요약 + 클릭하면 팝업 ───── */
-.hr-rt-card { position: relative; }
 .hr-rt-click { cursor: pointer; transition: box-shadow .15s; }
 .hr-rt-click:hover, .hr-rt-click:focus-within { box-shadow: 0 0 0 1px var(--mint-2); }
 

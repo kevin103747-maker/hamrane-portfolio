@@ -1,4 +1,3 @@
-// stylelint.config.mjs
 export default {
   rules: {
     'no-duplicate-selectors': true,
