@@ -1382,3 +1382,38 @@ section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
 }
 
 @media (prefers-reduced-motion: reduce) { .ml > span { transition: none; } }
+
+/* ───── 단가 카드: 요약 + 클릭하면 팝업 ───── */
+.hr-rt-card { position: relative; }
+.hr-rt-click { cursor: pointer; transition: box-shadow .15s; }
+.hr-rt-click:hover, .hr-rt-click:focus-within { box-shadow: 0 0 0 1px var(--mint-2); }
+
+.hr-rt-avg { display: flex; justify-content: space-between; align-items: baseline; margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line-2); font-size: 13px; }
+.hr-rt-avg span { color: var(--text-3); }
+.hr-rt-avg b { color: var(--text); font-weight: 600; }
+
+.hr-rt-more { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; padding: 0; background: none; border: 0; font: inherit; font-size: 13px; font-weight: 600; color: var(--mint-2); cursor: pointer; }
+.hr-rt-more::after { content: ''; position: absolute; inset: 0; border-radius: inherit; } /* 카드 전체를 클릭 영역으로 */
+.hr-rt-more:focus-visible { outline: none; }
+.hr-rt-more:focus-visible::after { outline: 2px solid var(--mint-2); outline-offset: 2px; }
+
+/* ───── 팝업 안의 마감 옵션 목록 ───── */
+.hr-ro { list-style: none; margin: 18px 0 0; padding: 0; display: grid; gap: 8px; }
+.hr-ro-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--card-2); }
+.hr-ro-row.no { opacity: .5; }
+.hr-ro-l b { display: block; font-size: 14px; }
+.hr-ro-l span { font-size: 12px; color: var(--text-3); }
+.hr-ro-r { text-align: right; }
+.hr-ro-r em { display: block; font-style: normal; font-size: 12px; color: var(--mint-2); }
+.hr-ro-r strong { font: 700 16px var(--f-sp); }
+.hr-ro-r span { font-size: 13px; color: var(--text-3); }
+
+/* ───── 할인 안내: 박스 없이 텍스트만 ───── */
+.hr-dn { display: grid; gap: 6px; margin: 14px 0 28px; padding: 0 2px; font-size: 13.5px; line-height: 1.6; }
+.hr-dn p { display: grid; grid-template-columns: 5em 1fr; gap: 0 14px; margin: 0; color: var(--text-2); }
+.hr-dn b { font-weight: 600; color: var(--mint-2); }
+.hr-dn span { min-width: 0; }
+.hr-dn .no, .hr-dn .no b { color: var(--text-3); }
+@media (max-width: 520px) {
+  .hr-dn p { grid-template-columns: 1fr; gap: 0; }
+}
