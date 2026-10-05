@@ -39,7 +39,7 @@ export default async function Home() {
   const stats = status.showStats ? computeStats(works) : null;
   return (
     <>
-          <script
+      <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(personJsonLd(links as unknown as Record<string, unknown>, intro.eyebrow)).replace(/</g, '\\u003c'),
@@ -58,9 +58,16 @@ export default async function Home() {
               <p className="hx-roles">
                 {intro.roles}<i>/</i>
               </p>
-              <Link className="hr-hero-cta" href="/guide">
-                의뢰가 처음이신가요? <b>의뢰 가이드 보기</b> →
-              </Link>
+
+              <div className="hr-cta-row">
+                <Link className="hr-cta-btn main" href="/pricing">단가 보기</Link>
+                <Link className="hr-cta-btn sub" href="/pricing#contact">문의하기</Link>
+              </div>
+              <div className="hr-cta-guide">
+                <Link className="hr-hero-cta" href="/guide">
+                  의뢰가 처음이신가요? <b>의뢰 가이드 보기</b> →
+                </Link>
+              </div>
 
               {(status.state || stats) && (
                 <div className="hr-trust">
