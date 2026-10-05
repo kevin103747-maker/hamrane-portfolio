@@ -1567,3 +1567,123 @@ section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
   .tools .chips::-webkit-scrollbar { display: none; }
   .tools .chips .chip { flex: none; }
 }
+/* ───── 휴대폰 보정 (2차): 카드 · 홈 · 마퀴 · 가격 · 팝업 · 가이드 ───── */
+.card p .d i { font-style: normal; }
+
+@media (hover: none) {
+  .card:hover .ph img { transform: none; }
+}
+
+@media (max-width: 560px) {
+  .wrap { padding: 0 18px; }
+
+  /* 작업 카드: 2열 + 촘촘하게 */
+  .grid, .feat, .modal .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 12px; }
+  .card { min-width: 0; }
+  .card .ph { border-radius: 10px; }
+  .card h3 { margin-top: 8px; font-size: 13px; line-height: 1.35; overflow: hidden; overflow-wrap: anywhere;
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+  .card p { margin-top: 3px; font-size: 11.5px; line-height: 1.4; gap: 0 4px; }
+  .card p .d i { display: none; }
+  .pts { margin-top: 6px; gap: 4px; }
+  .pts span { font-size: 10.5px; padding: 3px 6px; }
+
+  /* 최근 작업 마퀴: 카드를 작게 */
+  .hr-mq-group { gap: 10px; padding-right: 10px; }
+  .hr-mq-group .card { width: 150px; }
+
+  /* 홈 히어로: 사진을 위로 올려 글이 전체 폭을 쓰게 */
+  :root { --hx-av: 64px; --hx-soc: 40px; }
+  .hx-hero { padding-top: 24px; }
+  .hx-hero-in { gap: 18px; }
+  .hx-id { flex-direction: column; align-items: flex-start; gap: 14px; }
+  .hx-av { border-radius: 18px; }
+  .hero h1 { font-size: 30px; gap: 2px 10px; }
+  .hero h1 span { font-size: 18px; }
+  .hx-roles { margin-top: 8px; font-size: 13.5px; line-height: 1.5; }
+  .hx-roles i { margin: 0 6px; }
+  .hr-cta-links { margin-top: 12px; gap: 4px 12px; }
+  .hr-hero-cta { font-size: 12.5px; padding: 6px 12px; }
+  .hr-cta-mini { font-size: 12.5px; }
+  .hr-trust { margin-top: 12px; gap: 8px; }
+  .hx-soc { gap: 8px; }
+  .hx-soc-a { border-radius: 12px; }
+
+  /* 추천 영상 영역 */
+  .fx-sec { padding-top: 24px; }
+  .fx-player, .fx-panel { border-radius: 16px; }
+  .fx-cap h2 { font-size: 17px; }
+  .fx-cap p { font-size: 12.5px; }
+  .fx-play { width: 56px; height: 56px; }
+  .fx-play > span { width: 42px; height: 42px; font-size: 16px; }
+  .fx-panel-in { padding: 12px; }
+  .fx-list { max-height: 320px; }
+  .fx-q { grid-template-columns: 92px minmax(0, 1fr); gap: 10px; padding: 10px 4px; }
+  .fx-q b { font-size: 14px; }
+  .hx-recent { padding-top: 40px; }
+
+  /* 외주 단가: 탭은 옆으로 밀어 보기, 카드는 작게 */
+  .hr-rt-tabs { flex-wrap: nowrap; overflow-x: auto; margin: 0 -18px 20px; padding: 0 18px 4px; scrollbar-width: none; }
+  .hr-rt-tabs::-webkit-scrollbar { display: none; }
+  .hr-rt-tab { flex: none; height: 40px; padding: 0 14px; font-size: 14px; }
+  .hr-rt-tab small { display: none; }
+  .hr-rt-head h3 { font-size: 19px; }
+  .hr-rt-head p { margin-bottom: 14px; }
+  .hr-rt-grid { gap: 10px; }
+  .hr-rt-card { padding: 16px; }
+  .hr-rt-price { margin-top: 12px; }
+  .hr-rt-price strong { font-size: 24px; }
+
+  /* 패키지 카드와 팝업: 아래에서 올라오는 시트 */
+  .hr-pv-grid { gap: 10px; }
+  .hr-pv { min-height: 0; padding: 16px 18px 14px; gap: 8px; }
+  .hr-pv-q { font-size: 16px; }
+  .hr-pm-back { align-items: flex-end; padding: 0; }
+  .hr-pm { width: 100%; max-height: 90vh; border-radius: 20px 20px 0 0; border-bottom: 0; }
+  .hr-pm-scroll { padding: 22px 18px 6px; }
+  .hr-pm h3 { font-size: 19px; }
+  .hr-pm-est { margin-top: 14px; padding: 12px 14px; }
+  .hr-pm-est strong { font-size: 22px; }
+  .hr-pm-rows { gap: 12px; margin-top: 14px; }
+  .hr-pm-rows li { font-size: 14px; padding: 7px 0; }
+  .hr-pm-foot { padding: 12px 18px calc(14px + env(safe-area-inset-bottom)); }
+
+  /* 가이드 */
+  .hr-gp { gap: 36px; }
+  .hr-gp p { line-height: 1.65; }
+  .hr-gp-steps li { padding: 14px; }
+  .hr-gp-steps b { font-size: 15.5px; margin-bottom: 4px; }
+  .hr-gp-steps p { font-size: 14px; }
+  .hr-gp-price { padding: 18px; }
+  .hr-gp-assure { gap: 10px; }
+  .hr-gp-assure li { padding: 14px 16px; gap: 6px; }
+  .hr-gp-assure b { font-size: 15px; }
+  .hr-gp-assure p { font-size: 14px; }
+  .hr-gp-qa summary { padding: 14px 16px; font-size: 14.5px; }
+  .hr-gp-qa details p { padding: 0 16px 16px; font-size: 14px; }
+}
+
+@supports (height: 100dvh) {
+@media (max-width: 560px) {
+  .grid, .feat, .modal .grid { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .card { display: grid; grid-template-columns: 128px minmax(0, 1fr); gap: 0 12px; align-content: start; align-items: start; }
+  .card .ph { grid-row: 1 / span 3; }
+  .card h3 { margin-top: 0; }
+}
+}
+@media (hover: none) {
+  .hr-mq-track { animation: none; }
+  .hr-mq { overflow-x: auto; scrollbar-width: none; }
+  .hr-mq::-webkit-scrollbar { display: none; }
+  .hr-mq-group[aria-hidden='true'] { display: none; }
+}
+/* 마퀴 카드는 리스트형이 아니라 원래의 세로형으로 유지 */
+@media (max-width: 560px) {
+  .hr-mq-group .card { display: block; width: 150px; }
+  .hr-mq-group .card .ph { grid-row: auto; }
+
+  /* 페이지 번호가 360px 폭에서 두 줄로 꺾이지 않게 */
+  .hr-pgn { gap: 4px; margin-top: 28px; }
+  .hr-pgn button { min-width: 34px; height: 40px; padding: 0 8px; }
+  .hr-pgn .gap { padding: 0 2px; }
+}

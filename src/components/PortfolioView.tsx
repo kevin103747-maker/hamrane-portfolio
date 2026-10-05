@@ -1,13 +1,24 @@
 // src/components/PortfolioView.tsx
 'use client';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { matches, type Filter } from '@/lib/filters';
 import type { Work } from '@/lib/types';
 import { useSite } from './SiteProvider';
 import { WorkCard } from './WorkCard';
 import { COPY } from '@/lib/copy';
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 
-const PAGE_SIZE = 12; // 한 페이지에 보여줄 작업물 수 (4열 × 3줄)
+const PAGE_SIZE = 12;        // PC: 한 페이지에 보여줄 작업물 수 (4열 × 3줄)
+const MOBILE_PAGE_SIZE = 8;  // 휴대폰(560px 이하): 리스트형 카드라 더 적게 보여줍니다
+
+/** 화면이 휴대폰 폭인지 알려줍니다. 서버 렌더링 때는 PC로 보고, 접속 직후 실제 폭으로 바뀝니다. */
+const MOBILE_QUERY = '(max-width: 560px)';
+function subscribeMobile(cb: () => void) {
+  const m = window.matchMedia(MOBILE_QUERY);
+  m.addEventListener('change', cb);
+  return () => m.removeEventListener('change', cb);
+}
+const useIsMobile = () =>
+  useSyncExternalStore(subscribeMobile, () => window.matchMedia(MOBILE_QUERY).matches, () => false);
 
 /** 여러 개 선택 가능한 드롭다운 */
 function Multi({ label, options, value, onChange }: {
@@ -73,6 +84,7 @@ function Pager({ page, pages, onGo }: { page: number; pages: number; onGo: (n: n
 
 export function PortfolioView() {
   const s = useSite();
+  const pageSize = useIsMobile() ? MOBILE_PAGE_SIZE : PAGE_SIZE;
   const [q, setQ] = useState('');
   const [groupId, setGroupId] = useState<string | null>(null);
   const [partId, setPartId] = useState<string | null>(null);
@@ -141,9 +153,9 @@ export function PortfolioView() {
 
   /* 페이지 나누기: 검색·필터·정렬이 바뀌면 자동으로 1페이지로 돌아갑니다 */
   const filterKey = JSON.stringify([q, groupId, partId, usage, aType, sort]);
-  const pages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+  const pages = Math.max(1, Math.ceil(list.length / pageSize));
   const page = Math.min(pg.key === filterKey ? pg.n : 1, pages);
-  const shown = list.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const shown = list.slice((page - 1) * pageSize, page * pageSize);
   const goPage = (n: number) => {
     setPg({ key: filterKey, n: Math.max(1, Math.min(pages, n)) });
     allRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
