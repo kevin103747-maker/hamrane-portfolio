@@ -252,7 +252,7 @@ export function RateBoard({ groups }: { groups: BoardGroup[] }) {
             <em>{g.items.length}</em>
           </button>
         ))}
-      <TabScroller>
+      </TabScroller>
 
       {groups.map((g) => (
         <section key={g.id} id={`cat-${g.id}`} className="hr-rt-panel" hidden={g.id !== cur} aria-label={g.name}>
