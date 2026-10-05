@@ -168,6 +168,8 @@ export async function savePackage(fd: FormData) {
   const qty: Record<string, number> = {};
   // 개당 금액: 입력한 항목만 저장합니다. 비우면 단가표 금액, 0이면 무료입니다.
   const prices: Record<string, string> = {};
+  // 수량이 예시인 항목(곡마다 달라질 수 있음)
+  const est: string[] = [];
   for (const iid of itemIds) {
     const n = Number(str(fd, `qty_${iid}`) || '1');
     if (!Number.isInteger(n) || n < 1 || n > 99) fail(back, '수량은 1~99 사이의 정수로 입력하세요.');
@@ -178,6 +180,8 @@ export async function savePackage(fd: FormData) {
       if (!validMoney(pr)) fail(back, '개당 금액은 숫자로 입력하세요. (무료는 0, 단가표 금액을 쓰려면 비워 두세요)');
       prices[iid] = money(pr);
     }
+
+    if (flag(fd, `est_${iid}`)) est.push(iid);
   }
 
   // 협업·외부 상품: 이름·분야·담당·금액 입력칸이 같은 순서로 넘어옵니다.
@@ -233,6 +237,7 @@ export async function savePackage(fd: FormData) {
     item_ids: itemIds,
     qty,
     prices,
+    est,
     extras,
     total,
     discount,

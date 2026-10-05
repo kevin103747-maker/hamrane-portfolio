@@ -34,7 +34,7 @@ export default async function PackagesPage({
   const db = adminDb();
   const [g, r, p] = await Promise.all([
     db.from('part_groups').select('id, num, name').order('sort', { ascending: true }),
-    db.from('rate_items').select('id, group_id, name, price').order('sort', { ascending: true }),
+    db.from('rate_items').select('id, group_id, name, price, unit').order('sort', { ascending: true }),
     db.from('packages').select('*').order('sort', { ascending: true }),
   ]);
   const groups = g.data ?? [];
@@ -44,6 +44,7 @@ export default async function PackagesPage({
   const picked: string[] = cur?.item_ids ?? [];
   const qtyMap = (cur?.qty ?? {}) as Record<string, number>;
   const priceMap = (cur?.prices ?? {}) as Record<string, string>;
+  const estSet = new Set<string>((cur?.est ?? []) as string[]);
   const extras: Extra[] = ((cur?.extras ?? []) as Partial<Extra>[]).map((e) => ({
     name: e.name ?? '', group: e.group ?? '', who: e.who ?? '', price: e.price ?? '',
   }));
@@ -63,7 +64,12 @@ export default async function PackagesPage({
         </p>
         <p>
           <b>항목별 금액</b>은 팝업에 그대로 나옵니다. &quot;개당 금액&quot;을 비우면 단가표의 정가가 쓰이고(칸의 흐린 숫자),
-          입력하면 이 패키지에서만 그 금액이 적용되고, 0을 적으면 사이트에 &quot;무료&quot;로 나옵니다. 항목 금액의 합이 합계와 다르면 차이가 &quot;패키지 할인&quot;으로 표시됩니다.
+          입력하면 이 패키지에서만 그 금액이 적용되고, 0을 적으면 사이트에 &quot;무료&quot;로 나옵니다.
+          항목 금액의 합이 합계와 다르면 차이가 &quot;패키지 할인&quot;으로 표시됩니다.
+        </p>
+        <p>
+          <b>수량은 예시</b>를 체크하면 팝업에 &quot;예시 8트랙&quot;처럼 표시되고 &quot;곡마다 수량이 달라질 수 있다&quot;는 안내가 붙습니다.
+          튠처럼 곡마다 개수가 달라지는 항목에 쓰세요. 이때 수량 칸에는 예시로 보여줄 개수를 넣습니다.
         </p>
       </Help>
 
@@ -102,7 +108,7 @@ export default async function PackagesPage({
           <input name="desc" defaultValue={txt(cur?.descr)} />
         </label>
 
-        <Section open title="포함할 상품" badge={`${picked.length}개 선택`} hint="체크하고 수량·개당 금액을 정합니다 (금액을 비우면 단가표 금액)">
+        <Section open title="포함할 상품" badge={`${picked.length}개 선택`} hint="체크하고 수량·개당 금액을 정합니다 (금액을 비우면 단가표 금액, 0은 무료)">
           {groups.map((grp) => {
             const rows = items.filter((x) => x.group_id === grp.id);
             if (!rows.length) return null;
@@ -133,6 +139,10 @@ export default async function PackagesPage({
                           placeholder={String(x.price)}
                           defaultValue={priceMap[x.id] ?? ''}
                         />
+                      </label>
+                      <label className="hr-chk hr-pkq-e">
+                        <input type="checkbox" name={`est_${x.id}`} defaultChecked={estSet.has(x.id)} />
+                        수량은 예시{txt(x.unit) ? ` (${txt(x.unit)})` : ''}
                       </label>
                     </div>
                   ))}

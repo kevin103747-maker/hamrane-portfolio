@@ -9,8 +9,13 @@ import type { Discount } from '@/lib/types';
 /**
  * unit: 개당 금액(숫자, 0이면 무료). 금액이 정해지지 않은 협업 상품 등은 null
  * list: 단가표의 개당 정가. 무료 항목에 취소선으로 보여줄 때 씁니다. 협업 상품은 없음
+ * est: 수량이 예시인 항목(곡마다 달라질 수 있음)
+ * noun: 수량 뒤에 붙일 세는 말(예: 트랙). 없으면 ×N 으로 표시
  */
-export type PkgLine = { name: string; qty: number; unit: number | null; list?: number | null; collab?: boolean; who?: string };
+export type PkgLine = {
+  name: string; qty: number; unit: number | null; list?: number | null;
+  est?: boolean; noun?: string; collab?: boolean; who?: string;
+};
 type PkgRow = { label: string; lines: PkgLine[] };
 export type PackageView = {
   id: string; no: string; tag: string; name: string; desc: string; total: string; discount?: Discount; rows: PkgRow[];
@@ -21,6 +26,10 @@ const toNum = (s: string) => {
   const n = Number(s.replace(/[^\d]/g, ''));
   return Number.isFinite(n) && n > 0 ? n : null;
 };
+/** 수량 표기: 세는 말이 있으면 "8트랙", 없으면 "×8" */
+const qtyText = (l: PkgLine) => (l.noun ? `${l.qty}${l.noun}` : `×${l.qty}`);
+/** 계산식용 표기: "20,000원 × 8트랙" */
+const mulText = (l: PkgLine) => (l.noun ? `${l.qty}${l.noun}` : `${l.qty}`);
 
 function Modal({ p, onClose }: { p: PackageView; onClose: () => void }) {
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -43,6 +52,7 @@ function Modal({ p, onClose }: { p: PackageView; onClose: () => void }) {
   const sub = complete ? all.reduce((s, l) => s + (l.unit as number) * l.qty, 0) : 0;
   const total = toNum(p.total);
   const diff = complete && total != null ? total - sub : null;
+  const hasEst = all.some((l) => l.est);
 
   return createPortal(
     <div className="hr-pm-back" onClick={onClose}>
@@ -79,7 +89,9 @@ function Modal({ p, onClose }: { p: PackageView; onClose: () => void }) {
                     <li key={`${l.name}-${i}`}>
                       <span className="hr-pb-n">
                         {l.name}
-                        {l.qty > 1 && <small className="hr-pb-q">×{l.qty}</small>}
+                        {l.est
+                          ? <small className="hr-pb-e">예시 {qtyText(l)}</small>
+                          : l.qty > 1 && <small className="hr-pb-q">×{l.qty}</small>}
                         {l.collab && <small className="hr-pb-c">협업{l.who ? ` · ${l.who}` : ''}</small>}
                       </span>
                       <span className="hr-pb-a">
@@ -91,14 +103,14 @@ function Modal({ p, onClose }: { p: PackageView; onClose: () => void }) {
                               <i className="was">
                                 <span className="sr-only">단가표 정가 </span>
                                 <s>{won(l.list * l.qty)}원</s>
-                                {l.qty > 1 && ` (${won(l.list)}원 × ${l.qty})`}
+                                {l.qty > 1 && ` (${won(l.list)}원 × ${mulText(l)})`}
                               </i>
                             )}
                             <b className="free">무료</b>
                           </>
                         ) : (
                           <>
-                            {l.qty > 1 && <i>{won(l.unit)}원 × {l.qty}</i>}
+                            {l.qty > 1 && <i>{won(l.unit)}원 × {mulText(l)}</i>}
                             <b>{won(l.unit * l.qty)}원</b>
                           </>
                         )}
@@ -122,6 +134,12 @@ function Modal({ p, onClose }: { p: PackageView; onClose: () => void }) {
               </div>
             ) : (
               <p className="hr-pb-miss">금액이 적히지 않은 항목은 협업 작업자와 별도로 조율됩니다.</p>
+            )}
+
+            {hasEst && (
+              <p className="hr-pb-miss">
+                &lsquo;예시&rsquo; 표시 항목은 곡마다 수량이 달라질 수 있어요. 수량이 달라지면 금액도 함께 달라집니다.
+              </p>
             )}
           </div>
 

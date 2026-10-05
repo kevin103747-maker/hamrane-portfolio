@@ -28,4 +28,5 @@ type Pkg = {
   id: string; no: string; tag: string; name: Text; desc: Text; itemIds: string[]; total: string; discount?: Discount;
   qty?: Record<string, number>; extras?: PkgExtra[];
   prices?: Record<string, string>; // 이 패키지 안에서만 적용하는 개당 금액 (없으면 단가표 금액)
+  est?: string[]; // 수량이 예시인 단가 항목 id (곡마다 달라질 수 있는 항목)
 };

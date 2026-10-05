@@ -19,6 +19,12 @@ const amt = (s?: string): number | null => {
   return digits === '' ? null : Number(digits);
 };
 
+/** 단가표 단위에서 세는 말만 뽑습니다. "트랙당" → "트랙", "곡당" → "곡". 그 외(숫자 포함 등)는 빈 글자 */
+const nounOf = (u: string) => {
+  const m = u.trim().match(/^([^\d\s]{1,6})당$/);
+  return m ? m[1] : '';
+};
+
 export default async function Pricing() {
   const [d, turnaround, discounts] = await Promise.all([
     getSiteData(), getTurnaround(), getDiscounts(),
@@ -61,6 +67,8 @@ export default async function Pricing() {
             qty: p.qty?.[id] ?? 1,
             unit: amt(p.prices?.[id] ?? it.price),
             list: amt(it.price),
+            est: (p.est ?? []).includes(id),
+            noun: nounOf(tx(it.unit)),
           });
         }
       }
