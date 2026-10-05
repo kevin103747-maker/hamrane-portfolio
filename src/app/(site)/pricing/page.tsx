@@ -60,6 +60,7 @@ export default async function Pricing() {
             name: tx(it.name),
             qty: p.qty?.[id] ?? 1,
             unit: amt(p.prices?.[id] ?? it.price),
+            list: amt(it.price),
           });
         }
       }

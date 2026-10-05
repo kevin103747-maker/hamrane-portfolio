@@ -6,8 +6,11 @@ import { Price, Until } from './Price';
 import { Icon } from './Icons';
 import type { Discount } from '@/lib/types';
 
-/** unit: 개당 금액(숫자, 0이면 무료). 금액이 정해지지 않은 협업 상품 등은 null */
-export type PkgLine = { name: string; qty: number; unit: number | null; collab?: boolean; who?: string };
+/**
+ * unit: 개당 금액(숫자, 0이면 무료). 금액이 정해지지 않은 협업 상품 등은 null
+ * list: 단가표의 개당 정가. 무료 항목에 취소선으로 보여줄 때 씁니다. 협업 상품은 없음
+ */
+export type PkgLine = { name: string; qty: number; unit: number | null; list?: number | null; collab?: boolean; who?: string };
 type PkgRow = { label: string; lines: PkgLine[] };
 export type PackageView = {
   id: string; no: string; tag: string; name: string; desc: string; total: string; discount?: Discount; rows: PkgRow[];
@@ -83,7 +86,16 @@ function Modal({ p, onClose }: { p: PackageView; onClose: () => void }) {
                         {l.unit == null ? (
                           <em>별도 협의</em>
                         ) : l.unit === 0 ? (
-                          <b className="free">무료</b>
+                          <>
+                            {l.list != null && l.list > 0 && (
+                              <i className="was">
+                                <span className="sr-only">단가표 정가 </span>
+                                <s>{won(l.list * l.qty)}원</s>
+                                {l.qty > 1 && ` (${won(l.list)}원 × ${l.qty})`}
+                              </i>
+                            )}
+                            <b className="free">무료</b>
+                          </>
                         ) : (
                           <>
                             {l.qty > 1 && <i>{won(l.unit)}원 × {l.qty}</i>}

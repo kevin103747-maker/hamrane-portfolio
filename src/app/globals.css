@@ -1442,3 +1442,6 @@ section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
 .hr-ex-row input[name="exPrice"] { max-width: 150px; }
 
 .hr-pb-a b.free { color: var(--mint-2); }
+
+.hr-pb-a i.was { font-size: 12px; }
+.hr-pb-a i.was s { text-decoration-thickness: 1.5px; }
