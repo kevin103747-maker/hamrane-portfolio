@@ -7,11 +7,11 @@ import { Thumb } from './Thumb';
 import { useSite } from './SiteProvider';
 import { useModal } from './ModalContext';
 
-export function WorkCard({ work, pin, parts = true }: { work: Work; pin?: string; parts?: boolean }) {
+export function WorkCard({ work, pin, parts = true, tabIndex }: { work: Work; pin?: string; parts?: boolean; tabIndex?: number }) {
   const s = useSite();
   const { openWork } = useModal();
   return (
-    <a className="card" href={`?work=${work.id}`} onClick={(e) => { e.preventDefault(); openWork(work.id); }}>
+    <a className="card" href={`?work=${work.id}`} tabIndex={tabIndex} onClick={(e) => { e.preventDefault(); openWork(work.id); }}>
       <Thumb work={work}>
         {pin && <span className="pin"><Icon name="pin" className="" />{pin}</span>}
         <span className="ov"><span><Icon name="play" /></span></span>
