@@ -9,7 +9,6 @@ import { IndexReel } from '@/components/IndexReel';
 import { RecentMarquee } from '@/components/RecentMarquee';
 import { SectionHead } from '@/components/Heads';
 import { SocialLinks } from '@/components/SocialLinks';
-import { ScrollHint } from '@/components/ScrollHint';
 import { StatusBadge, StatsLine } from '@/components/Trust';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://hamrane-portfolio.vercel.app';
@@ -85,14 +84,13 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="hx-recent" id="recent">
+      <section className="hx-recent" id="recent" data-scroll-next>
         <div className="wrap">
           <SectionHead n="01" title="Recent" sub="최근 작업물" href="/portfolio" link="포트폴리오 전체" />
         </div>
         <RecentMarquee />
       </section>
 
-      <ScrollHint targetId="recent" />
     </>
   );
 }

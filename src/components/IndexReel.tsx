@@ -1,6 +1,6 @@
 // src/components/IndexReel.tsx
 'use client';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import type { QueueItem, Work } from '@/lib/types';
 import { useSite } from './SiteProvider';
@@ -15,6 +15,8 @@ export function IndexReel() {
   const s = useSite();
   const { openWork } = useModal();
   const [idx, setIdx] = useState(0);
+  const listRef = useRef<HTMLDivElement>(null);
+  const [edge, setEdge] = useState({ l: false, r: false });
 
   const items = useMemo<Entry[]>(() => {
     const found: Entry[] = [];
@@ -27,8 +29,28 @@ export function IndexReel() {
     return s.works.slice(0, 4).map((work) => ({ work, item: { workId: work.id } }));
   }, [s]);
 
+  /* 목록이 옆으로 넘칠 때(휴대폰) 어느 쪽에 더 있는지 계산합니다. PC는 세로 목록이라 둘 다 false입니다. */
+  useEffect(() => {
+    const el = listRef.current;
+    if (!el) return;
+    const update = () => {
+      const l = el.scrollLeft > 4;
+      const r = el.scrollLeft + el.clientWidth < el.scrollWidth - 4;
+      setEdge((e) => (e.l === l && e.r === r ? e : { l, r }));
+    };
+    update();
+    el.addEventListener('scroll', update, { passive: true });
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener('scroll', update);
+      ro.disconnect();
+    };
+  }, [items.length]);
+
   if (!items.length) return null;
-  const cur = items[Math.min(idx, items.length - 1)];
+  const curIdx = Math.min(idx, items.length - 1);
+  const cur = items[curIdx];
 
   const label = ({ work, item }: Entry) => {
     const own = orderParts(work);
@@ -43,6 +65,8 @@ export function IndexReel() {
   const more = cur.work.partIds.length - chips.length;
   const curLabel = label(cur);
   const open = () => openWork(cur.work.id);
+  const nudge = (dir: -1 | 1) =>
+    listRef.current?.scrollBy({ left: dir * listRef.current.clientWidth * 0.7, behavior: 'smooth' });
 
   return (
     <div className="fx-reel">
@@ -74,18 +98,29 @@ export function IndexReel() {
 
       <aside className="fx-panel">
         <div className="fx-panel-in">
-          <div className="fx-ph"><small>FEATURED</small><b>대표작</b></div>
-          <div className="fx-list">
-            {items.map((x, i) => (
-              <button key={x.work.id} type="button" className={`fx-q ${i === idx ? 'on' : ''}`} onClick={() => setIdx(i)}>
-                <Thumb work={x.work} />
-                <span>
-                  <small>{label(x)}</small>
-                  <b>{x.work.title}</b>
-                  <em>{s.artistNames(x.work)}</em>
-                </span>
-              </button>
-            ))}
+          <div className="fx-ph">
+            <small>FEATURED</small><b>대표작</b>
+            {items.length > 1 && (
+              <span className="fx-count" aria-label={`대표작 ${curIdx + 1}번째, 전체 ${items.length}개`}>
+                <b>{curIdx + 1}</b> / {items.length}
+              </span>
+            )}
+          </div>
+          <div className={`fx-lw${edge.l ? ' l' : ''}${edge.r ? ' r' : ''}`}>
+            <div className="fx-list" ref={listRef}>
+              {items.map((x, i) => (
+                <button key={x.work.id} type="button" className={`fx-q ${i === curIdx ? 'on' : ''}`} onClick={() => setIdx(i)}>
+                  <Thumb work={x.work} />
+                  <span>
+                    <small>{label(x)}</small>
+                    <b>{x.work.title}</b>
+                    <em>{s.artistNames(x.work)}</em>
+                  </span>
+                </button>
+              ))}
+            </div>
+            {edge.l && <button type="button" className="fx-nav prev" aria-label="이전 대표작 보기" onClick={() => nudge(-1)}>‹</button>}
+            {edge.r && <button type="button" className="fx-nav next" aria-label="다음 대표작 보기" onClick={() => nudge(1)}>›</button>}
           </div>
           <Link className="fx-all" href="/portfolio">전체 작업물 보기 <Icon name="arrow" /></Link>
         </div>
