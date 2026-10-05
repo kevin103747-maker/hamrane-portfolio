@@ -1767,3 +1767,41 @@ section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
 }
 /* ───── 외주 단가 페이지: 하단 문의 안내 문구는 왼쪽 정렬 ───── */
 .hr-pt-note.sm { text-align: left; }
+
+/* ───── 모바일: 대표곡 목록을 옆으로 미는 줄로 (세로 스크롤 상자 제거) ───── */
+@media (max-width: 560px) {
+  .fx-panel .fx-list {
+    display: flex; flex-direction: row; gap: 8px;
+    max-height: none; overflow-x: auto; overflow-y: hidden;
+    overscroll-behavior-x: contain; scroll-snap-type: x proximity;
+    scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  }
+  .fx-panel .fx-list::-webkit-scrollbar { display: none; }
+  .fx-panel .fx-q {
+    flex: 0 0 78%; scroll-snap-align: start;
+    border: 1px solid var(--line); border-radius: 12px; padding: 10px;
+  }
+  .fx-panel .fx-q.on { border-color: var(--mint); }
+}
+
+/* ───── 모바일: 내용물 때문에 페이지가 화면보다 넓어지지 않게 ───── */
+@media (max-width: 560px) {
+  .grid, .feat { grid-template-columns: minmax(0, 1fr); }
+  .grid > *, .card { min-width: 0; max-width: 100%; }
+  .card h3, .card p { overflow-wrap: anywhere; }
+  .hr-pgn { flex-wrap: wrap; justify-content: center; max-width: 100%; }
+  html, body { overflow-x: clip; }
+}
+
+/* ───── 외주 단가 분야 탭: 옆으로 밀 수 있다는 표시 ───── */
+.hr-rt-wrap { position: relative; min-width: 0; }
+.hr-rt-wrap.l::before, .hr-rt-wrap.r::after { content: ''; position: absolute; top: 0; height: 40px; width: 56px; pointer-events: none; z-index: 1; }
+.hr-rt-wrap.r::after { right: 0; background: linear-gradient(90deg, transparent, var(--bg) 80%); }
+.hr-rt-wrap.l::before { left: 0; background: linear-gradient(270deg, transparent, var(--bg) 80%); }
+.hr-rt-nav { position: absolute; top: 5px; z-index: 2; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--line-2); background: var(--card); color: var(--mint); font-size: 18px; line-height: 1; }
+.hr-rt-nav.prev { left: 0; }
+.hr-rt-nav.next { right: 0; }
+@media (max-width: 560px) {
+  .hr-rt-wrap.l::before { left: -18px; }
+  .hr-rt-wrap.r::after { right: -18px; }
+}

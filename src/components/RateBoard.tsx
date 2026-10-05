@@ -177,6 +177,38 @@ function DiscBox({ v }: { v: GroupDiscView }) {
     </div>
   );
 }
+/** 옆으로 미는 탭 줄. 더 볼 내용이 있는 쪽 끝에 그림자와 ‹ › 버튼을 보여줍니다. */
+function TabScroller({ children }: { children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [edge, setEdge] = useState({ l: false, r: false });
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const update = () => {
+      const l = el.scrollLeft > 4;
+      const r = el.scrollLeft + el.clientWidth < el.scrollWidth - 4;
+      setEdge((e) => (e.l === l && e.r === r ? e : { l, r }));
+    };
+    update();
+    el.addEventListener('scroll', update, { passive: true });
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => { el.removeEventListener('scroll', update); ro.disconnect(); };
+  }, []);
+
+  const go = (dir: -1 | 1) =>
+    ref.current?.scrollBy({ left: dir * ref.current.clientWidth * 0.6, behavior: 'smooth' });
+
+  return (
+    <div className={`hr-rt-wrap${edge.l ? ' l' : ''}${edge.r ? ' r' : ''}`}>
+      <div className="hr-rt-tabs" ref={ref} role="group" aria-label="분야 선택">{children}</div>
+      {edge.l && <button type="button" className="hr-rt-nav prev" aria-label="왼쪽으로 더 보기" onClick={() => go(-1)}>‹</button>}
+      {edge.r && <button type="button" className="hr-rt-nav next" aria-label="오른쪽으로 더 보기" onClick={() => go(1)}>›</button>}
+    </div>
+  );
+}
+
 
 export function RateBoard({ groups }: { groups: BoardGroup[] }) {
   const [cur, setCur] = useState(groups[0]?.id ?? '');
@@ -205,7 +237,7 @@ export function RateBoard({ groups }: { groups: BoardGroup[] }) {
         <b>분야 선택</b>
         <span>총 {groups.length}개 분야 · 눌러서 단가를 확인하세요</span>
       </div>
-      <div className="hr-rt-tabs" role="group" aria-label="분야 선택">
+      <TabScroller>
         {groups.map((g) => (
           <button
             key={g.id}
@@ -220,7 +252,7 @@ export function RateBoard({ groups }: { groups: BoardGroup[] }) {
             <em>{g.items.length}</em>
           </button>
         ))}
-      </div>
+      <TabScroller>
 
       {groups.map((g) => (
         <section key={g.id} id={`cat-${g.id}`} className="hr-rt-panel" hidden={g.id !== cur} aria-label={g.name}>
