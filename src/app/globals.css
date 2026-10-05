@@ -1498,24 +1498,24 @@ section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
 .hr-qm-warn { margin: 0; font-size: 13px; color: #d97706; }
 .hr-qm-file { display: none; }
 
-/* ───── 홈 히어로 의뢰 버튼 (작게) ───── */
-.hr-cta-row { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; }
-.hr-cta-btn { height: 32px; padding: 0 14px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center;
-  font-size: 12.5px; font-weight: 600; letter-spacing: -.01em; white-space: nowrap;
-  transition: background .2s, color .2s, border-color .2s; }
-.hr-cta-btn.main { background: var(--mint); color: var(--mint-ink); }
-.hr-cta-btn.main:hover { background: var(--mint-2); }
-.hr-cta-btn.sub { border: 1px solid var(--line-2); background: transparent; color: var(--text-2); }
-.hr-cta-btn.sub:hover { border-color: var(--mint); color: var(--mint); }
-.hr-cta-btn:focus-visible { outline: 2px solid var(--mint); outline-offset: 2px; }
-.hr-cta-guide { margin-top: 10px; }
-@media (max-width: 560px) {
-  .hr-cta-btn { height: 30px; padding: 0 12px; font-size: 12px; }
-}
-
-
 /* 카드의 아티스트 이름이 한 줄을 넘치면 말줄임 처리 */
 .card p > span:first-child { max-width: 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* 가이드 하단 안내: 박스 없이 글자만 */
 .hr-pt-note { margin-top: 48px; text-align: center; font-size: 14.5px; color: var(--text-2); }
+
+/* ───── 홈 히어로 링크 줄: 가이드 · 단가 보기 · 문의하기 ───── */
+.hr-cta-links { margin-top: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; }
+/* 기존 가이드 링크(알약)의 자체 위쪽 여백 16px을 이 줄 안에서는 없애, 세 링크의 세로 중심을 맞춥니다 */
+.hr-cta-links .hr-hero-cta { margin-top: 0; }
+.hr-cta-mini { font-size: 13px; font-weight: 500; color: var(--text-3); transition: color .2s; }
+.hr-cta-mini:hover { color: var(--mint); }
+.hr-cta-mini:focus-visible { outline: 2px solid var(--mint); outline-offset: 3px; border-radius: 3px; }
+/* 가이드 링크와 단가·문의 링크 사이의 가는 구분선 */
+.hr-cta-mini.first { position: relative; margin-left: 4px; }
+.hr-cta-mini.first::before { content: ''; position: absolute; left: -11px; top: 50%; width: 1px; height: 11px; transform: translateY(-50%); background: var(--line-2); }
+
+/* 가이드 알약은 페이지 진입 때 아래에서 올라오는 효과가 있어서, 두 링크도 같은 타이밍으로 맞춥니다 */
+@media (prefers-reduced-motion: no-preference) {
+  .hx-id-text .hr-cta-mini { animation: .8s cubic-bezier(.2,.7,.2,1) .42s backwards hr-rise; }
+}

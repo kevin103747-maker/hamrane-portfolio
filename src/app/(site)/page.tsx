@@ -59,14 +59,12 @@ export default async function Home() {
                 {intro.roles}<i>/</i>
               </p>
 
-              <div className="hr-cta-row">
-                <Link className="hr-cta-btn main" href="/pricing">단가 보기</Link>
-                <Link className="hr-cta-btn sub" href="/pricing#contact">문의하기</Link>
-              </div>
-              <div className="hr-cta-guide">
+              <div className="hr-cta-links">
                 <Link className="hr-hero-cta" href="/guide">
                   의뢰가 처음이신가요? <b>의뢰 가이드 보기</b> →
                 </Link>
+                <Link className="hr-cta-mini first" href="/pricing">단가 보기</Link>
+                <a className="hr-cta-mini" href="#contact">문의하기</a>
               </div>
 
               {(status.state || stats) && (
