@@ -41,7 +41,7 @@ function ScrollRow({ children, className = '' }: { children: React.ReactNode; cl
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (
-    <div className={`hr-sr${edge.l ? ' l' : ''}${edge.r ? ' r' : ''}`}>
+    <div className={`hr-scrl${edge.l ? ' l' : ''}${edge.r ? ' r' : ''}`}>
       <div ref={ref} className={`hr-sr-row ${className}`} onScroll={update}>{children}</div>
       {edge.r && (
         <button
@@ -283,15 +283,27 @@ export function PortfolioView() {
     </>
   );
 
-  const moreFilters = (
+  const multiFilters = (
     <>
       <Multi label="사용처 유형" options={s.usageTypes.map((u) => ({ id: u.id, name: s.t(u.name) }))} value={usage} onChange={setUsage} />
       <Multi label="아티스트 유형" options={s.artistTypes.map((u) => ({ id: u.id, name: s.t(u.name) }))} value={aType} onChange={setAType} />
-      <select className="sel" value={sort} onChange={(e) => setSort(e.target.value as 'new' | 'old')} aria-label="정렬">
-        <option value="new">최신순</option>
-        <option value="old">오래된순</option>
-      </select>
     </>
+  );
+
+  /* PC: 기존 드롭다운 */
+  const sortSelect = (
+    <select className="sel" value={sort} onChange={(e) => setSort(e.target.value as 'new' | 'old')} aria-label="정렬">
+      <option value="new">최신순</option>
+      <option value="old">오래된순</option>
+    </select>
+  );
+
+  /* 휴대폰: 목록이 따로 뜨지 않는 두 칸 토글 */
+  const sortSeg = (
+    <div className="hr-seg" role="group" aria-label="정렬">
+      <button type="button" className={sort === 'new' ? 'on' : ''} aria-pressed={sort === 'new'} onClick={() => setSort('new')}>최신순</button>
+      <button type="button" className={sort === 'old' ? 'on' : ''} aria-pressed={sort === 'old'} onClick={() => setSort('old')}>오래된순</button>
+    </div>
   );
 
   return (
@@ -313,7 +325,12 @@ export function PortfolioView() {
               </button>
             </div>
             {/* 필터를 눌렀을 때만 그려지는 패널 */}
-            {moreOpen && <div id="tools-more" className="tools-m-more">{moreFilters}</div>}
+           {moreOpen && (
+  <div id="tools-more" className="tools-m-more">
+    <div className="tools-m-dd">{multiFilters}</div>
+    {sortSeg}
+  </div>
+)}
             {/* 분야 칩: 옆으로 미는 줄 */}
             <ScrollRow>{groupChips}</ScrollRow>
             {groupId && <ScrollRow className="sub">{partChips}</ScrollRow>}
@@ -324,7 +341,8 @@ export function PortfolioView() {
               {searchBox}
               <div className="chips">{groupChips}</div>
               <span className="tsep" />
-              {moreFilters}
+              {multiFilters}
+              {sortSelect}
             </div>
             {groupId && (
               <div className="wrap">
