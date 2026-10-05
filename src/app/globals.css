@@ -1747,3 +1747,13 @@ section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
 .hr-seg button { height: 40px; font-size: 13px; color: var(--text-2); }
 .hr-seg button + button { border-left: 1px solid var(--line-2); }
 .hr-seg button.on { background: var(--mint-soft); color: var(--mint); font-weight: 600; }
+
+/* ───── PC 툴바: 윗줄(검색 | 필터·정렬) + 아랫줄(분야 칩) ───── */
+@media (min-width: 1081px) {
+  .tools:has(> .tsep) { gap: 14px 10px; }
+  .tools:has(> .tsep) .search { order: 1; flex: 0 1 320px; width: auto; margin-right: auto; }
+  .tools:has(> .tsep) > .dd,
+  .tools:has(> .tsep) > .sel { order: 2; margin-left: 0; }
+  .tools:has(> .tsep) > .tsep { display: none; }
+  .tools:has(> .tsep) > .chips { order: 3; flex: 1 0 100%; }
+}
