@@ -676,38 +676,6 @@ footer a:hover { color: var(--mint); }
 
 /* ───── 의뢰 안내: 처음 의뢰 문구 / 진행 순서 / 자주 묻는 질문 ───── */
 
-.hr-gd-steps {
-  list-style: none; margin: 0 0 30px; padding: 0;
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
-}
-.hr-gd-steps li {
-  position: relative; display: flex; flex-direction: column; gap: 6px;
-  padding: 18px 18px 16px; background: var(--card); border: 1px solid var(--line); border-radius: 14px;
-}
-.hr-gd-steps li:not(:last-child)::after {
-  content: '›'; position: absolute; right: -10px; top: 18px; z-index: 1;
-  font-size: 20px; line-height: 1; color: var(--text-3);
-}
-.hr-gd-no { font: 600 12px var(--f-mono); letter-spacing: .08em; color: var(--mint); }
-.hr-gd-steps b { font-size: 16px; font-weight: 600; }
-.hr-gd-steps p { font-size: 13px; line-height: 1.6; color: var(--text-2); }
-.hr-gd-steps .nt {
-  margin-top: 4px; padding-top: 8px; border-top: 1px dashed var(--line-2);
-  font-size: 12px; line-height: 1.55; color: var(--text-3); white-space: normal;
-}
-
-.hr-gd-faq { display: grid; gap: 10px; }
-.hr-gd-faq details { background: var(--card); border: 1px solid var(--line); border-radius: 12px; transition: border-color .2s; }
-.hr-gd-faq details[open] { border-color: var(--line-2); }
-.hr-gd-faq summary {
-  display: flex; justify-content: space-between; align-items: center; gap: 12px;
-  padding: 16px 20px; font-size: 15px; font-weight: 600; cursor: pointer; list-style: none;
-}
-.hr-gd-faq summary::-webkit-details-marker { display: none; }
-.hr-gd-faq summary::after { content: '+'; font-size: 22px; line-height: 1; color: var(--mint); transition: transform .2s; }
-.hr-gd-faq details[open] summary::after { transform: rotate(45deg); }
-.hr-gd-faq details p { padding: 0 20px 18px; font-size: 14px; line-height: 1.7; color: var(--text-2); }
-
 /* 문의 영역 안내 박스 */
 .hr-ct-guide {
   display: grid; grid-template-columns: 1fr auto; gap: 14px 24px; align-items: center;
@@ -727,17 +695,9 @@ footer a:hover { color: var(--mint); }
   color: var(--mint); border: 1px solid var(--mint); border-radius: 99px; transition: .2s;
 }
 .hr-ct-copy:hover { background: var(--mint); color: var(--mint-ink); }
-
-@media (max-width: 980px) {
-  .hr-gd-steps { grid-template-columns: repeat(2, 1fr); }
-  .hr-gd-steps li::after { display: none; }
-}
 @media (max-width: 860px) {
   .hr-ct-guide { grid-template-columns: 1fr; }
   .hr-ct-copy { justify-self: start; }
-}
-@media (max-width: 560px) {
-  .hr-gd-steps { grid-template-columns: 1fr; }
 }
 
 /* 홈 첫 화면: 의뢰 안내 링크 */
@@ -756,10 +716,8 @@ footer a:hover { color: var(--mint); }
 }
 
 /* 진행 단계 수가 달라져도 알아서 줄을 맞춥니다(앞서 만든 4열 고정 규칙을 대체) */
-.hr-gd-steps { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
 
 /* 자주 묻는 질문 답변의 줄바꿈 유지 */
-.hr-gd-faq details p { white-space: pre-line; }
 
 /* 어드민: 의뢰 안내 목록 편집 */
 
@@ -846,20 +804,10 @@ footer a:hover { color: var(--mint); }
 /* ───── 어드민: 소요·마감, 패키지 수량·협업 상품 ───── */
 
 /* ───── 작업별 소요·마감 한 줄 ───── */
-.hr-tl { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 10px 0 0; padding: 10px 0 0; border-top: 1px dashed var(--line-2); }
-.hr-tl > div { display: inline-flex; align-items: baseline; gap: 6px; font-size: 12.5px; }
-.hr-tl dt { font: 500 11px var(--f-mono); color: var(--text-3); }
-.hr-tl dd { margin: 0; display: inline-flex; align-items: baseline; gap: 5px; font-weight: 600; color: var(--text); }
-.hr-tl dd em { font: 600 11.5px var(--f-mono); font-style: normal; color: var(--mint); }
-.hr-tl .no dd { font-weight: 500; color: var(--text-3); }
 
 /* 어드민: 작업별 설정 칸 */
 
 /* ───── 수량 할인 · 묶음 할인 안내 ───── */
-.hr-dc { display: flex; flex-direction: column; gap: 6px; margin: 12px 0 0; padding: 12px 14px; border: 1px solid var(--line-2); border-radius: 10px; background: var(--mint-soft); }
-.hr-dc-i { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 13px; color: var(--text); }
-.hr-dc-i b { font: 600 11px var(--f-mono); letter-spacing: .04em; color: var(--mint); }
-.hr-dc-i.no, .hr-dc-i.no b { color: var(--text-3); }
 .hr-dc-ex { margin: 8px 0 0; font-size: 12px; color: var(--text-3); }
 
 .hr-bd { margin-top: 18px; padding: 18px 20px; border: 1.5px dashed var(--mint); border-radius: 14px; background: var(--card); display: grid; gap: 10px; }
@@ -910,14 +858,6 @@ footer a:hover { color: var(--mint); }
 .hr-pm-est strong { font: 600 26px/1.1 var(--f-sp); letter-spacing: -.03em; }
 .hr-pm-est strong small { font: 500 13px var(--f-kr); letter-spacing: 0; margin-left: 3px; }
 .hr-pm-est i { font: 400 11px var(--f-mono); font-style: normal; color: var(--text-3); }
-
-.hr-pm-rows { margin-top: 20px; display: grid; gap: 16px; }
-.hr-pm-g { display: block; margin-bottom: 4px; font: 500 11px var(--f-mono); color: var(--mint); letter-spacing: .06em; }
-.hr-pm-rows ul { list-style: none; }
-.hr-pm-rows li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14.5px; line-height: 1.45; color: var(--text); }
-.hr-pm-rows li:last-child { border-bottom: 0; }
-.hr-pm-rows li .q { font: 500 11px var(--f-mono); color: var(--text-3); }
-.hr-pm-rows li .c { font: 500 10px var(--f-mono); padding: 2px 6px; border-radius: 4px; border: 1px dashed var(--line-2); color: var(--text-3); }
 .hr-pm-note { margin: 18px 0 12px; font-size: 12px; line-height: 1.6; color: var(--text-3); }
 
 .hr-pm-foot { padding: 14px 28px 22px; border-top: 1px solid var(--line); }
@@ -952,39 +892,14 @@ footer a:hover { color: var(--mint); }
 /* 저장 버튼을 화면 아래에 고정 */
 
 /* ───── 외주 단가 페이지: 접이식 막대 · 문의 버튼 ───── */
-.hr-tg { border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
-.hr-tg > summary { list-style: none; cursor: pointer; display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; min-height: 46px; padding: 10px 16px; border-radius: 12px; transition: background .15s; }
-.hr-tg > summary::-webkit-details-marker { display: none; }
-.hr-tg > summary:hover { background: var(--card-2); }
-.hr-tg > summary:focus-visible { outline: 2px solid var(--mint); outline-offset: -2px; }
-.hr-tg[open] > summary { border-bottom: 1px solid var(--line); border-radius: 12px 12px 0 0; }
-.hr-tg-t { font-size: 14px; font-weight: 700; letter-spacing: -.01em; }
-.hr-tg-s { font-size: 12.5px; color: var(--text-3); }
-.hr-tg-n { font: 600 11px var(--f-mono); padding: 2px 8px; border-radius: 999px; background: var(--mint-soft); color: var(--mint); }
-.hr-tg-act { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--mint); }
-.hr-tg-act .o { display: none; }
-.hr-tg[open] > summary .hr-tg-act .c { display: none; }
-.hr-tg[open] > summary .hr-tg-act .o { display: inline; }
-.hr-tg-act svg { transition: transform .2s; }
-.hr-tg[open] > summary .hr-tg-act svg { transform: rotate(180deg); }
-
-.hr-pr-first { margin-bottom: 14px; font-size: 13.5px; line-height: 1.6; color: var(--text-2); }
 
 .hr-pt-cta { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 46px; padding: 0 22px; border-radius: 12px; background: var(--mint); color: var(--mint-ink); font-size: 14px; font-weight: 700; white-space: nowrap; transition: background .2s, transform .2s; }
 .hr-pt-cta:hover { background: var(--mint-2); transform: translateY(-1px); }
 .hr-pt-cta.sm { height: 46px; padding: 0 18px; }
 .phead .hr-pt-cta { margin-top: 20px; }
 
-.hr-pt-end { margin: 22px 0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px 16px; padding: 16px 18px; border: 1px solid var(--line-2); border-radius: 12px; background: var(--mint-soft); }
-.hr-pt-end p { font-size: 14px; font-weight: 600; color: var(--text); }
-
 /* FAQ: 한 줄로 접힘 */
 .hr-faq-sec { padding-top: 0; padding-bottom: 40px; }
-.hr-faq-list { padding: 2px 16px 8px; display: block; }
-.hr-faq-list details { margin: 0; padding: 0; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: transparent; }
-.hr-faq-list details:first-child { border-top: 0; }
-.hr-faq-list summary { padding: 12px 0; font-size: 14px; min-height: 0; }
-.hr-faq-list p { padding: 0 0 14px; font-size: 13.5px; line-height: 1.65; color: var(--text-2); }
 
 @media (max-width: 640px) {
   .hr-pt-cta, .hr-pt-cta.sm { width: 100%; }
@@ -993,10 +908,6 @@ footer a:hover { color: var(--mint); }
 
 /* ───── 외주 단가: FAQ 안의 진행 순서 · 패키지와 FAQ 사이 간격 ───── */
 section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
-.hr-faq-list .hr-faq-steps { padding: 0 0 16px; }
-.hr-faq-list .hr-faq-steps p { padding: 0; }
-.hr-faq-list .hr-faq-steps .hr-pr-first { margin-bottom: 14px; }
-.hr-faq-list .hr-faq-steps .hr-gd-steps { margin: 0; }
 @media (max-width: 640px) {
   section.hr-faq-sec { padding-top: 40px; padding-bottom: 56px; }
 }
@@ -1323,8 +1234,6 @@ section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
   .hr-pm h3 { font-size: 19px; }
   .hr-pm-est { margin-top: 14px; padding: 12px 14px; }
   .hr-pm-est strong { font-size: 22px; }
-  .hr-pm-rows { gap: 12px; margin-top: 14px; }
-  .hr-pm-rows li { font-size: 14px; padding: 7px 0; }
   .hr-pm-foot { padding: 12px 18px calc(14px + env(safe-area-inset-bottom)); }
 
   /* 가이드 */
