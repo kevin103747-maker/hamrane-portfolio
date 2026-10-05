@@ -1451,3 +1451,42 @@ section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
 
 /* 어드민: "수량은 예시" 체크 */
 .hr-pkq-e { font-size: 12px; color: var(--text-3); }
+
+/* ───── 견적서 만들기 (어드민) ───── */
+.hr-pn-body:has(.hr-qm) { max-width: none; }
+.hr-qm { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 440px); gap: 24px; align-items: start; }
+.hr-qm-form { display: grid; gap: 16px; min-width: 0; }
+.hr-qm-prev { position: sticky; top: 16px; display: grid; gap: 12px; min-width: 0; }
+.hr-qm-cvwrap { max-height: calc(100vh - 190px); overflow: auto; border: 1px solid var(--line-2); border-radius: 14px; background: var(--card); }
+.hr-qm-cv { display: block; width: 100%; height: auto; }
+@media (max-width: 1100px) {
+  .hr-qm { grid-template-columns: minmax(0, 1fr); }
+  .hr-qm-prev { position: static; }
+  .hr-qm-cvwrap { max-height: none; }
+}
+
+.hr-qm input, .hr-qm select, .hr-qm textarea { font: inherit; font-size: 14px; color: var(--text); background: var(--card-2); border: 1px solid var(--line-2); border-radius: 8px; padding: 8px 10px; min-width: 0; }
+.hr-qm textarea { width: 100%; resize: vertical; line-height: 1.5; }
+.hr-qm label { display: grid; gap: 4px; font-size: 12px; color: var(--text-3); }
+.hr-qm button { font: inherit; font-size: 13px; padding: 7px 12px; border-radius: 8px; border: 1px solid var(--line-2); background: var(--card-2); color: var(--text); cursor: pointer; white-space: nowrap; }
+.hr-qm button:disabled { opacity: .4; cursor: default; }
+.hr-qm button.pri { background: var(--mint); color: var(--mint-ink); border-color: transparent; font-weight: 600; }
+.hr-qm-add { justify-self: start; }
+
+.hr-qm-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.hr-qm-song { display: grid; gap: 10px; }
+.hr-qm-songhead { display: flex; gap: 6px; align-items: end; }
+.hr-qm-songhead label { flex: 1; }
+.hr-qm-no { font: 700 15px var(--f-sp); color: var(--mint-2); padding-bottom: 9px; }
+.hr-qm-line { display: grid; grid-template-columns: minmax(0, 1fr) 64px 120px auto; gap: 6px 8px; align-items: center; padding-bottom: 10px; border-bottom: 1px dashed var(--line-2); }
+.hr-qm-line .n2 { grid-column: 1 / -1; display: flex; gap: 10px; align-items: center; }
+.hr-qm-line .n2 input { flex: 1; font-size: 13px; }
+.hr-qm-lt { flex: none; font-size: 12px; color: var(--text-3); }
+.hr-qm-btns { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.hr-qm-st { margin-left: auto; font-size: 13px; color: var(--text-3); }
+.hr-qm-st b { color: var(--text); }
+.hr-qm-adj { display: grid; grid-template-columns: minmax(0, 1fr) 140px auto; gap: 8px; margin-bottom: 8px; }
+.hr-qm-seg { display: inline-flex; border: 1px solid var(--line-2); border-radius: 10px; overflow: hidden; }
+.hr-qm-seg button { border: 0; border-radius: 0; background: transparent; }
+.hr-qm-seg button.on { background: var(--mint-soft); color: var(--mint-2); font-weight: 600; }
+.hr-qm-msg { margin: 0; font-size: 13px; color: var(--mint-2); }

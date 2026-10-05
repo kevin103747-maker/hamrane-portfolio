@@ -1,0 +1,89 @@
+// src/app/hr-admin/(panel)/quote/page.tsx — 프로젝트 견적서(PNG) 만들기
+import { redirect } from 'next/navigation';
+import { requireAdmin } from '@/lib/auth/guard';
+import { can } from '@/lib/auth/permissions';
+import { adminDb } from '@/lib/auth/admin-db';
+import { Help } from '@/components/admin/Section';
+import { QuoteMaker, type QuoteGroup, type QuotePkg, type PresetLine } from '@/components/admin/QuoteMaker';
+
+const txt = (v: unknown): string =>
+  typeof v === 'string' ? v : ((v as { ko?: string } | null)?.ko ?? '');
+
+/** "150,000" → 150000. 비었거나 숫자가 아니면 null, "0"은 0 */
+const amt = (s: unknown): number | null => {
+  const d = String(s ?? '').replace(/[^\d]/g, '');
+  return d === '' ? null : Number(d);
+};
+
+/** 단가표 단위에서 세는 말만 뽑습니다. "트랙당" → "트랙" */
+const nounOf = (u: string) => {
+  const m = u.trim().match(/^([^\d\s]{1,6})당$/);
+  return m ? m[1] : '';
+};
+
+export default async function QuotePage() {
+  const me = await requireAdmin();
+  if (!can(me, 'rates')) redirect('/hr-admin');
+
+  const db = adminDb();
+  const [g, r, p] = await Promise.all([
+    db.from('part_groups').select('id, num, name').order('sort', { ascending: true }),
+    db.from('rate_items').select('id, group_id, name, price, unit').order('sort', { ascending: true }),
+    db.from('packages').select('*').order('sort', { ascending: true }),
+  ]);
+  const items = r.data ?? [];
+
+  const groups: QuoteGroup[] = (g.data ?? [])
+    .map((grp) => ({
+      name: txt(grp.name),
+      items: items
+        .filter((x) => x.group_id === grp.id)
+        .map((x) => ({ id: x.id as string, name: txt(x.name), price: amt(x.price), noun: nounOf(txt(x.unit)) })),
+    }))
+    .filter((grp) => grp.items.length > 0);
+
+  // 패키지: 패키지에 정해 둔 개당 금액(0=무료 포함)을 그대로 가져옵니다.
+  const byId = new Map(items.map((x) => [x.id as string, x]));
+  const pkgs: QuotePkg[] = (p.data ?? []).map((x) => {
+    const prices = (x.prices ?? {}) as Record<string, string>;
+    const qty = (x.qty ?? {}) as Record<string, number>;
+    const lines: PresetLine[] = [];
+    for (const id of (x.item_ids ?? []) as string[]) {
+      const it = byId.get(id);
+      if (!it) continue;
+      const u = amt(prices[id] ?? it.price);
+      lines.push({
+        name: txt(it.name), qty: qty[id] ?? 1, unit: u == null ? '' : String(u),
+        list: amt(it.price), noun: nounOf(txt(it.unit)),
+      });
+    }
+    for (const e of (x.extras ?? []) as { name: string; price?: string }[]) {
+      const u = amt(e.price);
+      lines.push({ name: e.name, qty: 1, unit: u == null ? '' : String(u), list: null, noun: '' });
+    }
+    return { id: x.id as string, label: `EX ${x.num} · ${txt(x.name)}`, lines };
+  });
+
+  return (
+    <div className="hr-pn-body">
+      <h1>견적서 만들기</h1>
+      <p className="hr-lead">의뢰인에게 보낼 프로젝트 견적서를 곡별로 정리해서 PNG 이미지로 저장합니다.</p>
+      <Help>
+        <p>
+          <b>곡별로 나눕니다.</b> 곡을 추가하고, 곡마다 단가표·패키지에서 항목을 고르거나 직접 입력하세요.
+          비슷한 곡은 &quot;복제&quot;로 빠르게 만들 수 있습니다.
+        </p>
+        <p>
+          <b>개당 금액</b>은 단가표 금액이 채워지며 바꿀 수 있습니다. <b>0은 무료</b>(정가가 취소선으로 같이 나옴),
+          <b>비우면 &quot;협의&quot;</b>로 표시되고 합계에서 빠집니다.
+        </p>
+        <p>
+          묶음 할인처럼 합계를 조정할 땐 &quot;할인/조정&quot;에 줄을 추가하세요. 할인은 <b>-50000</b>처럼 마이너스로 적습니다.
+          곡이 많으면 오른쪽 미리보기에서 <b>요약</b> 보기를 쓰면 이미지가 짧아집니다.
+        </p>
+        <p>입력한 내용은 이 브라우저에만 임시 저장되며 서버에는 올라가지 않습니다.</p>
+      </Help>
+      <QuoteMaker groups={groups} pkgs={pkgs} />
+    </div>
+  );
+}
