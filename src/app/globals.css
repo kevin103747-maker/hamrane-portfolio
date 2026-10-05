@@ -1757,3 +1757,11 @@ section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
   .tools:has(> .tsep) > .tsep { display: none; }
   .tools:has(> .tsep) > .chips { order: 3; flex: 1 0 100%; }
 }
+/* ───── PC 상단 메뉴: 영문 글자 폭 기준으로 간격 맞추기 + Contact만 따로 띄우기 ───── */
+@media (hover: hover) and (min-width: 1081px) {
+  .menu .ml { position: relative; overflow-x: visible; overflow-y: clip; }
+  .menu .ml-ko { grid-area: auto; position: absolute; top: 0; left: 50%; translate: -50% 0; }
+
+  /* Contact는 앞의 네 메뉴보다 조금 더 떨어뜨립니다 (기본 간격 30px + 16px) */
+  .menu > a:last-child { margin-left: 16px; }
+}
