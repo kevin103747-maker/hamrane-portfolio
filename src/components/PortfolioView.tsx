@@ -20,6 +20,41 @@ function subscribeMobile(cb: () => void) {
 const useIsMobile = () =>
   useSyncExternalStore(subscribeMobile, () => window.matchMedia(MOBILE_QUERY).matches, () => false);
 
+/** 옆으로 미는 줄. 더 볼 내용이 있는 쪽 끝에 그림자와 › 버튼을 보여 "밀 수 있다"는 걸 알려줍니다. */
+function ScrollRow({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [edge, setEdge] = useState({ l: false, r: false });
+  const update = () => {
+    const el = ref.current;
+    if (!el) return;
+    const l = el.scrollLeft > 4;
+    const r = el.scrollLeft + el.clientWidth < el.scrollWidth - 4;
+    setEdge((e) => (e.l === l && e.r === r ? e : { l, r }));
+  };
+  useLayoutEffect(update); // 칩 내용이 바뀔 때마다 다시 계산
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return (
+    <div className={`hr-sr${edge.l ? ' l' : ''}${edge.r ? ' r' : ''}`}>
+      <div ref={ref} className={`hr-sr-row ${className}`} onScroll={update}>{children}</div>
+      {edge.r && (
+        <button
+          type="button"
+          className="hr-sr-next"
+          aria-label="오른쪽으로 더 보기"
+          onClick={() => ref.current?.scrollBy({ left: ref.current.clientWidth * 0.6, behavior: 'smooth' })}
+        >›</button>
+      )}
+    </div>
+  );
+}
+
 /** 여러 개 선택 가능한 드롭다운 */
 function Multi({ label, options, value, onChange }: {
   label: string; options: { id: string; name: string }[]; value: string[]; onChange: (v: string[]) => void;
@@ -84,7 +119,8 @@ function Pager({ page, pages, onGo }: { page: number; pages: number; onGo: (n: n
 
 export function PortfolioView() {
   const s = useSite();
-  const pageSize = useIsMobile() ? MOBILE_PAGE_SIZE : PAGE_SIZE;
+  const isMobile = useIsMobile();
+  const pageSize = isMobile ? MOBILE_PAGE_SIZE : PAGE_SIZE;
   const [q, setQ] = useState('');
   const [groupId, setGroupId] = useState<string | null>(null);
   const [partId, setPartId] = useState<string | null>(null);
@@ -92,6 +128,7 @@ export function PortfolioView() {
   const [aType, setAType] = useState<string[]>([]);
   const [sort, setSort] = useState<'new' | 'old'>('new');
   const [expanded, setExpanded] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false); // 휴대폰: 세부 필터(사용처·아티스트 유형·정렬) 펼침 여부
   const [pg, setPg] = useState<{ key: string; n: number }>({ key: '', n: 1 });
   const [hydrated, setHydrated] = useState(false); // 주소에서 필터를 읽어오기 전에는 주소를 건드리지 않습니다
   const allRef = useRef<HTMLDivElement>(null);
@@ -112,6 +149,7 @@ export function PortfolioView() {
     const so: 'new' | 'old' = p.get('sort') === 'old' ? 'old' : 'new';
     const n = Math.max(1, parseInt(p.get('page') ?? '1', 10) || 1);
     setQ(qq); setGroupId(g); setPartId(pt); setUsage(u); setAType(a); setSort(so);
+    if (u.length || a.length || so === 'old') setMoreOpen(true); // 주소로 들어온 세부 필터는 접어 두지 않고 보여줍니다
     if (n > 1) setPg({ key: JSON.stringify([qq, g, pt, u, a, so]), n });
     setHydrated(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -180,6 +218,7 @@ export function PortfolioView() {
   const scopeName = partId ? s.partName(partId) : groupId ? s.groupName(groupId) : '';
   const active = !!(q || groupId || partId || usage.length || aType.length);
   const subParts = groupId ? s.parts.filter((p) => p.groupId === groupId) : [];
+  const moreCount = usage.length + aType.length + (sort === 'old' ? 1 : 0); // "필터" 버튼에 표시할 적용 개수
 
   /* 대표작 펼치기: 첫 줄 높이 + 둘째 줄 윗부분만 보이게 */
   const featRef = useRef<HTMLDivElement>(null);
@@ -202,53 +241,97 @@ export function PortfolioView() {
 
   const reset = () => { setQ(''); setGroupId(null); setPartId(null); setUsage([]); setAType([]); };
 
+  /* ── 필터 도구 조각들: PC와 휴대폰이 같은 조각을 서로 다른 배치로 씁니다 ── */
+  const searchBox = (
+    <label className="search">
+      <svg className="ico" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" strokeWidth="2" />
+        <path d="m20 20-4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+      <input
+        ref={searchRef}
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key !== 'Escape') return;
+          if (q) setQ('');
+          else e.currentTarget.blur();
+        }}
+        aria-keyshortcuts="/"
+        placeholder="곡 제목, 아티스트 검색"
+      />
+    </label>
+  );
+
+  const groupChips = (
+    <>
+      <button className={`chip${!groupId ? ' on' : ''}`} onClick={() => { setGroupId(null); setPartId(null); }}>전체</button>
+      {s.groups.map((g) => (
+        <button key={g.id} className={`chip${groupId === g.id ? ' on' : ''}`} onClick={() => { setGroupId(g.id); setPartId(null); }}>
+          {s.t(g.name)}
+        </button>
+      ))}
+    </>
+  );
+
+  const partChips = (
+    <>
+      <button className={`chip${!partId ? ' on' : ''}`} onClick={() => setPartId(null)}>전체</button>
+      {subParts.map((p) => (
+        <button key={p.id} className={`chip${partId === p.id ? ' on' : ''}`} onClick={() => setPartId(p.id)}>{s.t(p.name)}</button>
+      ))}
+    </>
+  );
+
+  const moreFilters = (
+    <>
+      <Multi label="사용처 유형" options={s.usageTypes.map((u) => ({ id: u.id, name: s.t(u.name) }))} value={usage} onChange={setUsage} />
+      <Multi label="아티스트 유형" options={s.artistTypes.map((u) => ({ id: u.id, name: s.t(u.name) }))} value={aType} onChange={setAType} />
+      <select className="sel" value={sort} onChange={(e) => setSort(e.target.value as 'new' | 'old')} aria-label="정렬">
+        <option value="new">최신순</option>
+        <option value="old">오래된순</option>
+      </select>
+    </>
+  );
+
   return (
     <>
       <div className="toolbar">
-        <div className="wrap tools">
-          <label className="search">
-            <svg className="ico" viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" strokeWidth="2" />
-              <path d="m20 20-4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-            <input
-              ref={searchRef}
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key !== 'Escape') return;
-                if (q) setQ('');
-                else e.currentTarget.blur();
-              }}
-              aria-keyshortcuts="/"
-              placeholder="곡 제목, 아티스트 검색"
-            />
-          </label>
-          <div className="chips">
-            <button className={`chip${!groupId ? ' on' : ''}`} onClick={() => { setGroupId(null); setPartId(null); }}>전체</button>
-            {s.groups.map((g) => (
-              <button key={g.id} className={`chip${groupId === g.id ? ' on' : ''}`} onClick={() => { setGroupId(g.id); setPartId(null); }}>
-                {s.t(g.name)}
+        {isMobile ? (
+          <div className="wrap tools-m">
+            {/* 윗줄: 검색창 + 필터 버튼 */}
+            <div className="tools-m-top">
+              {searchBox}
+              <button
+                type="button"
+                className={`hr-ftog${moreCount ? ' on' : ''}`}
+                aria-expanded={moreOpen}
+                aria-controls="tools-more"
+                onClick={() => setMoreOpen(!moreOpen)}
+              >
+                필터{moreCount > 0 && <b>{moreCount}</b>}
               </button>
-            ))}
-          </div>
-          <span className="tsep" />
-          <Multi label="사용처 유형" options={s.usageTypes.map((u) => ({ id: u.id, name: s.t(u.name) }))} value={usage} onChange={setUsage} />
-          <Multi label="아티스트 유형" options={s.artistTypes.map((u) => ({ id: u.id, name: s.t(u.name) }))} value={aType} onChange={setAType} />
-          <select className="sel" value={sort} onChange={(e) => setSort(e.target.value as 'new' | 'old')} aria-label="정렬">
-            <option value="new">최신순</option>
-            <option value="old">오래된순</option>
-          </select>
-        </div>
-        {groupId && (
-          <div className="wrap">
-            <div className="chips sub">
-              <button className={`chip${!partId ? ' on' : ''}`} onClick={() => setPartId(null)}>전체</button>
-              {subParts.map((p) => (
-                <button key={p.id} className={`chip${partId === p.id ? ' on' : ''}`} onClick={() => setPartId(p.id)}>{s.t(p.name)}</button>
-              ))}
             </div>
+            {/* 필터를 눌렀을 때만 그려지는 패널 */}
+            {moreOpen && <div id="tools-more" className="tools-m-more">{moreFilters}</div>}
+            {/* 분야 칩: 옆으로 미는 줄 */}
+            <ScrollRow>{groupChips}</ScrollRow>
+            {groupId && <ScrollRow className="sub">{partChips}</ScrollRow>}
           </div>
+        ) : (
+          <>
+            <div className="wrap tools">
+              {searchBox}
+              <div className="chips">{groupChips}</div>
+              <span className="tsep" />
+              {moreFilters}
+            </div>
+            {groupId && (
+              <div className="wrap">
+                <div className="chips sub">{partChips}</div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -289,16 +372,15 @@ export function PortfolioView() {
           {shown.length
             ? shown.map((w) => <WorkCard key={w.id} work={w} />)
             : (
-             <div className="empty">
-  {feats.length ? COPY.emptyExtra : active ? COPY.emptySearch : COPY.emptyAll}
-  {active && (
-    <>
-      <br />
-      <button className="hr-empty-btn" onClick={reset}>{COPY.resetFilters}</button>
-    </>
-  )}
-</div>
-
+              <div className="empty">
+                {feats.length ? COPY.emptyExtra : active ? COPY.emptySearch : COPY.emptyAll}
+                {active && (
+                  <>
+                    <br />
+                    <button className="hr-empty-btn" onClick={reset}>{COPY.resetFilters}</button>
+                  </>
+                )}
+              </div>
             )}
         </div>
         <Pager page={page} pages={pages} onGo={goPage} />

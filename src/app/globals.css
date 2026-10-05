@@ -1687,3 +1687,49 @@ section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
   .hr-pgn button { min-width: 34px; height: 40px; padding: 0 8px; }
   .hr-pgn .gap { padding: 0 2px; }
 }
+
+/* ───── 휴대폰 헤더: 전용 문의 버튼 ───── */
+.cta-m { display: none; }
+@media (max-width: 560px) {
+  .gnb .right { gap: 8px; }
+  .cta-m { display: inline-flex; align-items: center; justify-content: center; flex: none; height: 32px; padding: 0 12px;
+    border-radius: 9px; background: var(--mint-soft); color: var(--mint); font-size: 12.5px; font-weight: 700; white-space: nowrap; }
+  .cta-m:active { background: var(--mint); color: var(--mint-ink); }
+  .gnb .logo { min-width: 0; flex-shrink: 1; }
+}
+@media (max-width: 400px) {
+  .gnb .logo .lg { height: 20px; }
+  .cta-m { padding: 0 10px; }
+}
+
+/* ───── 단가표 아래 안내 문구의 문의 링크 ───── */
+.hr-pt-link { margin-left: 6px; color: var(--mint); font-weight: 600; white-space: nowrap; }
+.hr-pt-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* ───── 옆으로 미는 줄(분야 칩): 끝에 그림자와 › 버튼 ───── */
+.hr-sr { position: relative; min-width: 0; }
+.hr-sr-row { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.hr-sr-row::-webkit-scrollbar { display: none; }
+.hr-sr-row .chip { flex: none; white-space: nowrap; }
+.hr-sr-row.sub .chip { height: 36px; font-size: 12.5px; }
+.hr-sr.r::after, .hr-sr.l::before { content: ''; position: absolute; top: 0; bottom: 0; width: 44px; pointer-events: none; }
+.hr-sr.r::after { right: 0; background: linear-gradient(90deg, transparent, var(--bg) 85%); }
+.hr-sr.l::before { left: 0; background: linear-gradient(270deg, transparent, var(--bg) 85%); }
+.hr-sr-next { position: absolute; right: 0; top: 50%; transform: translateY(-50%); z-index: 1;
+  width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%;
+  border: 1px solid var(--line-2); background: var(--card); color: var(--mint); font-size: 18px; line-height: 1; }
+
+/* ───── 포트폴리오 필터 (휴대폰) ───── */
+.tools-m { display: grid; gap: 8px; }
+.tools-m-top { display: flex; align-items: center; gap: 8px; }
+.tools-m-top .search { flex: 1 1 0; min-width: 0; width: auto; }
+.hr-ftog { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 42px; padding: 0 14px;
+  border: 1px solid var(--line); background: var(--card); color: var(--text-2); border-radius: 11px; font-size: 13px; }
+.hr-ftog b { font: 600 11px var(--f-mono); color: var(--mint-ink); background: var(--mint); border-radius: 99px; padding: 1px 7px; }
+.hr-ftog.on, .hr-ftog[aria-expanded='true'] { color: var(--mint); border-color: var(--mint); }
+.tools-m-more { position: relative; display: grid; grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: 6px;
+  padding: 8px; border: 1px solid var(--line); background: var(--card); border-radius: 12px; }
+.tools-m-more .dd { position: static; }
+.tools-m-more .dd-btn { width: 100%; justify-content: center; padding: 0 8px; background: var(--card-2); }
+.tools-m-more .sel { width: 100%; background: var(--card-2); }
+.tools-m-more .dd-pop { left: 0; right: 0; min-width: 0; top: calc(100% + 6px); }

@@ -51,6 +51,8 @@ export function Header() {
           <a className="crew" href={links.crewUrl} target="_blank" rel="noopener noreferrer">Team VIRTUALITY Sounds <Icon name="arrow" className="" /></a>
           <span className="vsep" />
           <a className="cta" href="#contact">문의하기</a>
+          {/* 휴대폰(560px 이하) 전용 문의 버튼. 위의 .cta는 이 폭에서 숨겨지므로 따로 둡니다. */}
+          <a className="cta-m" href="#contact">문의하기</a>
           {LOCALES.length > 1 && (
             <select className="lang" aria-label="언어" value={DEFAULT_LOCALE} onChange={(e) => router.push(localePath(e.target.value, path))}>
               {LOCALES.map((l) => <option key={l.code} value={l.code}>{l.label}</option>)}

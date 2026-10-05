@@ -91,17 +91,15 @@ export default async function Pricing() {
         title="외주 단가"
         en="Pricing"
         desc="파트별 기본 단가입니다. 곡의 난이도와 작업량에 따라 달라지므로, 곡을 보내주시면 확인 후 정확한 견적을 드립니다."
-      >
-      </PageHead>
+      />
 
       <section><div className="wrap">
         <RateBoard groups={board} />
 
-        <div className="hr-pt-end">
-          <p>찾는 작업이 없거나 조합이 궁금하시면 편하게 물어보세요.</p>
-          <a className="hr-pt-cta sm" href="#contact">문의하기 →</a>
-        </div>
-
+     <p className="hr-pt-note sm">
+          찾는 작업이 없거나 조합이 궁금하시면 편하게 물어보세요. <a className="hr-pt-link" href="#contact">문의하기 →</a>
+        </p>
+        
         <BundleBox
           tiers={discounts.bundle}
           yes={groups.filter((g) => discounts.groups[g.id]?.bundle).map((g) => tx(g.name))}
