@@ -1,4 +1,4 @@
-// src/app/hr-admin/(panel)/guide/actions.ts — 의뢰 안내 문구 저장
+// src/app/hr-admin/(panel)/guide/actions.ts — 의뢰 가이드 문구 저장
 'use server';
 import { redirect } from 'next/navigation';
 import { requireAdmin } from '@/lib/auth/guard';
@@ -43,11 +43,11 @@ export async function saveGuide(fd: FormData) {
     redirect(`${BACK}?ok=reset`);
   }
 
-  // 처음 의뢰 안내 박스
+  // 페이지 맨 위 인사말
   const ftTitle = one(text(fd, 'ftTitle'));
   const ftBody = one(text(fd, 'ftBody'));
-  tooLong('처음 의뢰 안내 제목', ftTitle, L.ftTitle);
-  tooLong('처음 의뢰 안내 본문', ftBody, L.ftBody);
+  tooLong('인사말 제목', ftTitle, L.ftTitle);
+  tooLong('인사말 소개 문장', ftBody, L.ftBody);
 
   // 진행 순서: 완전히 빈 줄은 버립니다.
   const steps: GuideSettings['steps'] = [];
@@ -61,6 +61,24 @@ export async function saveGuide(fd: FormData) {
     steps.push({ title, desc, note });
   });
   if (steps.length > L.stepMax) fail(`진행 단계는 ${L.stepMax}개까지 가능합니다.`);
+
+  // 가격 조율 안내
+  const ptTitle = one(text(fd, 'ptTitle'));
+  const ptBody = multi(text(fd, 'ptBody'));
+  tooLong('가격 조율 안내 제목', ptTitle, L.ptTitle);
+  tooLong('가격 조율 안내 본문', ptBody, L.ptBody);
+
+  // 안심 포인트 카드
+  const assure: GuideSettings['assure'] = [];
+  table(fd, ['assureTitle', 'assureDesc']).forEach(([t, d], i) => {
+    const title = one(t), desc = multi(d);
+    if (!title && !desc) return;
+    if (!title || !desc) fail(`${i + 1}번째 안심 카드: 제목과 설명을 모두 입력하세요. (필요 없으면 삭제 버튼을 누르세요)`);
+    tooLong(`${i + 1}번째 안심 카드 제목`, title, L.assureTitle);
+    tooLong(`${i + 1}번째 안심 카드 설명`, desc, L.assureDesc);
+    assure.push({ title, desc });
+  });
+  if (assure.length > L.assureMax) fail(`안심 카드는 ${L.assureMax}개까지 가능합니다.`);
 
   // 자주 묻는 질문
   const faq: GuideSettings['faq'] = [];
@@ -88,6 +106,8 @@ export async function saveGuide(fd: FormData) {
   const value: GuideSettings = {
     firstTime: { title: ftTitle, body: ftBody },
     steps,
+    priceTalk: { title: ptTitle, body: ptBody },
+    assure,
     faq,
     contact: { lead, reply, ask, fields },
   };

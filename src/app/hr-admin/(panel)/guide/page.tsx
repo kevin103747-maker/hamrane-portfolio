@@ -1,4 +1,4 @@
-// src/app/hr-admin/(panel)/guide/page.tsx — 의뢰 안내 문구 수정
+// src/app/hr-admin/(panel)/guide/page.tsx — 의뢰 가이드 문구 수정
 import { redirect } from 'next/navigation';
 import { requireAdmin } from '@/lib/auth/guard';
 import { can } from '@/lib/auth/permissions';
@@ -20,9 +20,10 @@ export default async function GuidePage({
 
   return (
     <div className="hr-pn-body">
-      <h1>의뢰 안내 문구</h1>
+      <h1>의뢰 가이드 문구</h1>
       <p>
-        단가 페이지의 안심 문구·진행 순서·자주 묻는 질문과, 모든 페이지 하단 문의 영역의 안내를 고칩니다.
+        의뢰 가이드 페이지(/guide)의 인사말·진행 순서·가격 조율·안심 포인트·자주 묻는 질문과,
+        모든 페이지 하단 문의 영역의 안내를 고칩니다.
         내용을 비우거나 항목을 모두 삭제하면 사이트에서 그 부분이 표시되지 않습니다.
         실제로 지킬 수 있는 조건만 적어 주세요.
       </p>
@@ -38,22 +39,22 @@ export default async function GuidePage({
 
       <form action={saveGuide} className="hr-card hr-f">
         <fieldset>
-          <legend>처음 의뢰 안내 (단가 페이지 맨 위 박스)</legend>
+          <legend>페이지 맨 위 인사말 (의뢰 가이드 제목과 소개)</legend>
           <CountedField name="ftTitle" label="제목" defaultValue={g.firstTime.title} soft={20} max={L.ftTitle} />
-          <CountedField name="ftBody" label="본문" defaultValue={g.firstTime.body} soft={120} max={L.ftBody} rows={2} />
+          <CountedField name="ftBody" label="소개 문장" defaultValue={g.firstTime.body} soft={200} max={L.ftBody} rows={3} />
         </fieldset>
 
         <fieldset>
-          <legend>의뢰 진행 순서 (단가 페이지, 최대 {L.stepMax}단계)</legend>
+          <legend>의뢰 진행 순서 (최대 {L.stepMax}단계)</legend>
           <ListEditor
             initial={g.steps}
             max={L.stepMax}
             itemLabel="단계"
             addLabel="+ 단계 추가"
-            emptyNote="진행 순서가 없으면 단가 페이지에서 이 영역이 표시되지 않습니다."
+            emptyNote="진행 순서가 없으면 가이드 페이지에서 이 영역이 표시되지 않습니다."
             fields={[
               { key: 'title', name: 'stepTitle', label: '제목', max: L.stepTitle },
-              { key: 'desc', name: 'stepDesc', label: '설명', max: L.stepDesc, rows: 2 },
+              { key: 'desc', name: 'stepDesc', label: '설명', max: L.stepDesc, rows: 3 },
               {
                 key: 'note', name: 'stepNote', label: '덧붙임 한 줄 (선택. 비우면 표시 안 함)', max: L.stepNote,
                 placeholder: '예) 견적 확인까지 비용은 들지 않습니다',
@@ -63,13 +64,36 @@ export default async function GuidePage({
         </fieldset>
 
         <fieldset>
-          <legend>자주 묻는 질문 (단가 페이지 맨 아래, 최대 {L.faqMax}개)</legend>
+          <legend>가격 조율 안내 (제목과 본문 모두 비우면 표시 안 함)</legend>
+          <CountedField name="ptTitle" label="제목" defaultValue={g.priceTalk.title} soft={30} max={L.ptTitle} />
+          <CountedField
+            name="ptBody" label="본문 (줄바꿈 가능)" defaultValue={g.priceTalk.body} soft={500} max={L.ptBody} rows={5}
+          />
+        </fieldset>
+
+        <fieldset>
+          <legend>안심 포인트 카드 (최대 {L.assureMax}개)</legend>
+          <ListEditor
+            initial={g.assure}
+            max={L.assureMax}
+            itemLabel="카드"
+            addLabel="+ 카드 추가"
+            emptyNote="카드가 없으면 가이드 페이지에서 이 영역이 표시되지 않습니다."
+            fields={[
+              { key: 'title', name: 'assureTitle', label: '제목', max: L.assureTitle, placeholder: '예) 문의만으로 확정되지 않아요' },
+              { key: 'desc', name: 'assureDesc', label: '설명', max: L.assureDesc, rows: 3, placeholder: '실제로 지킬 수 있는 내용만 적어 주세요' },
+            ]}
+          />
+        </fieldset>
+
+        <fieldset>
+          <legend>자주 묻는 질문 (최대 {L.faqMax}개)</legend>
           <ListEditor
             initial={g.faq}
             max={L.faqMax}
             itemLabel="질문"
             addLabel="+ 질문 추가"
-            emptyNote="질문이 없으면 단가 페이지에서 이 영역이 표시되지 않습니다."
+            emptyNote="질문이 없으면 가이드 페이지에서 이 영역이 표시되지 않습니다."
             fields={[
               { key: 'q', name: 'faqQ', label: '질문', max: L.faqQ, placeholder: '예) 수정은 몇 번까지 가능한가요?' },
               { key: 'a', name: 'faqA', label: '답변 (줄바꿈 가능)', max: L.faqA, rows: 4, placeholder: '실제 조건을 적어 주세요' },

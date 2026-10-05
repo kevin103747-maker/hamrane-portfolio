@@ -58,9 +58,10 @@ export default async function Home() {
               <p className="hx-roles">
                 {intro.roles}<i>/</i>
               </p>
-              <Link className="hr-hero-cta" href="/pricing#process">
-                의뢰가 처음이신가요? <b>진행 방식 보기</b> →
+              <Link className="hr-hero-cta" href="/guide">
+                의뢰가 처음이신가요? <b>의뢰 가이드 보기</b> →
               </Link>
+
               {(status.state || stats) && (
                 <div className="hr-trust">
                   <StatusBadge status={status} />

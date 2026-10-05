@@ -21,7 +21,7 @@ export const MENU: MenuSection[] = [
     sub: '의뢰자가 가장 먼저 보는 안내',
     items: [
       { href: '/hr-admin/status', label: '의뢰 상태', desc: '지금 의뢰 가능 여부, 한 줄 메모, 홈 작업 현황', perm: 'settings' },
-      { href: '/hr-admin/guide', label: '의뢰 안내', desc: '진행 순서, 자주 묻는 질문, 문의 안내 문구', perm: 'settings' },
+      { href: '/hr-admin/guide', label: '의뢰 가이드', desc: '진행 순서, 가격 조율, 안심 포인트, 자주 묻는 질문, 문의 안내 문구', perm: 'settings' },
     ],
   },
   {

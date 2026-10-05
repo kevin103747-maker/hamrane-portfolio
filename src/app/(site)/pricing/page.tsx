@@ -1,11 +1,10 @@
 // src/app/(site)/pricing/page.tsx
+import Link from 'next/link';
 import { getSiteData } from '@/lib/site-data';
-import { getGuideSettings } from '@/lib/guide-settings';
 import { tx } from '@/lib/i18n';
 import { PageHead, SectionHead } from '@/components/Heads';
 import { RateBoard, type BoardGroup } from '@/components/RateBoard';
 import { PackageList, type PackageView, type PkgLine } from '@/components/PackageList';
-import { FaqList } from '@/components/Guide';
 import { turnFor } from '@/lib/turnaround';
 import { getTurnaround } from '@/lib/turnaround-settings';
 import { getDiscounts } from '@/lib/discounts-settings';
@@ -15,8 +14,8 @@ import { BundleBox } from '@/components/BundleBox';
 export const metadata = { title: 'Pricing' };
 
 export default async function Pricing() {
-  const [d, guide, turnaround, discounts] = await Promise.all([
-    getSiteData(), getGuideSettings(), getTurnaround(), getDiscounts(),
+    const [d, turnaround, discounts] = await Promise.all([
+    getSiteData(), getTurnaround(), getDiscounts(),
   ]);
   const item = (id: string) => d.rateItems.find((i) => i.id === id);
   // 단가 항목이 하나라도 있는 분야만 표시합니다. (리믹스처럼 포트폴리오 전용 분야는 단가 항목을 넣지 않으면 숨겨집니다.)
@@ -63,9 +62,6 @@ export default async function Pricing() {
     };
   });
 
-  const hasFaq =
-    guide.faq.length > 0 || guide.steps.length > 0 || !!(guide.firstTime.title || guide.firstTime.body);
-
   return (
     <>
       <PageHead
@@ -99,11 +95,12 @@ export default async function Pricing() {
         <PackageList items={packages} />
       </div></section>
 
-      {hasFaq && (
-        <section className="hr-faq-sec"><div className="wrap">
-          <FaqList faq={guide.faq} steps={guide.steps} first={guide.firstTime} />
-        </div></section>
-      )}
+            <section className="hr-faq-sec"><div className="wrap">
+        <Link className="hr-gp-banner" href="/guide">
+          <span><b>처음 의뢰하시나요?</b> 진행 방식, 가격 조율, 자주 묻는 질문을 정리해 두었어요.</span>
+          <span className="go">의뢰 가이드 보기 →</span>
+        </Link>
+      </div></section>
     </>
   );
 }

@@ -7,7 +7,7 @@ import { Icon } from './Icons';
 import { useSite } from './SiteProvider';
 import { LOCALES, DEFAULT_LOCALE, localePath, stripLocale } from '@/lib/i18n';
 
-const MENU = [['/', 'Home'], ['/portfolio', 'Portfolio'], ['/pricing', 'Pricing'], ['#contact', 'Contact']] as const;
+const MENU = [['/', 'Home'], ['/portfolio', 'Portfolio'], ['/pricing', 'Pricing'], ['/guide', 'Guide'], ['#contact', 'Contact']] as const;
 
 export function Header() {
   const { links } = useSite();

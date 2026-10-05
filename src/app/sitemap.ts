@@ -8,6 +8,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/`, priority: 1 },
     { url: `${SITE_URL}/portfolio`, priority: 0.8 },
     { url: `${SITE_URL}/pricing`, priority: 0.8 },
+    { url: `${SITE_URL}/guide`, priority: 0.7 },
   ];
 }
 

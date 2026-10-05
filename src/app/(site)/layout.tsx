@@ -25,7 +25,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
             <div className="wrap">
               <span>© 2026 HamRanè</span>
               <nav>
-                <Link href="/">Home</Link><Link href="/portfolio">Portfolio</Link><Link href="/pricing">Pricing</Link>
+                <Link href="/">Home</Link><Link href="/portfolio">Portfolio</Link><Link href="/pricing">Pricing</Link><Link href="/guide">Guide</Link>
                 <a href={data.links.crewUrl} target="_blank" rel="noopener noreferrer">@VRSounds</a>
               </nav>
             </div>
