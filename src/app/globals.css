@@ -1765,3 +1765,5 @@ section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
   /* Contact는 앞의 네 메뉴보다 조금 더 떨어뜨립니다 (기본 간격 30px + 16px) */
   .menu > a:last-child { margin-left: 16px; }
 }
+/* ───── 외주 단가 페이지: 하단 문의 안내 문구는 왼쪽 정렬 ───── */
+.hr-pt-note.sm { text-align: left; }
