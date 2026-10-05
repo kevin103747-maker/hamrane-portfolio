@@ -1,4 +1,4 @@
-// src/app/hr-admin/(panel)/quote/page.tsx — 프로젝트 견적서(PNG) 만들기
+// src/app/hr-admin/(panel)/quote/page.tsx — 프로젝트 견적서·명세서(PNG) 만들기
 import { redirect } from 'next/navigation';
 import { requireAdmin } from '@/lib/auth/guard';
 import { can } from '@/lib/auth/permissions';
@@ -66,8 +66,8 @@ export default async function QuotePage() {
 
   return (
     <div className="hr-pn-body">
-      <h1>견적서 만들기</h1>
-      <p className="hr-lead">의뢰인에게 보낼 프로젝트 견적서를 곡별로 정리해서 PNG 이미지로 저장합니다.</p>
+      <h1>견적서·명세서</h1>
+      <p className="hr-lead">의뢰인에게 보낼 견적서와 작업 후 명세서를 곡별로 정리해서 PNG 이미지로 저장합니다.</p>
       <Help>
         <p>
           <b>곡별로 나눕니다.</b> 곡을 추가하고, 곡마다 단가표·패키지에서 항목을 고르거나 직접 입력하세요.
@@ -81,7 +81,15 @@ export default async function QuotePage() {
           묶음 할인처럼 합계를 조정할 땐 &quot;할인/조정&quot;에 줄을 추가하세요. 할인은 <b>-50000</b>처럼 마이너스로 적습니다.
           곡이 많으면 오른쪽 미리보기에서 <b>요약</b> 보기를 쓰면 이미지가 짧아집니다.
         </p>
-        <p>입력한 내용은 이 브라우저에만 임시 저장되며 서버에는 올라가지 않습니다.</p>
+        <p>
+          <b>명세서</b>는 같은 내용에서 문서 종류만 바꿔 만듭니다. 작업하면서 달라진 수량·금액을 고치고,
+          작업 완료일·입금 기한·입금 계좌와 선입금(기 입금액)을 적으면 남은 금액이 계산됩니다.
+          협의로 남은 항목은 확정 금액으로 바꿔 주세요.
+        </p>
+        <p>
+          입력한 내용은 이 브라우저에만 임시 저장되며 서버에는 올라가지 않습니다.
+          견적서를 보낼 때 <b>작업 파일 저장</b>(.json)도 같이 받아 두면, 나중에 <b>불러오기</b>로 이어서 명세서를 만들 수 있습니다.
+        </p>
       </Help>
       <QuoteMaker groups={groups} pkgs={pkgs} />
     </div>

@@ -1,4 +1,4 @@
-// src/components/admin/QuoteMaker.tsx — 프로젝트 견적서: 입력 → 캔버스 미리보기 → PNG 저장/복사
+// src/components/admin/QuoteMaker.tsx — 견적서·명세서: 입력 → 캔버스 미리보기 → PNG 저장/복사
 'use client';
 import { useEffect, useRef, useState } from 'react';
 
@@ -13,12 +13,25 @@ type Song = { id: string; title: string; lines: Line[] };
 type Adj = { id: string; label: string; amount: string };
 type Theme = 'light' | 'dark';
 type Mode = 'detail' | 'summary';
+type Kind = 'quote' | 'statement';
 type Doc = {
-  client: string; project: string; date: string; valid: string;
+  kind: Kind;
+  client: string; project: string; date: string;
+  valid: string; // 견적서: 유효기간
+  done: string; // 명세서: 작업 완료일 (YYYY-MM-DD)
+  due: string; // 명세서: 입금 기한
+  bank: string; // 명세서: 입금 계좌
+  paid: string; // 명세서: 기 입금액(선입금), 숫자 글자
   songs: Song[]; adjs: Adj[]; notes: string; theme: Theme; mode: Mode;
 };
 
 const KEY = 'hr-quote-draft-v1';
+const KIND_NAME: Record<Kind, string> = { quote: '견적서', statement: '명세서' };
+const DEFAULT_NOTES: Record<Kind, string> = {
+  quote: '• 금액은 VAT 포함입니다.\n• 곡의 난이도와 작업량에 따라 달라질 수 있으며, 확인 후 최종 금액을 안내드립니다.',
+  statement: '• 금액은 VAT 포함입니다.\n• 문의 사항은 편하게 연락 주세요.',
+};
+
 const uid = () => Math.random().toString(36).slice(2, 9);
 const won = (n: number) => n.toLocaleString('ko-KR');
 const toN = (s: string): number | null => {
@@ -38,12 +51,64 @@ const songTotal = (s: Song) => s.lines.reduce((t, l) => t + (lineTotal(l) ?? 0),
 const today = () => new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
 
 const blankSong = (): Song => ({ id: uid(), title: '', lines: [] });
-const blankDoc = (): Doc => ({
-  client: '', project: '', date: '', valid: '발행일로부터 14일',
-  songs: [blankSong()], adjs: [],
-  notes: '• 금액은 VAT 포함입니다.\n• 곡의 난이도와 작업량에 따라 달라질 수 있으며, 확인 후 최종 금액을 안내드립니다.',
-  theme: 'light', mode: 'detail',
+const blankDoc = (kind: Kind = 'quote'): Doc => ({
+  kind, client: '', project: '', date: '', valid: '발행일로부터 14일',
+  done: '', due: '', bank: '', paid: '',
+  songs: [blankSong()], adjs: [], notes: DEFAULT_NOTES[kind], theme: 'light', mode: 'detail',
 });
+
+/** 저장본·불러온 파일을 안전하게 읽습니다. 형식이 틀리면 null, 빠진 값은 기본값으로 채웁니다. */
+const str = (v: unknown) => (typeof v === 'string' ? v : '');
+function normalize(raw: unknown): Doc | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const j = raw as Record<string, unknown>;
+  if (!Array.isArray(j.songs) || j.songs.length === 0) return null;
+  const kind: Kind = j.kind === 'statement' ? 'statement' : 'quote';
+  const base = blankDoc(kind);
+
+  const songs: Song[] = j.songs.map((s) => {
+    const o = (s ?? {}) as Record<string, unknown>;
+    const lines = Array.isArray(o.lines) ? o.lines : [];
+    return {
+      id: str(o.id) || uid(),
+      title: str(o.title),
+      lines: lines.map((l) => {
+        const q = (l ?? {}) as Record<string, unknown>;
+        const list = typeof q.list === 'number' && Number.isFinite(q.list) ? q.list : null;
+        return {
+          id: str(q.id) || uid(),
+          name: str(q.name),
+          qty: Math.min(99, Math.max(1, Math.floor(Number(q.qty)) || 1)),
+          unit: str(q.unit).replace(/[^\d]/g, ''),
+          list,
+          noun: str(q.noun),
+          note: str(q.note),
+        };
+      }),
+    };
+  });
+  const adjs: Adj[] = (Array.isArray(j.adjs) ? j.adjs : []).map((a) => {
+    const o = (a ?? {}) as Record<string, unknown>;
+    return { id: str(o.id) || uid(), label: str(o.label), amount: str(o.amount).replace(/[^\d-]/g, '') };
+  });
+
+  return {
+    kind,
+    client: str(j.client),
+    project: str(j.project),
+    date: str(j.date),
+    valid: typeof j.valid === 'string' ? j.valid : base.valid,
+    done: str(j.done),
+    due: str(j.due),
+    bank: str(j.bank),
+    paid: str(j.paid).replace(/[^\d]/g, ''),
+    songs,
+    adjs,
+    notes: typeof j.notes === 'string' ? j.notes : base.notes,
+    theme: j.theme === 'dark' ? 'dark' : 'light',
+    mode: j.mode === 'summary' ? 'summary' : 'detail',
+  };
+}
 
 /* ───────────── 이미지 그리기 ───────────── */
 const W = 1080;
@@ -78,6 +143,7 @@ function drawQuote(
 ): number {
   const p = PAL[d.theme];
   const CW = W - PAD * 2;
+  const isSt = d.kind === 'statement';
   let on = paint;
   const font = (w: number, s: number) => `${w} ${s}px ${ff}`;
 
@@ -216,38 +282,66 @@ function drawQuote(
   const adjs = d.adjs.filter((a) => adjN(a.amount) !== 0);
   const grand = songSum + adjs.reduce((t, a) => t + adjN(a.amount), 0);
   const tbd = d.songs.some((s) => s.lines.some((l) => toN(l.unit) == null));
+  const paid = isSt ? (toN(d.paid) ?? 0) : 0;
+  const remain = grand - paid;
 
   /* ── 총 금액 카드 ── */
   const totalsBlock = (x0: number, y0: number, w: number): number => {
     const ix = x0 + CARD_PAD;
     const iw = w - CARD_PAD * 2;
     let y = y0 + CARD_PAD;
-    if (adjs.length) {
-      put('곡 합계', ix, y + 18 * 1.05, 500, 18, p.ink2);
-      put(`${won(songSum)}원`, ix + iw, y + 18 * 1.05, 600, 18, p.ink, 'right');
+    const row = (label: string, value: string, color: string) => {
+      put(label, ix, y + 18 * 1.05, 500, 18, p.ink2);
+      put(value, ix + iw, y + 18 * 1.05, 600, 18, color, 'right');
       y += 36;
+    };
+
+    if (adjs.length) {
+      row('곡 합계', `${won(songSum)}원`, p.ink);
       adjs.forEach((a) => {
         const n = adjN(a.amount);
-        put(a.label.trim() || '조정', ix, y + 18 * 1.05, 500, 18, p.ink2);
-        put(`${n < 0 ? '-' : '+'}${won(Math.abs(n))}원`, ix + iw, y + 18 * 1.05, 600, 18, n < 0 ? p.accent : p.ink, 'right');
-        y += 36;
+        row(a.label.trim() || '조정', `${n < 0 ? '-' : '+'}${won(Math.abs(n))}원`, n < 0 ? p.accent : p.ink);
       });
+    }
+    if (paid > 0) {
+      row('작업 금액', `${won(grand)}원`, p.ink);
+      row('기 입금액', `-${won(paid)}원`, p.accent);
+    }
+    if (adjs.length || paid > 0) {
       y += 4;
       hline(ix, ix + iw, y);
       y += 22;
     }
-    put('총 금액', ix, y + 44 * 1.05, 600, 22, p.ink2);
-    put(`${won(grand)}원`, ix + iw, y + 44 * 1.05, 800, 44, p.accent, 'right');
+
+    const label = !isSt ? '총 금액' : remain < 0 ? '환불 금액' : paid > 0 ? '남은 금액' : '청구 금액';
+    const shown = isSt ? Math.abs(remain) : grand;
+    put(label, ix, y + 44 * 1.05, 600, 22, p.ink2);
+    put(`${won(shown)}원`, ix + iw, y + 44 * 1.05, 800, 44, p.accent, 'right');
     y += 44 * 1.3 + 6;
     put(tbd ? 'VAT 포함 · 협의 항목은 합계에서 제외' : 'VAT 포함', ix + iw, y + 15 * 1.05, 400, 15, p.ink3, 'right');
     y += 22;
     return y - y0 + CARD_PAD;
   };
 
+  /* ── 입금 계좌 카드 (명세서) ── */
+  const bank = isSt ? d.bank.trim() : '';
+  const bankBlock = (x0: number, y0: number, w: number): number => {
+    const ix = x0 + CARD_PAD;
+    const iw = w - CARD_PAD * 2;
+    let y = y0 + CARD_PAD;
+    put('입금 계좌', ix, y + 15 * 1.05, 500, 15, p.ink3);
+    y += 32;
+    wrap(bank, iw, 600, 22).forEach((ln) => {
+      put(ln, ix, y + 22 * 1.05, 600, 22, p.ink);
+      y += 32;
+    });
+    return y - y0 + CARD_PAD - 8;
+  };
+
   /* ── 위에서부터 차례로 ── */
   let y = PAD;
 
-  // 상단: 로고 + 발행일
+  // 상단: 로고 + 문서 종류/발행일
   const logoH = 40;
   if (logo && logo.naturalHeight > 0) {
     const lw = logoH * (logo.naturalWidth / logo.naturalHeight);
@@ -255,23 +349,33 @@ function drawQuote(
   } else {
     put('HamRanè', PAD, y + 30, 700, 30, p.ink);
   }
-  put('PROJECT QUOTE', W - PAD, y + 16, 600, 14, p.ink3, 'right');
+  put(isSt ? 'STATEMENT' : 'PROJECT QUOTE', W - PAD, y + 16, 600, 14, p.ink3, 'right');
   if (d.date) put(d.date.replace(/-/g, '.'), W - PAD, y + 38, 500, 16, p.ink2, 'right');
   y += logoH + 44;
 
-  // 제목
-  const title = d.project.trim() || '프로젝트 견적서';
+  // 제목: 프로젝트 이름이 있으면 위에 문서 종류를 작게 붙입니다.
+  const projectName = d.project.trim();
+  if (projectName) {
+    put(isSt ? '작업 명세서' : '견적서', PAD, y + 16 * 1.05, 700, 16, p.accent);
+    y += 30;
+  }
+  const title = projectName || (isSt ? '작업 명세서' : '프로젝트 견적서');
   wrap(title, CW, 700, 42).forEach((ln) => {
     put(ln, PAD, y + 42 * 1.05, 700, 42, p.ink);
     y += 42 * 1.3;
   });
   y += 14;
 
-  // 의뢰인 · 유효기간
+  // 의뢰인 · 유효기간(견적서) / 작업 완료일 · 입금 기한(명세서)
   const client = d.client.trim();
   const metas: [string, string][] = [];
   if (client) metas.push(['의뢰인', client.endsWith('님') ? client : `${client}님`]);
-  if (d.valid.trim()) metas.push(['유효기간', d.valid.trim()]);
+  if (isSt) {
+    if (d.done) metas.push(['작업 완료일', d.done.replace(/-/g, '.')]);
+    if (d.due.trim()) metas.push(['입금 기한', d.due.trim()]);
+  } else if (d.valid.trim()) {
+    metas.push(['유효기간', d.valid.trim()]);
+  }
   if (metas.length) {
     let x = PAD;
     metas.forEach(([k, v]) => {
@@ -298,6 +402,15 @@ function drawQuote(
   card(PAD, y, CW, th);
   totalsBlock(PAD, y, CW);
   y += th;
+
+  // 입금 계좌 카드 (명세서)
+  if (bank) {
+    y += 20;
+    const bh = withDraw(false, () => bankBlock(PAD, y, CW));
+    card(PAD, y, CW, bh);
+    bankBlock(PAD, y, CW);
+    y += bh;
+  }
 
   // 안내 문구
   const notes = d.notes.trim();
@@ -338,13 +451,16 @@ function paintQuote(cv: HTMLCanvasElement, d: Doc, logo: HTMLImageElement | null
 
 /* ───────────── 화면 ───────────── */
 export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: QuotePkg[] }) {
-  const [doc, setDoc] = useState<Doc>(blankDoc);
+  const [doc, setDoc] = useState<Doc>(() => blankDoc());
   const [ready, setReady] = useState(false);
   const [height, setHeight] = useState(0);
   const [msg, setMsg] = useState('');
   const cvRef = useRef<HTMLCanvasElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const logos = useRef<Partial<Record<Theme, HTMLImageElement | null>>>({});
   const items = groups.flatMap((g) => g.items);
+  const isSt = doc.kind === 'statement';
+  const pending = doc.songs.reduce((n, s) => n + s.lines.filter((l) => toN(l.unit) == null).length, 0);
 
   const toast = (m: string) => {
     setMsg(m);
@@ -356,9 +472,9 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
     try {
       const raw = localStorage.getItem(KEY);
       if (raw) {
-        const j = JSON.parse(raw) as Partial<Doc>;
-        if (j && Array.isArray(j.songs) && j.songs.length > 0) {
-          setDoc({ ...blankDoc(), ...j } as Doc);
+        const n = normalize(JSON.parse(raw));
+        if (n) {
+          setDoc(n);
           setReady(true);
           return;
         }
@@ -396,7 +512,7 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
       const cv = cvRef.current;
       if (!cv) return;
       const ff = getComputedStyle(document.body).fontFamily || 'sans-serif';
-      const sample = JSON.stringify(doc) + '견적서 곡 합계 총 금액 무료 협의 안내 원 VAT 포함 의뢰인 유효기간';
+      const sample = JSON.stringify(doc) + '견적서 명세서 곡 합계 총 금액 청구 남은 입금 계좌 무료 협의 안내 원 VAT 포함 의뢰인 유효기간';
       try {
         await Promise.all([400, 500, 600, 700, 800].map((w) => document.fonts.load(`${w} 20px ${ff}`, sample)));
       } catch {
@@ -411,6 +527,20 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
 
   /* ── 상태 변경 도우미 ── */
   const upd = (patch: Partial<Doc>) => setDoc((x) => ({ ...x, ...patch }));
+
+  /** 문서 종류 전환: 곡·금액은 그대로 두고, 기본 문구였던 안내만 새 종류의 기본 문구로 바꿉니다. */
+  const setKind = (kind: Kind) =>
+    setDoc((x) => {
+      if (x.kind === kind) return x;
+      const keep = x.notes.trim() !== '' && x.notes !== DEFAULT_NOTES[x.kind];
+      return {
+        ...x,
+        kind,
+        notes: keep ? x.notes : DEFAULT_NOTES[kind],
+        done: kind === 'statement' ? x.done || today() : x.done,
+      };
+    });
+
   const setSong = (sid: string, fn: (s: Song) => Song) =>
     setDoc((x) => ({ ...x, songs: x.songs.map((s) => (s.id === sid ? fn(s) : s)) }));
   const setLine = (sid: string, lid: string, patch: Partial<Line>) =>
@@ -465,21 +595,24 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
     setDoc((x) => ({ ...x, adjs: x.adjs.map((a) => (a.id === id ? { ...a, ...patch } : a)) }));
   const delAdj = (id: string) => setDoc((x) => ({ ...x, adjs: x.adjs.filter((a) => a.id !== id) }));
 
-  /* ── 저장 · 복사 · 초기화 ── */
-  const fileName = () => {
+  /* ── 저장 · 복사 · 파일 · 초기화 ── */
+  const fileName = (ext: 'png' | 'json') => {
     const base = (doc.client || doc.project || 'project').replace(/[\\/:*?"<>|\s]+/g, '_');
-    return `견적서_${base}_${doc.date || today()}.png`;
+    return `${KIND_NAME[doc.kind]}_${base}_${doc.date || today()}.${ext}`;
+  };
+  const download = (blob: Blob, name: string) => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   };
   const savePng = () => {
     const cv = cvRef.current;
     if (!cv) return;
     cv.toBlob((b) => {
       if (!b) return toast('이미지를 만들지 못했어요.');
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(b);
-      a.download = fileName();
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      download(b, fileName('png'));
     }, 'image/png');
   };
   const copyPng = async () => {
@@ -494,22 +627,70 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
       toast('복사하지 못했어요. 저장 버튼을 써 주세요.');
     }
   };
+  const exportJson = () => {
+    const blob = new Blob([JSON.stringify({ v: 1, doc }, null, 2)], { type: 'application/json' });
+    download(blob, fileName('json'));
+    toast('작업 파일을 저장했어요. 나중에 불러오기로 이어서 작업할 수 있어요.');
+  };
+  const importJson = async (f: File | undefined) => {
+    if (!f) return;
+    try {
+      if (!window.confirm('지금 작성 중인 내용이 불러온 파일의 내용으로 바뀝니다. 계속할까요?')) return;
+      const j = JSON.parse(await f.text()) as { doc?: unknown };
+      const n = normalize(j?.doc ?? j);
+      if (!n) throw new Error('bad');
+      setDoc(n);
+      toast('불러왔어요.');
+    } catch {
+      toast('불러오지 못했어요. 이 페이지에서 저장한 .json 파일인지 확인해 주세요.');
+    } finally {
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  };
   const reset = () => {
-    if (!window.confirm('입력한 내용을 모두 지우고 처음부터 시작할까요?')) return;
+    if (!window.confirm('입력한 내용을 모두 지우고 처음부터 시작할까요? (입금 계좌는 남겨 둡니다)')) return;
     try { localStorage.removeItem(KEY); } catch { /* 무시 */ }
-    setDoc({ ...blankDoc(), date: today() });
+    setDoc({
+      ...blankDoc(doc.kind),
+      date: today(),
+      done: doc.kind === 'statement' ? today() : '',
+      bank: doc.bank,
+    });
   };
 
   return (
     <div className="hr-qm">
       <div className="hr-qm-form">
         <section className="hr-card">
-          <h2>기본 정보</h2>
+          <div className="hr-qm-kind">
+            <h2>기본 정보</h2>
+            <div className="hr-qm-seg" role="group" aria-label="문서 종류">
+              <button type="button" className={doc.kind === 'quote' ? 'on' : ''} onClick={() => setKind('quote')}>견적서</button>
+              <button type="button" className={doc.kind === 'statement' ? 'on' : ''} onClick={() => setKind('statement')}>명세서</button>
+            </div>
+            <small>같은 내용으로 문서 종류만 바꿔 뽑을 수 있어요.</small>
+          </div>
           <div className="hr-qm-grid">
             <label>의뢰인<input value={doc.client} placeholder="예: 홍길동" onChange={(e) => upd({ client: e.target.value })} /></label>
             <label>프로젝트 이름<input value={doc.project} placeholder="예: OO 콘서트 음원 작업" onChange={(e) => upd({ project: e.target.value })} /></label>
             <label>발행일<input type="date" value={doc.date} onChange={(e) => upd({ date: e.target.value })} /></label>
-            <label>유효기간<input value={doc.valid} onChange={(e) => upd({ valid: e.target.value })} /></label>
+            {isSt ? (
+              <>
+                <label>작업 완료일<input type="date" value={doc.done} onChange={(e) => upd({ done: e.target.value })} /></label>
+                <label>입금 기한<input maxLength={30} value={doc.due} placeholder="예: 2026.10.12" onChange={(e) => upd({ due: e.target.value })} /></label>
+                <label>입금 계좌<input maxLength={60} value={doc.bank} placeholder="예: 은행 000-0000-0000 예금주" onChange={(e) => upd({ bank: e.target.value })} /></label>
+                <label>
+                  기 입금액 (선입금)
+                  <input
+                    inputMode="numeric" placeholder="없으면 비워 두세요"
+                    value={doc.paid === '' ? '' : Number(doc.paid).toLocaleString('ko-KR')}
+                    onChange={(e) => upd({ paid: e.target.value.replace(/[^\d]/g, '') })}
+                  />
+                </label>
+              </>
+            ) : (
+              <label>유효기간<input maxLength={30} value={doc.valid} onChange={(e) => upd({ valid: e.target.value })} /></label>
+            )}
           </div>
         </section>
 
@@ -621,12 +802,25 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
           <button type="button" onClick={copyPng}>이미지 복사</button>
           <button type="button" onClick={reset}>처음부터</button>
         </div>
+        <div className="hr-qm-btns">
+          <button type="button" onClick={exportJson}>작업 파일 저장</button>
+          <button type="button" onClick={() => fileRef.current?.click()}>불러오기</button>
+          <input
+            ref={fileRef} type="file" accept="application/json,.json" className="hr-qm-file"
+            aria-label="작업 파일 불러오기" onChange={(e) => importJson(e.target.files?.[0])}
+          />
+        </div>
+        {isSt && pending > 0 && (
+          <p className="hr-qm-warn" role="status">
+            금액이 비어(협의) 있는 항목이 {pending}개 있어요. 명세서에는 확정 금액을 넣어 주세요.
+          </p>
+        )}
         {msg && <p className="hr-qm-msg" role="status">{msg}</p>}
         {height > 9000 && (
           <p className="hr-qm-msg">이미지가 매우 깁니다. &lsquo;요약&rsquo; 보기를 쓰면 짧아져요.</p>
         )}
         <div className="hr-qm-cvwrap">
-          <canvas ref={cvRef} className="hr-qm-cv" aria-label="견적서 미리보기" />
+          <canvas ref={cvRef} className="hr-qm-cv" aria-label={`${KIND_NAME[doc.kind]} 미리보기`} />
         </div>
       </aside>
     </div>
