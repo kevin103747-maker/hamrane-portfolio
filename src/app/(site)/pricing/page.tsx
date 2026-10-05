@@ -92,7 +92,6 @@ export default async function Pricing() {
         en="Pricing"
         desc="파트별 기본 단가입니다. 곡의 난이도와 작업량에 따라 달라지므로, 곡을 보내주시면 확인 후 정확한 견적을 드립니다."
       >
-        <a className="hr-pt-cta" href="#contact">문의하기 →</a>
       </PageHead>
 
       <section><div className="wrap">

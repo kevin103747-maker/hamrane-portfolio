@@ -1516,3 +1516,6 @@ section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
 
 /* 카드의 아티스트 이름이 한 줄을 넘치면 말줄임 처리 */
 .card p > span:first-child { max-width: 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 가이드 하단 안내: 박스 없이 글자만 */
+.hr-pt-note { margin-top: 48px; text-align: center; font-size: 14.5px; color: var(--text-2); }

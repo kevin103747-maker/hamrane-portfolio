@@ -60,10 +60,7 @@ export default async function GuidePage() {
           )}
         </div>
 
-        <div className="hr-pt-end">
-          <p>더 궁금한 점이 있다면 편하게 물어보세요.</p>
-          <a className="hr-pt-cta sm" href="#contact">문의하기 →</a>
-        </div>
+        <p className="hr-pt-note">더 궁금한 점이 있다면 편하게 물어보세요.</p>
       </div></section>
     </>
   );
