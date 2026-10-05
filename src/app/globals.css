@@ -1417,3 +1417,26 @@ section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
 @media (max-width: 520px) {
   .hr-dn p { grid-template-columns: 1fr; gap: 0; }
 }
+
+/* ───── 패키지 팝업: 항목별 금액 ───── */
+.hr-pb { display: grid; gap: 18px; margin-top: 20px; }
+.hr-pb-g { display: block; margin-bottom: 4px; font: 600 12px var(--f-mono); letter-spacing: .06em; color: var(--text-3); }
+.hr-pb ul { list-style: none; margin: 0; padding: 0; }
+.hr-pb li { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; padding: 10px 0; border-bottom: 1px dashed var(--line-2); font-size: 14px; }
+.hr-pb-n { min-width: 0; color: var(--text); }
+.hr-pb-q { margin-left: 6px; color: var(--text-3); }
+.hr-pb-c { margin-left: 8px; padding: 1px 8px; border: 1px dashed var(--line-2); border-radius: 999px; font-size: 11px; color: var(--text-2); }
+.hr-pb-a { flex: none; text-align: right; }
+.hr-pb-a b { font: 600 14px var(--f-sp); }
+.hr-pb-a i { display: block; font-style: normal; font-size: 11px; color: var(--text-3); }
+.hr-pb-a em { font-style: normal; font-size: 12px; color: var(--text-3); }
+.hr-pb-sum { display: grid; gap: 6px; padding-top: 14px; border-top: 1px solid var(--line-2); }
+.hr-pb-r { display: flex; justify-content: space-between; font-size: 14px; color: var(--text-2); }
+.hr-pb-r b { font: 600 14px var(--f-sp); color: var(--text); }
+.hr-pb-r.adj b { color: var(--mint-2); }
+.hr-pb-r.tot { margin-top: 4px; padding-top: 10px; border-top: 1px dashed var(--line-2); font-weight: 600; color: var(--text); }
+.hr-pb-r.tot b { font-size: 17px; }
+.hr-pb-miss { margin: 0; font-size: 12.5px; color: var(--text-3); }
+
+/* 어드민: 협업 상품 금액 칸 */
+.hr-ex-row input[name="exPrice"] { max-width: 150px; }

@@ -1,4 +1,4 @@
-// src/components/PackageList.tsx — 질문형 미리보기 카드 + 클릭하면 구성 팝업
+// src/components/PackageList.tsx — 질문형 미리보기 카드 + 클릭하면 구성·항목별 금액 팝업
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -6,10 +6,17 @@ import { Price, Until } from './Price';
 import { Icon } from './Icons';
 import type { Discount } from '@/lib/types';
 
-export type PkgLine = { name: string; qty: number; collab?: boolean; who?: string };
+/** unit: 개당 금액(숫자). 금액이 정해지지 않은 협업 상품 등은 null */
+export type PkgLine = { name: string; qty: number; unit: number | null; collab?: boolean; who?: string };
 type PkgRow = { label: string; lines: PkgLine[] };
 export type PackageView = {
   id: string; no: string; tag: string; name: string; desc: string; total: string; discount?: Discount; rows: PkgRow[];
+};
+
+const won = (n: number) => n.toLocaleString('ko-KR');
+const toNum = (s: string) => {
+  const n = Number(s.replace(/[^\d]/g, ''));
+  return Number.isFinite(n) && n > 0 ? n : null;
 };
 
 function Modal({ p, onClose }: { p: PackageView; onClose: () => void }) {
@@ -26,6 +33,13 @@ function Modal({ p, onClose }: { p: PackageView; onClose: () => void }) {
       window.removeEventListener('keydown', onKey);
     };
   }, [onClose]);
+
+  // 모든 항목에 금액이 있을 때만 합계를 계산해 보여줍니다.
+  const all = p.rows.flatMap((r) => r.lines);
+  const complete = all.length > 0 && all.every((l) => l.unit != null);
+  const sub = complete ? all.reduce((s, l) => s + (l.unit as number) * l.qty, 0) : 0;
+  const total = toNum(p.total);
+  const diff = complete && total != null ? total - sub : null;
 
   return createPortal(
     <div className="hr-pm-back" onClick={onClose}>
@@ -53,22 +67,50 @@ function Modal({ p, onClose }: { p: PackageView; onClose: () => void }) {
             <i>VAT 포함<Until discount={p.discount} /></i>
           </div>
 
-          <div className="hr-pm-rows">
+          <div className="hr-pb">
             {p.rows.map((r) => (
               <div key={r.label}>
-                <span className="hr-pm-g">{r.label}</span>
+                <span className="hr-pb-g">{r.label}</span>
                 <ul>
                   {r.lines.map((l, i) => (
                     <li key={`${l.name}-${i}`}>
-                      <span>{l.name}</span>
-                      {l.qty > 1 && <small className="q">×{l.qty}</small>}
-                      {l.collab && <small className="c">협업{l.who ? ` · ${l.who}` : ''}</small>}
+                      <span className="hr-pb-n">
+                        {l.name}
+                        {l.qty > 1 && <small className="hr-pb-q">×{l.qty}</small>}
+                        {l.collab && <small className="hr-pb-c">협업{l.who ? ` · ${l.who}` : ''}</small>}
+                      </span>
+                      <span className="hr-pb-a">
+                        {l.unit != null ? (
+                          <>
+                            {l.qty > 1 && <i>{won(l.unit)}원 × {l.qty}</i>}
+                            <b>{won(l.unit * l.qty)}원</b>
+                          </>
+                        ) : (
+                          <em>별도 협의</em>
+                        )}
+                      </span>
                     </li>
                   ))}
                 </ul>
               </div>
             ))}
+
+            {complete && diff != null ? (
+              <div className="hr-pb-sum">
+                <div className="hr-pb-r"><span>구성 합계</span><b>{won(sub)}원</b></div>
+                {diff !== 0 && (
+                  <div className="hr-pb-r adj">
+                    <span>{diff < 0 ? '패키지 할인' : '추가 조정'}</span>
+                    <b>{diff < 0 ? '-' : '+'}{won(Math.abs(diff))}원</b>
+                  </div>
+                )}
+                <div className="hr-pb-r tot"><span>패키지 정가</span><b>{won(total as number)}원</b></div>
+              </div>
+            ) : (
+              <p className="hr-pb-miss">금액이 적히지 않은 항목은 협업 작업자와 별도로 조율됩니다.</p>
+            )}
           </div>
+
           <p className="hr-pm-note">예시 구성이며, 실제 금액은 곡의 난이도와 작업량에 따라 달라집니다.</p>
         </div>
 

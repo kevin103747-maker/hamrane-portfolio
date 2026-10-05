@@ -34,7 +34,7 @@ export default async function PackagesPage({
   const db = adminDb();
   const [g, r, p] = await Promise.all([
     db.from('part_groups').select('id, num, name').order('sort', { ascending: true }),
-    db.from('rate_items').select('id, group_id, name').order('sort', { ascending: true }),
+    db.from('rate_items').select('id, group_id, name, price').order('sort', { ascending: true }),
     db.from('packages').select('*').order('sort', { ascending: true }),
   ]);
   const groups = g.data ?? [];
@@ -43,8 +43,9 @@ export default async function PackagesPage({
   const cur = edit ? pkgs.find((x) => x.id === edit) : undefined;
   const picked: string[] = cur?.item_ids ?? [];
   const qtyMap = (cur?.qty ?? {}) as Record<string, number>;
+  const priceMap = (cur?.prices ?? {}) as Record<string, string>;
   const extras: Extra[] = ((cur?.extras ?? []) as Partial<Extra>[]).map((e) => ({
-    name: e.name ?? '', group: e.group ?? '', who: e.who ?? '',
+    name: e.name ?? '', group: e.group ?? '', who: e.who ?? '', price: e.price ?? '',
   }));
   const nameOf = (id: string) => txt(items.find((x) => x.id === id)?.name) || id;
 
@@ -59,6 +60,10 @@ export default async function PackagesPage({
         <p>
           <b>합계는 직접 입력</b>합니다. 항목을 체크하거나 단가를 바꿔도 합계는 자동으로 바뀌지 않습니다.
           단가표에 있는 상품은 체크하고 수량을 정하고, 다른 작업자의 몫처럼 내 단가표에 없는 상품은 &quot;협업·외부 상품&quot;에 직접 적습니다.
+        </p>
+        <p>
+          <b>항목별 금액</b>은 팝업에 그대로 나옵니다. &quot;개당 금액&quot;을 비우면 단가표의 정가가 쓰이고(칸의 흐린 숫자),
+          입력하면 이 패키지에서만 그 금액이 적용됩니다. 항목 금액의 합이 합계와 다르면 차이가 &quot;패키지 할인&quot;으로 표시됩니다.
         </p>
       </Help>
 
@@ -97,7 +102,7 @@ export default async function PackagesPage({
           <input name="desc" defaultValue={txt(cur?.descr)} />
         </label>
 
-        <Section open title="포함할 상품" badge={`${picked.length}개 선택`} hint="단가표에서 체크하고 수량을 정합니다">
+        <Section open title="포함할 상품" badge={`${picked.length}개 선택`} hint="체크하고 수량·개당 금액을 정합니다 (금액을 비우면 단가표 금액)">
           {groups.map((grp) => {
             const rows = items.filter((x) => x.group_id === grp.id);
             if (!rows.length) return null;
@@ -119,6 +124,15 @@ export default async function PackagesPage({
                       <label className="hr-pkq-n">
                         수량
                         <input type="number" name={`qty_${x.id}`} min={1} max={99} defaultValue={qtyMap[x.id] ?? 1} />
+                      </label>
+                      <label className="hr-pkq-n">
+                        개당 금액
+                        <input
+                          name={`price_${x.id}`}
+                          inputMode="numeric"
+                          placeholder={String(x.price)}
+                          defaultValue={priceMap[x.id] ?? ''}
+                        />
                       </label>
                     </div>
                   ))}

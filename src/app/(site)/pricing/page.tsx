@@ -13,8 +13,14 @@ import { BundleBox } from '@/components/BundleBox';
 
 export const metadata = { title: 'Pricing' };
 
+/** "150,000" 같은 글자에서 숫자만 뽑습니다. 비었거나 숫자가 아니면 null */
+const num = (s?: string) => {
+  const n = Number((s ?? '').replace(/[^\d]/g, ''));
+  return Number.isFinite(n) && n > 0 ? n : null;
+};
+
 export default async function Pricing() {
-    const [d, turnaround, discounts] = await Promise.all([
+  const [d, turnaround, discounts] = await Promise.all([
     getSiteData(), getTurnaround(), getDiscounts(),
   ]);
   const item = (id: string) => d.rateItems.find((i) => i.id === id);
@@ -40,7 +46,8 @@ export default async function Pricing() {
       })),
   }));
 
-  // 패키지: 분야별로 묶고, 협업·외부 상품은 점선 칩으로 구분해 같은 줄(또는 새 줄)에 넣습니다.
+  // 패키지: 분야별로 묶고, 협업·외부 상품은 같은 줄(또는 새 줄)에 넣습니다.
+  // 금액: 패키지에서 따로 정한 개당 금액이 있으면 그 값, 없으면 단가표의 정가를 씁니다.
   const packages: PackageView[] = d.packages.map((p) => {
     const rows = new Map<string, PkgLine[]>();
     const push = (label: string, line: PkgLine) => rows.set(label, [...(rows.get(label) ?? []), line]);
@@ -48,11 +55,17 @@ export default async function Pricing() {
     for (const g of d.groups) {
       for (const id of p.itemIds) {
         const it = item(id);
-        if (it && it.groupId === g.id) push(tx(g.name), { name: tx(it.name), qty: p.qty?.[id] ?? 1 });
+        if (it && it.groupId === g.id) {
+          push(tx(g.name), {
+            name: tx(it.name),
+            qty: p.qty?.[id] ?? 1,
+            unit: num(p.prices?.[id] ?? it.price),
+          });
+        }
       }
     }
     for (const e of p.extras ?? []) {
-      push(e.group?.trim() || '추가 구성', { name: e.name, qty: 1, collab: true, who: e.who });
+      push(e.group?.trim() || '추가 구성', { name: e.name, qty: 1, unit: num(e.price), collab: true, who: e.who });
     }
 
     return {
@@ -95,7 +108,7 @@ export default async function Pricing() {
         <PackageList items={packages} />
       </div></section>
 
-            <section className="hr-faq-sec"><div className="wrap">
+      <section className="hr-faq-sec"><div className="wrap">
         <Link className="hr-gp-banner" href="/guide">
           <span><b>처음 의뢰하시나요?</b> 진행 방식, 가격 조율, 자주 묻는 질문을 정리해 두었어요.</span>
           <span className="go">의뢰 가이드 보기 →</span>

@@ -166,26 +166,42 @@ export async function savePackage(fd: FormData) {
 
   // 수량: 선택한 항목만 저장하고, 1이면 저장하지 않습니다.
   const qty: Record<string, number> = {};
+  // 개당 금액: 입력한 항목만 저장합니다. 비우면 단가표 금액을 씁니다.
+  const prices: Record<string, string> = {};
   for (const iid of itemIds) {
     const n = Number(str(fd, `qty_${iid}`) || '1');
     if (!Number.isInteger(n) || n < 1 || n > 99) fail(back, '수량은 1~99 사이의 정수로 입력하세요.');
     if (n > 1) qty[iid] = n;
+
+    const pr = str(fd, `price_${iid}`);
+    if (pr) {
+      if (!validMoney(pr) || digits(pr) <= 0) fail(back, '개당 금액은 0보다 큰 숫자로 입력하세요.');
+      prices[iid] = money(pr);
+    }
   }
 
-  // 협업·외부 상품: 이름·분야·담당 입력칸이 같은 순서로 넘어옵니다.
+  // 협업·외부 상품: 이름·분야·담당·금액 입력칸이 같은 순서로 넘어옵니다.
   const exName = fd.getAll('exName').map(String);
   const exGroup = fd.getAll('exGroup').map(String);
   const exWho = fd.getAll('exWho').map(String);
-  const extras: { name: string; group?: string; who?: string }[] = [];
+  const exPrice = fd.getAll('exPrice').map(String);
+  const extras: { name: string; group?: string; who?: string; price?: string }[] = [];
   exName.forEach((raw, i) => {
     const n = raw.trim();
     const group = (exGroup[i] ?? '').trim();
     const who = (exWho[i] ?? '').trim();
-    if (!n && !group && !who) return; // 빈 줄은 건너뜀
+    const price = (exPrice[i] ?? '').trim();
+    if (!n && !group && !who && !price) return; // 빈 줄은 건너뜀
     if (!n) fail(back, '협업·외부 상품은 이름을 입력해야 합니다.');
     if (n.length > 30) fail(back, `협업 상품 이름은 30자 이내로 입력하세요. (${n})`);
     if (group.length > 20 || who.length > 20) fail(back, '분야 표기와 담당은 각각 20자 이내로 입력하세요.');
-    extras.push({ name: n, ...(group ? { group } : {}), ...(who ? { who } : {}) });
+    if (price && (!validMoney(price) || digits(price) <= 0)) fail(back, `협업 상품 금액은 0보다 큰 숫자로 입력하세요. (${n})`);
+    extras.push({
+      name: n,
+      ...(group ? { group } : {}),
+      ...(who ? { who } : {}),
+      ...(price ? { price: money(price) } : {}),
+    });
   });
   if (extras.length > 12) fail(back, '협업·외부 상품은 최대 12개까지 넣을 수 있습니다.');
 
@@ -216,6 +232,7 @@ export async function savePackage(fd: FormData) {
     descr: merge(before?.descr, desc),
     item_ids: itemIds,
     qty,
+    prices,
     extras,
     total,
     discount,

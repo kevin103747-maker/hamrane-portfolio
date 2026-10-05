@@ -23,8 +23,9 @@ export type SiteData = {
   groups: Group[]; parts: Part[]; usageTypes: Tag[]; artistTypes: Tag[]; artists: Artist[]; works: Work[];
   rateItems: RateItem[]; packages: Pkg[]; notice: Text; links: Links; indexQueue: QueueItem[];
 };
-type PkgExtra = { name: string; group?: string; who?: string }; // 내 단가표에 없는 협업·외부 상품
+type PkgExtra = { name: string; group?: string; who?: string; price?: string }; // 내 단가표에 없는 협업·외부 상품
 type Pkg = {
   id: string; no: string; tag: string; name: Text; desc: Text; itemIds: string[]; total: string; discount?: Discount;
   qty?: Record<string, number>; extras?: PkgExtra[];
+  prices?: Record<string, string>; // 이 패키지 안에서만 적용하는 개당 금액 (없으면 단가표 금액)
 };
