@@ -1825,3 +1825,24 @@ section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
   .fx-count { display: inline; margin-left: auto; font: 500 12px var(--f-mono); color: var(--text-3); }
   .fx-count b { color: var(--mint); font-weight: 600; }
 }
+/* ───── 홈 히어로: 직무 줄 끝 슬래시 제거 ───── */
+.hx-roles i { display: none; }
+
+/* ───── 모바일 홈 히어로: 가이드 링크는 윗줄, 단가 보기 | 문의하기는 아랫줄 ───── */
+@media (max-width: 560px) {
+  .hr-cta-links {
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+    justify-items: start;
+    align-items: center;
+    gap: 8px 16px;
+  }
+  .hr-cta-links .hr-hero-cta { grid-column: 1 / -1; }
+  .hr-cta-links .hr-cta-mini.first { margin-left: 0; }
+  .hr-cta-links .hr-cta-mini.first::before { display: none; }
+  .hr-cta-links .hr-cta-mini:not(.first) { position: relative; }
+  .hr-cta-links .hr-cta-mini:not(.first)::before {
+    content: ''; position: absolute; top: 50%; left: -8px;
+    width: 1px; height: 11px; background: var(--line-2); transform: translateY(-50%);
+  }
+}
