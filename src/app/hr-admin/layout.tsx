@@ -1,3 +1,5 @@
+import './admin.css';
+
 // src/app/hr-admin/layout.tsx
 export const metadata = { title: 'Admin', robots: { index: false, follow: false } };
 
