@@ -1857,3 +1857,11 @@ section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
   .cta-m { padding: 0 9px; font-size: 12px; }
   .theme-switch { width: 46px; }
 }
+/* ───── 모바일 포트폴리오 툴바: 검색창이 줄을 독차지해 버튼을 밀어내지 않게 ───── */
+@media (max-width: 560px) {
+  .toolbar, .toolbar .wrap, .tools, .tools-m { min-width: 0; max-width: 100%; }
+  .tools-m-top { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .tools-m-top .search { flex: 1 1 0; width: auto; min-width: 0; }
+  .tools-m-top > :not(.search) { flex: none; }
+  .hr-scrl, .hr-sr-row { min-width: 0; max-width: 100%; }
+}
