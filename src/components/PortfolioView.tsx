@@ -43,6 +43,15 @@ function ScrollRow({ children, className = '' }: { children: React.ReactNode; cl
   return (
     <div className={`hr-scrl${edge.l ? ' l' : ''}${edge.r ? ' r' : ''}`}>
       <div ref={ref} className={`hr-sr-row ${className}`} onScroll={update}>{children}</div>
+            {edge.l && (
+        <button
+          type="button"
+          className="hr-sr-prev"
+          aria-label="왼쪽으로 더 보기"
+          onClick={() => ref.current?.scrollBy({ left: -ref.current.clientWidth * 0.6, behavior: 'smooth' })}
+        >‹</button>
+      )}
+
       {edge.r && (
         <button
           type="button"

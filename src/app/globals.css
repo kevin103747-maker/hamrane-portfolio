@@ -1718,6 +1718,9 @@ section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
 .hr-sr-next { position: absolute; right: 0; top: 50%; transform: translateY(-50%); z-index: 1;
   width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%;
   border: 1px solid var(--line-2); background: var(--card); color: var(--mint); font-size: 18px; line-height: 1; }
+.hr-sr-prev { position: absolute; left: 0; top: 50%; transform: translateY(-50%); z-index: 1;
+  width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%;
+  border: 1px solid var(--line-2); background: var(--card); color: var(--mint); font-size: 18px; line-height: 1; }
 
 /* ───── 포트폴리오 필터 (휴대폰) ───── */
 .tools-m { display: grid; gap: 8px; }
@@ -1727,12 +1730,11 @@ section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
   border: 1px solid var(--line); background: var(--card); color: var(--text-2); border-radius: 11px; font-size: 13px; }
 .hr-ftog b { font: 600 11px var(--f-mono); color: var(--mint-ink); background: var(--mint); border-radius: 99px; padding: 1px 7px; }
 .hr-ftog.on, .hr-ftog[aria-expanded='true'] { color: var(--mint); border-color: var(--mint); }
-.tools-m-more { position: relative; display: grid; grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: 6px;
-  padding: 8px; border: 1px solid var(--line); background: var(--card); border-radius: 12px; }
-.tools-m-more .dd { position: static; }
-.tools-m-more .dd-btn { width: 100%; justify-content: center; padding: 0 8px; background: var(--card-2); }
-.tools-m-more .sel { width: 100%; background: var(--card-2); }
-.tools-m-more .dd-pop { left: 0; right: 0; min-width: 0; top: calc(100% + 6px); }
+.tools-m-more { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 8px; border: 1px solid var(--line); background: var(--card); border-radius: 12px; }
+.tools-m-dd { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.tools-m-more .dd { position: static; min-width: 0; }
+.tools-m-more .dd-btn { width: 100%; min-height: 40px; justify-content: center; gap: 6px; padding: 0 14px; font-size: 13px; white-space: nowrap; background: var(--card-2); }
+.tools-m-more .dd-pop { left: 0; right: 0; min-width: 0; top: calc(100% + 6px); z-index: 5; }
 
 .tools-m-more { display: grid; gap: 8px; padding: 8px; border: 1px solid var(--line); background: var(--card); border-radius: 12px; }
 .tools-m-dd { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
