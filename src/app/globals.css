@@ -172,7 +172,7 @@ footer nav { display: flex; gap: 22px; }
 footer a:hover { color: var(--mint); }
 
 /* ───── 모달 (영상 / 아티스트) ───── */
-.modal { position: fixed; inset: 0; display: grid; place-items: center; padding: 40px; background: rgba(4,8,7,.66); backdrop-filter: blur(8px); animation: mfade .25s ease; }
+.modal { position: fixed; inset: 0; display: grid; place-items: center; padding: 40px; background: rgba(4,8,7,.66); backdrop-filter: blur(8px); animation: mfade .25s ease; z-index: 100; }
 .modal .box { width: min(1040px, 100%); max-height: calc(100vh - 80px); overflow: auto; border-radius: 22px; background: var(--bg); border: 1px solid var(--line-2); animation: mrise .3s cubic-bezier(.2,.7,.2,1); }
 .modal .box.vbox { width: min(960px, 100%); }
 .modal .mh { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 18px; padding: 24px 28px; border-bottom: 1px solid var(--line); background: color-mix(in oklab, var(--bg) 90%, transparent); backdrop-filter: blur(10px); }
@@ -285,7 +285,6 @@ footer a:hover { color: var(--mint); }
 }
 
 /* ===== 추가: 팝업 / 대표곡 / 아티스트 / 히어로 보조 스타일 ===== */
-.modal { z-index: 100; }
 .hr-x { margin-left: auto; flex: none; width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line-2); background: transparent; color: var(--text-3); display: grid; place-items: center; font-size: 18px; cursor: pointer; }
 .hr-x:hover { color: var(--text, #fff); }
 .hr-video { position: relative; aspect-ratio: 16 / 9; background: #000; }
@@ -367,11 +366,10 @@ footer a:hover { color: var(--mint); }
 .hx-av img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: var(--hx-av-pos); }
 .hx-id-text { min-width: 0; }
 .hx-roles { margin-top: 12px; font-size: 15px; color: var(--text-3); }
-.hx-roles i { font-style: normal; margin: 0 10px; opacity: .55; }
 .hx-roles a { color: var(--fx-acc); font-weight: 600; text-decoration: none; }
 .hx-roles a:hover { text-decoration: underline; }
 
-.hx-soc { display: flex; gap: 10px; }
+.hx-soc { display: flex; flex-wrap: wrap; gap: 10px; }
 .hx-soc-a { width: var(--hx-soc); height: var(--hx-soc); display: grid; place-items: center; border: 1px solid var(--line-2); border-radius: 14px; color: inherit; text-decoration: none; transition: border-color .2s, background .2s, color .2s; }
 .hx-soc-a:hover { border-color: var(--fx-acc); color: var(--fx-acc); background: color-mix(in oklab, var(--fx-acc) 10%, transparent); }
 
@@ -815,7 +813,6 @@ footer a:hover { color: var(--mint); }
 }
 
 /* ───── 채널 바로가기: 개수가 늘어나도 줄바꿈 ───── */
-.hx-soc { flex-wrap: wrap; }
 .hx-soc-a img { display: block; }
 
 /* ───── 채널 아이콘: 이름표(아래에서 위로 떠오름) ───── */
@@ -1484,7 +1481,7 @@ section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
   .hr-rt-wrap.r::after { right: -18px; }
 }
 /* ───── 대표작: 옆으로 미는 목록 표시 + n / 전체 ───── */
-.fx-lw { --fade: var(--bg); position: relative; min-width: 0; }
+.fx-lw { --fade: var(--bg); position: relative; min-width: 0; flex: 1; min-height: 0; display: flex; flex-direction: column; }
 @supports (color: color-mix(in lab, red, red)) {
   .fx-lw { --fade: color-mix(in oklab, var(--bg) 90%, #fff 5%); }
 }
@@ -1523,7 +1520,6 @@ section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
   }
 }
 /* ───── 대표작 목록 래퍼가 패널 높이를 따라가도록 ───── */
-.fx-lw { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .fx-lw > .fx-list { flex: 1; min-height: 0; }
 
 /* ───── 아주 좁은 폰: 상단 헤더가 화면 폭을 넘지 않게 ───── */
