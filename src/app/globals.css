@@ -1358,3 +1358,27 @@ section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
 @media (max-width: 600px) {
   .hr-gp-steps li { grid-template-columns: 36px 1fr; gap: 12px; padding: 16px; }
 }
+/* ───── 메뉴 라벨: 호버 시 영문 → 한글 ───── */
+.ml { display: inline-grid; overflow: hidden; line-height: 1.5; white-space: nowrap; }
+.ml > span { grid-area: 1 / 1; transition: transform .28s cubic-bezier(.2,.7,.2,1), opacity .28s; }
+.ml-ko { transform: translateY(100%); opacity: 0; }
+
+@media (hover: hover) {
+  .menu a:hover .ml-en, .menu a:focus-visible .ml-en { transform: translateY(-100%); opacity: 0; }
+  .menu a:hover .ml-ko, .menu a:focus-visible .ml-ko { transform: translateY(0); opacity: 1; }
+}
+
+/* 모바일 패널, 그리고 호버가 없는 터치 기기: 한글 + 작은 영문을 항상 같이 표시 */
+.mpanel .ml { display: flex; align-items: baseline; gap: 10px; overflow: visible; }
+.mpanel .ml > span { grid-area: auto; }
+.mpanel .ml-ko { order: -1; transform: none; opacity: 1; }
+.mpanel .ml-en { font: 500 11px var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
+
+@media (hover: none) {
+  .menu .ml { display: flex; align-items: baseline; gap: 6px; overflow: visible; }
+  .menu .ml > span { grid-area: auto; }
+  .menu .ml-ko { order: -1; transform: none; opacity: 1; }
+  .menu .ml-en { font-size: 11px; color: var(--text-3); }
+}
+
+@media (prefers-reduced-motion: reduce) { .ml > span { transition: none; } }
