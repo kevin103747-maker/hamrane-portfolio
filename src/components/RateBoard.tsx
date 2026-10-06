@@ -10,6 +10,7 @@ import { feeLabel, type Fee, type GroupTurn } from '@/lib/turnaround';
 import { volLabel, type GroupDiscView } from '@/lib/discounts';
 import { badgeClass } from '@/lib/rate-badge';
 import { BonusNote } from './BonusNote';
+import { track } from '@/lib/track';
 import type { BonusView } from '@/lib/bonus';
 
 
@@ -234,6 +235,7 @@ export function RateBoard({ groups, bonus }: { groups: BoardGroup[]; bonus?: Bon
   }, [groups]);
 
   const pick = (id: string) => {
+    if (id !== cur) track('group', id);
     setCur(id);
     window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}#cat-${id}`);
   };

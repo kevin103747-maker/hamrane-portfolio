@@ -44,6 +44,7 @@ export const MENU: MenuSection[] = [
     items: [
       { href: '/hr-admin/groups', label: '분야·파트', desc: '포트폴리오·단가표의 분야 이름, 순서, 파트', perm: 'settings' },
       { href: '/hr-admin/settings', label: '사이트 설정', desc: '문구, 제목·설명, 채널 링크, 연락처, 공지', perm: 'settings' },
+      { href: '/hr-admin/stats', label: '방문 통계', desc: '날짜별 방문과 단가표 분야별 관심 (내 활동 제외)', perm: 'settings' },      
     ],
   },
 ];

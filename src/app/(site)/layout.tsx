@@ -10,6 +10,7 @@ import { Contact } from '@/components/Contact';
 import { PointerFx } from '@/components/PointerFx';
 import { BackToTop } from '@/components/BackToTop';
 import { ScrollHint } from '@/components/ScrollHint';  
+import { Tracker } from '@/components/Tracker';
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
   const [data, guide, status] = await Promise.all([getSiteData(), getGuideSettings(), getStatusSettings()]);
@@ -20,6 +21,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
           <Header />
           <PointerFx />
           <BackToTop />
+          <Tracker />
           <ScrollHint /> 
           {children}
           <Contact guide={guide.contact} status={status} />
