@@ -268,3 +268,45 @@ export async function removePackage(fd: FormData) {
   await logEdit(me, 'delete', 'packages', id, before, null);
   redirect(`${PKGS}?ok=1`);
 }
+/* ---------------- 단가 항목 순서 ---------------- */
+type RateRow = Record<string, unknown>;
+
+export async function moveRate(fd: FormData) {
+  const me = await guard();
+  const id = str(fd, 'id');
+  const dir = str(fd, 'dir') === 'up' ? -1 : 1;
+  const db = adminDb();
+
+  const [g, r] = await Promise.all([
+    db.from('part_groups').select('id').order('sort', { ascending: true }).order('id', { ascending: true }),
+    db.from('rate_items').select('*').order('sort', { ascending: true }).order('id', { ascending: true }),
+  ]);
+  if (g.error || r.error) fail(RATES, `불러오지 못했습니다: ${(g.error ?? r.error)?.message}`);
+  const groups = (g.data ?? []) as RateRow[];
+  const items = (r.data ?? []) as RateRow[];
+
+  const item = items.find((x) => x.id === id);
+  if (!item) fail(RATES, '항목을 찾지 못했습니다. 새로고침 후 다시 시도하세요.');
+  const gid = item.group_id as string;
+
+  // 분야별로 나눠 놓고, 같은 분야 안에서 이웃과 자리를 바꿉니다.
+  const byGroup = new Map<string, RateRow[]>();
+  for (const x of groups) byGroup.set(x.id as string, items.filter((i) => i.group_id === x.id));
+  const list = byGroup.get(gid) ?? [];
+  const i = list.findIndex((x) => x.id === id);
+  const j = i + dir;
+  if (i >= 0 && j >= 0 && j < list.length) {
+    [list[i], list[j]] = [list[j], list[i]];
+  }
+
+  // 분야 순서 → 분야 안 순서대로 늘어놓고 0부터 다시 번호를 매깁니다.
+  const flat = [
+    ...groups.flatMap((x) => byGroup.get(x.id as string) ?? []),
+    ...items.filter((x) => !byGroup.has(x.group_id as string)),
+  ].map((x, k) => ({ ...x, sort: k }));
+
+  const { error } = await db.from('rate_items').upsert(flat, { onConflict: 'id' });
+  if (error) fail(RATES, `순서 저장 실패: ${error.message}`);
+  await logEdit(me, 'update', 'rate_items', id, null, { group: gid, order: list.map((x) => x.id) });
+  redirect(`${RATES}?ok=1&g=${encodeURIComponent(gid)}#row-${id}`);
+}
