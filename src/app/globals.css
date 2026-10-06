@@ -1459,3 +1459,25 @@ section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
 }
 .hr-rt-top em.bd-hot, .hr-pm-top em.bd-hot { --bd: var(--t-price); }
 .hr-rt-top em.bd-new, .hr-pm-top em.bd-new { --bd: var(--t-request); }
+
+/* 서비스 혜택: 단가표 맨 위 한 줄 + 팝업 */
+.hr-bn { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); font-size: 13px; line-height: 1.5; color: var(--text-2); }
+.hr-bn > i { flex: none; font: 700 11px/1 var(--f-mono); font-style: normal; letter-spacing: .04em; padding: 4px 8px; border-radius: 99px; color: var(--mint-ink); background: var(--mint); }
+.hr-bn > span { flex: 1; min-width: 0; }
+.hr-bn > span b { color: var(--text); font-weight: 600; }
+.hr-bn > button { flex: none; font: inherit; font-weight: 600; color: var(--mint); background: none; border: 1px solid var(--line-2); border-radius: 99px; padding: 5px 12px; cursor: pointer; }
+.hr-bn > button:hover { border-color: var(--mint); }
+@media (max-width: 560px) {
+  .hr-bn { flex-wrap: wrap; }
+  .hr-bn > span { flex: 1 1 calc(100% - 64px); }
+  .hr-bn > button { margin-left: auto; }
+}
+.hr-pm-bonus { margin: 12px 0 0; font-size: 13px; color: var(--text-2); }
+.hr-pm-bonus b { margin-right: 8px; font-weight: 600; color: var(--mint); }
+.hr-bn-list { margin: 12px 0 0; padding-left: 18px; font-size: 13px; line-height: 1.7; color: var(--text-2); }
+.hr-bn-vids { display: grid; gap: 12px; margin-top: 16px; }
+.hr-bn-v { position: relative; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; background: #000; border: 1px solid var(--line); }
+.hr-bn-v > button { position: absolute; inset: 0; padding: 0; border: 0; background: none; cursor: pointer; }
+.hr-bn-v img, .hr-bn-v iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; object-fit: cover; }
+.hr-bn-v .play { position: absolute; inset: 0; display: grid; place-items: center; }
+.hr-bn-v .play > span { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: rgba(0, 0, 0, .6); color: #fff; font-size: 18px; padding-left: 3px; }

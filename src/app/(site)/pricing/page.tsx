@@ -10,6 +10,8 @@ import { getTurnaround } from '@/lib/turnaround-settings';
 import { getDiscounts } from '@/lib/discounts-settings';
 import { groupView } from '@/lib/discounts';
 import { BundleBox } from '@/components/BundleBox';
+import { getBonus } from '@/lib/bonus-settings';
+import type { BonusView } from '@/lib/bonus';
 
 export const metadata = { title: 'Pricing' };
 
@@ -26,14 +28,20 @@ const nounOf = (u: string) => {
 };
 
 export default async function Pricing() {
-  const [d, turnaround, discounts] = await Promise.all([
-    getSiteData(), getTurnaround(), getDiscounts(),
+  const [d, turnaround, discounts, bn] = await Promise.all([
+    getSiteData(), getTurnaround(), getDiscounts(), getBonus(),
   ]);
   const item = (id: string) => d.rateItems.find((i) => i.id === id);
   // 단가 항목이 하나라도 있는 분야만 표시합니다. (리믹스처럼 포트폴리오 전용 분야는 단가 항목을 넣지 않으면 숨겨집니다.)
   const groups = d.groups.filter((g) => d.rateItems.some((i) => i.groupId === g.id));
   // 화면의 분야 번호는 보이는 분야 기준으로 01부터 다시 매깁니다.
   const no = (n: number) => String(n + 1).padStart(2, '0');
+    // 서비스 혜택: 켜져 있고 이름이 있을 때만 보입니다. 모든 작업에 기본 적용, 제외 목록만 뺍니다.
+  const bonusOn = bn.on && bn.title !== '';
+  const bonusView: BonusView | undefined = bonusOn
+    ? { title: bn.title, line: bn.line, detail: bn.detail, conditions: bn.conditions, videos: bn.videos }
+    : undefined;
+
 
   // 클라이언트 컴포넌트에는 글자만 담은 단순한 데이터로 넘깁니다.
   const board: BoardGroup[] = groups.map((g, n) => ({
@@ -49,6 +57,8 @@ export default async function Pricing() {
         id: i.id, name: tx(i.name), desc: tx(i.desc), price: i.price, unit: tx(i.unit), tag: i.tag, discount: i.discount,
         turn: turnFor(turnaround, g.id, i.id),
         noDisc: discounts.excluded.includes(i.id),
+        bonus: bonusOn && !bn.excluded.includes(i.id) ? bn.title : undefined,
+        noBonus: bonusOn && bn.excluded.includes(i.id) ? bn.title : undefined,
       })),
   }));
 
@@ -94,7 +104,7 @@ export default async function Pricing() {
       />
 
       <section><div className="wrap">
-        <RateBoard groups={board} />
+        <RateBoard groups={board} bonus={bonusView} />
 
      <p className="hr-pt-note sm">
           찾는 작업이 없거나 조합이 궁금하시면 편하게 물어보세요. <a className="hr-pt-link" href="#contact">문의하기 →</a>

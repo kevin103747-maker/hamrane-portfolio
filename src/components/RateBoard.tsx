@@ -9,10 +9,13 @@ import { isDiscountActive } from '@/lib/filters';
 import { feeLabel, type Fee, type GroupTurn } from '@/lib/turnaround';
 import { volLabel, type GroupDiscView } from '@/lib/discounts';
 import { badgeClass } from '@/lib/rate-badge';
+import { BonusNote } from './BonusNote';
+import type { BonusView } from '@/lib/bonus';
+
 
 type BoardItem = {
   id: string; name: string; desc: string; price: string; unit: string; tag?: string; discount?: Discount;
-  turn?: GroupTurn; noDisc?: boolean;
+  turn?: GroupTurn; noDisc?: boolean; bonus?: string; noBonus?: string;
 };
 export type BoardGroup = { id: string; no: string; name: string; en: string; desc: string; items: BoardItem[]; disc?: GroupDiscView };
 
@@ -103,6 +106,7 @@ function RateModal({ groupName, i, onClose }: { groupName: string; i: BoardItem;
               <OptRow label="당일 마감" days="당일" on={t.same.on} fee={t.same.fee} base={base} />
             </ul>
           )}
+                    {i.bonus && <p className="hr-pm-bonus"><b>포함 혜택</b>{i.bonus}</p>}
           <p className="hr-pm-note">
             {onSale ? '할인가 기준으로 계산한 금액입니다. ' : ''}
             곡의 난이도와 작업량에 따라 달라지며, 확인 후 정확한 금액을 안내드립니다.
@@ -148,6 +152,8 @@ function RateCard({ groupName, i, showDisc }: { groupName: string; i: BoardItem;
         </div>
       )}
       {showDisc && i.noDisc && <p className="hr-dc-ex">수량·묶음 할인 제외 작업</p>}
+      {i.noBonus && <p className="hr-dc-ex">{i.noBonus} 제외 작업</p>}
+
 
       {i.turn && (
         <button ref={btnRef} type="button" className="hr-rt-more" aria-haspopup="dialog" onClick={() => setOpen(true)}>
@@ -211,7 +217,7 @@ function TabScroller({ children }: { children: React.ReactNode }) {
 }
 
 
-export function RateBoard({ groups }: { groups: BoardGroup[] }) {
+export function RateBoard({ groups, bonus }: { groups: BoardGroup[]; bonus?: BonusView }) {
   const [cur, setCur] = useState(groups[0]?.id ?? '');
 
   // 주소의 #cat-분야ID 로 들어오면 해당 탭을 엽니다.
@@ -234,6 +240,7 @@ export function RateBoard({ groups }: { groups: BoardGroup[] }) {
 
   return (
     <div className="hr-rt">
+       {bonus && <BonusNote b={bonus} />}
       <div className="hr-rt-tabhead">
         <b>분야 선택</b>
         <span>총 {groups.length}개 분야 · 눌러서 단가를 확인하세요</span>

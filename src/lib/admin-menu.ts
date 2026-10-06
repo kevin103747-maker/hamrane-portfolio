@@ -34,6 +34,7 @@ export const MENU: MenuSection[] = [
       { href: '/hr-admin/quote', label: '견적서·명세서', desc: '의뢰인에게 보낼 견적서와 작업 후 명세서를 곡별로 정리해 PNG로 저장', perm: 'rates' },
       { href: '/hr-admin/turnaround', label: '소요·마감', desc: '분야·작업별 평균 소요기간과 빠른·당일 마감 표시', perm: 'rates' },
       { href: '/hr-admin/discounts', label: '할인 규칙', desc: '수량 할인, 묶음 할인과 적용 제외 항목', perm: 'rates' },
+      { href: '/hr-admin/bonus', label: '서비스 혜택', desc: '리릭비디오 같은 무료 혜택 안내와 제외 작업', perm: 'rates' },
     ],
   },
   {
