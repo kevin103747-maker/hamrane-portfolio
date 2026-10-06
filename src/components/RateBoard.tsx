@@ -8,6 +8,7 @@ import type { Discount } from '@/lib/types';
 import { isDiscountActive } from '@/lib/filters';
 import { feeLabel, type Fee, type GroupTurn } from '@/lib/turnaround';
 import { volLabel, type GroupDiscView } from '@/lib/discounts';
+import { badgeClass } from '@/lib/rate-badge';
 
 type BoardItem = {
   id: string; name: string; desc: string; price: string; unit: string; tag?: string; discount?: Discount;
@@ -85,7 +86,7 @@ function RateModal({ groupName, i, onClose }: { groupName: string; i: BoardItem;
         </button>
 
         <div className="hr-pm-scroll">
-          <div className="hr-pm-top"><span>{groupName}</span>{i.tag && <em>{i.tag}</em>}</div>
+          <div className="hr-pm-top"><span>{groupName}</span>{i.tag && <em className={badgeClass(i.tag)}>{i.tag}</em>}</div>
           <h3>{i.name}</h3>
           {i.desc && <p className="hr-pm-desc">{i.desc}</p>}
 
@@ -131,7 +132,7 @@ function RateCard({ groupName, i, showDisc }: { groupName: string; i: BoardItem;
     <li className={`hr-rt-card${i.turn ? ' hr-rt-click' : ''}`}>
       <div className="hr-rt-top">
         <b>{i.name}</b>
-        {i.tag && <em>{i.tag}</em>}
+        {i.tag && <em className={badgeClass(i.tag)}>{i.tag}</em>}
       </div>
       {i.desc && <p>{i.desc}</p>}
       <div className="hr-rt-price">

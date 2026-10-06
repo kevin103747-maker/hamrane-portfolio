@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { requireAdmin } from '@/lib/auth/guard';
 import { adminDb } from '@/lib/auth/admin-db';
 import { can, logEdit } from '@/lib/auth/permissions';
+import { pickTag } from '@/lib/rate-badge';
 
 const RATES = '/hr-admin/rates';
 const PKGS = '/hr-admin/rates/packages';
@@ -116,7 +117,7 @@ export async function saveRate(fd: FormData) {
     descr: merge(before?.descr, desc),
     price,
     unit: merge(before?.unit, unit),
-    tag: tag || null,
+    tag: pickTag(str(fd, 'badge'), tag),
     discount,
     sort: await pickSort(fd, 'rate_items', before?.sort as number | undefined),
   };

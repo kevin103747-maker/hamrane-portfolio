@@ -1447,3 +1447,15 @@ section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
   .hr-scrl, .hr-sr-row { min-width: 0; max-width: 100%; }
 }
 .hx-soc-a.off { opacity: .4; pointer-events: none; }
+
+/* 단가표 배지: 추천 · 인기 · 신규 (정해진 문구일 때만 붙는 .bd) */
+.hr-rt-top em.bd, .hr-pm-top em.bd {
+  --bd: var(--mint);
+  flex: none; font-style: normal; font-weight: 700; font-size: 11px; line-height: 1;
+  padding: 4px 9px; border-radius: 99px; white-space: nowrap;
+  color: var(--bd);
+  border: 1px solid color-mix(in oklab, var(--bd) 55%, transparent);
+  background: color-mix(in oklab, var(--bd) 12%, transparent);
+}
+.hr-rt-top em.bd-hot, .hr-pm-top em.bd-hot { --bd: var(--t-price); }
+.hr-rt-top em.bd-new, .hr-pm-top em.bd-new { --bd: var(--t-request); }

@@ -6,6 +6,7 @@ import { can } from '@/lib/auth/permissions';
 import { adminDb } from '@/lib/auth/admin-db';
 import { DiscountFields } from '@/components/admin/DiscountFields';
 import { Section, Help, Flash } from '@/components/admin/Section';
+import { RATE_BADGES, isBadge } from '@/lib/rate-badge';
 import { saveRate, removeRate, moveRate } from './actions';
 
 // 문자열 또는 { ko: "..." } 형태 모두 글자로 바꿉니다.
@@ -39,7 +40,8 @@ export default async function RatesPage({
   const groups = g.data ?? [];
   const items = r.data ?? [];
   const cur = edit ? items.find((x) => x.id === edit) : undefined;
-  const hasOptional = !!(cur?.descr || cur?.tag || cur?.sort);
+  const curTag: string = cur?.tag ?? '';
+  const hasOptional = !!(cur?.descr || (curTag && !isBadge(curTag)) || cur?.sort);
 
   return (
     <div className="hr-pn-body">
@@ -53,6 +55,7 @@ export default async function RatesPage({
         <p>
           위쪽 폼에서 항목을 추가하거나 수정하고, 아래 목록에서 분야별로 확인합니다.
           항목 순서는 목록의 ▲▼ 버튼으로 바꿉니다. 같은 분야 안에서만 움직이며, 누르는 즉시 저장됩니다.
+          &quot;배지&quot;를 고르면 단가표 카드에 추천·인기·신규 표시가 붙습니다.
           이벤트 할인은 이 항목 하나에만 붙는 기간 한정 할인입니다. 여러 곡이나 여러 분야에 걸리는 할인은 &quot;할인 규칙&quot;에서 정합니다.
         </p>
       </Help>
@@ -87,16 +90,27 @@ export default async function RatesPage({
             <input name="unit" defaultValue={txt(cur?.unit)} placeholder="곡당" required />
           </label>
         </div>
+        <div className="hr-row">
+          <label>
+            배지 (카드 오른쪽 위에 표시)
+            <select name="badge" defaultValue={isBadge(curTag) ? curTag : ''}>
+              <option value="">없음 (또는 아래 &quot;직접 입력 태그&quot; 사용)</option>
+              {RATE_BADGES.map((b) => (
+                <option key={b.label} value={b.label}>{b.label}</option>
+              ))}
+            </select>
+          </label>
+        </div>
 
-        <Section open={hasOptional} title="설명 · 태그 · 순서 (선택)">
+        <Section open={hasOptional} title="설명 · 직접 입력 태그 · 순서 (선택)">
           <label>
             설명
             <input name="desc" defaultValue={txt(cur?.descr)} />
           </label>
           <div className="hr-row">
             <label>
-              태그
-              <input name="tag" defaultValue={cur?.tag ?? ''} />
+              직접 입력 태그 (배지를 골랐다면 무시됩니다. 예: 여름 한정)
+              <input name="tag" defaultValue={isBadge(curTag) ? '' : curTag} />
             </label>
             <label>
               순서 (보통 비워 두세요. 새 항목은 맨 끝에 들어가고, 순서는 아래 목록의 ▲▼로 바꿉니다)
