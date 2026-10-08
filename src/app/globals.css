@@ -348,6 +348,13 @@ footer a:hover { color: var(--mint); }
 @keyframes hr-bob { 0%, 100% { transform: translateY(-2px); } 50% { transform: translateY(3px); } }
 @media (prefers-reduced-motion: reduce) { .hr-scroll-ic { animation: none; } }
 
+/* 모바일: 스크롤 힌트를 하단 네비게이션 위로 */
+@media (max-width: 560px) {
+  .hr-scroll {
+    bottom: calc(80px + max(0px, env(safe-area-inset-bottom)));
+  }
+}
+
 @media (max-width: 900px) {
   :root { --hr-frame: 104px; --hr-frame-radius: 24px; }
   
@@ -595,6 +602,14 @@ footer a:hover { color: var(--mint); }
 }
 .hr-top.show { opacity: 1; transform: none; pointer-events: auto; }
 .hr-top:hover { color: var(--mint); border-color: var(--mint); }
+
+/* 모바일: 맨 위로 버튼을 하단 네비게이션 위로 */
+@media (max-width: 560px) {
+  .hr-top {
+    bottom: calc(80px + max(0px, env(safe-area-inset-bottom)));
+    right: 16px;
+  }
+}
 
 /* 검색 결과 없음 화면의 초기화 버튼 */
 .hr-empty-btn {
@@ -1518,8 +1533,20 @@ section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
 
 @media (max-width: 560px) {
   .bottom-nav { display: grid; }
-  footer { padding-bottom: calc(64px + max(0px, env(safe-area-inset-bottom))); }
-  .contact-sec { padding-bottom: 24px; }
+
+  /* 페이지 전체 하단에 여백 추가로 콘텐츠가 가려지지 않게 */
+  body {
+    padding-bottom: calc(80px + max(0px, env(safe-area-inset-bottom)));
+  }
+
+  /* 푸터와 문의 섹션 여백 조정 */
+  footer { padding-bottom: calc(24px + max(0px, env(safe-area-inset-bottom))); }
+  .contact-sec { padding-bottom: 32px; }
+
+  /* 스크롤 앵커가 하단 네비게이션에 가려지지 않게 */
+  html {
+    scroll-padding-bottom: calc(80px + max(0px, env(safe-area-inset-bottom)));
+  }
 }
 .hr-bn > i { flex: none; font: 700 11px/1 var(--f-mono); font-style: normal; letter-spacing: .04em; padding: 4px 8px; border-radius: 99px; color: var(--mint-ink); background: var(--mint); }
 .hr-bn > span { flex: 1; min-width: 0; }
