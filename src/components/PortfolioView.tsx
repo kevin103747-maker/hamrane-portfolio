@@ -4,6 +4,7 @@ import { matches, type Filter } from '@/lib/filters';
 import type { Work } from '@/lib/types';
 import { useSite } from './SiteProvider';
 import { WorkCard } from './WorkCard';
+import { Icon } from './Icons';
 import { COPY } from '@/lib/copy';
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 
@@ -330,7 +331,9 @@ export function PortfolioView() {
                 aria-controls="tools-more"
                 onClick={() => setMoreOpen(!moreOpen)}
               >
-                필터{moreCount > 0 && <b>{moreCount}</b>}
+                <Icon name="filter" className="" />
+                <span>필터</span>
+                {moreCount > 0 && <b>{moreCount}</b>}
               </button>
             </div>
             {/* 필터를 눌렀을 때만 그려지는 패널 */}
@@ -410,6 +413,17 @@ export function PortfolioView() {
               </div>
             )}
         </div>
+        {shown.length === 0 && !feats.length && (
+          <div className="grid-skeleton">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="card-skeleton">
+                <div className="ph-skeleton" />
+                <div className="text-skeleton" />
+                <div className="text-skeleton short" />
+              </div>
+            ))}
+          </div>
+        )}
         <Pager page={page} pages={pages} onGo={goPage} />
       </div>
     </>

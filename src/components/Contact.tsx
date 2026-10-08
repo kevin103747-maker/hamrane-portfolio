@@ -25,7 +25,7 @@ export function Contact({ guide: G, status }: { guide: ContactGuide; status: Sta
       ok = false;
     }
     setDone({ k, ok });
-    setTimeout(() => setDone(null), 1800);
+    setTimeout(() => setDone(null), 4000);
   };
   const label = (k: Key, idle: string) => (done?.k === k ? (done.ok ? COPY.copied : COPY.copyFail) : idle);
 
@@ -51,9 +51,11 @@ export function Contact({ guide: G, status }: { guide: ContactGuide; status: Sta
             {(G.lead || G.reply) && <p>{G.lead && <b>{G.lead}</b>} {G.reply}</p>}
             {G.ask && <p className="ask-line">{G.ask}</p>}
             {G.fields.length > 0 && <div className="hr-ct-fields">{G.fields.map((f) => <span key={f}>{f}</span>)}</div>}
+            <p className="hr-ct-response">평균 응답 시간: 24시간 이내</p>
           </div>
           {G.fields.length > 0 && (
             <button type="button" className="hr-ct-copy" onClick={() => copy('tp', inquiryTemplate(G.fields))}>
+              <Icon name="copy" className="" />
               {label('tp', '문의 양식 복사')}
             </button>
           )}
