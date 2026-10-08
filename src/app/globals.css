@@ -1354,6 +1354,12 @@ section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
     border-radius: 9px; background: var(--mint-soft); color: var(--mint); font-size: 12.5px; font-weight: 700; white-space: nowrap; }
   .cta-m:active { background: var(--mint); color: var(--mint-ink); }
   .gnb .logo { min-width: 0; flex-shrink: 1; }
+  .theme-switch { height: 32px; }
+  .theme-switch::after { top: 5px; left: 5px; width: 20px; height: 20px; }
+  [data-theme='light'] .theme-switch::after { transform: translateX(22px); }
+  .theme-switch svg { top: 8px; width: 14px; height: 14px; }
+  .theme-switch .moon { right: 8px; }
+  .theme-switch .sun { left: 8px; }
 }
 @media (max-width: 400px) {
   .gnb .logo .lg { height: 20px; }
@@ -1510,12 +1516,12 @@ section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
   .gnb .right { gap: 6px; }
   .gnb .logo .lg { height: 18px; }
   .cta-m { padding: 0 9px; font-size: 12px; }
-  .theme-switch { width: 46px; height: 24px; }
-  .theme-switch::after { width: 18px; height: 18px; }
-  [data-theme='light'] .theme-switch::after { transform: translateX(22px); }
-  .theme-switch svg { top: 5px; width: 12px; height: 12px; }
-  .theme-switch .moon { right: 5px; }
-  .theme-switch .sun { left: 5px; }
+  .theme-switch { width: 44px; height: 32px; }
+  .theme-switch::after { top: 5px; left: 5px; width: 20px; height: 20px; }
+  [data-theme='light'] .theme-switch::after { transform: translateX(18px); }
+  .theme-switch svg { top: 8px; width: 14px; height: 14px; }
+  .theme-switch .moon { right: 8px; }
+  .theme-switch .sun { left: 8px; }
 }
 /* ───── 모바일 포트폴리오 툴바: 검색창이 줄을 독차지해 버튼을 밀어내지 않게 ───── */
 @media (max-width: 560px) {
