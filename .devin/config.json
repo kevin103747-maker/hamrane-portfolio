@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(**)",
+      "Exec(git)",
+      "Exec(npm run)",
+      "Exec(npm)",
+      "Write(src/**)",
+      "Write(public/**)",
+      "Write(**.json)",
+      "Write(**.md)",
+      "Write(**.ts)",
+      "Write(**.tsx)",
+      "Write(**.css)",
+      "Write(**.mjs)"
+    ],
+    "deny": [
+      "Exec(sudo)",
+      "Exec(rm -rf)",
+      "Exec(docker)"
+    ]
+  }
+}
