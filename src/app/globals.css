@@ -1173,7 +1173,7 @@ section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
 
 /* 터치 기기: 누르는 영역을 44px 안팎으로 */
 @media (pointer: coarse) {
-  .theme-switch::before { content: ''; position: absolute; inset: -9px -4px; }
+  .theme-switch::before { content: ''; position: absolute; inset: -8px; }
   .burger, .x, .hr-x { width: 44px; height: 44px; }
 
   /* 링크와 버튼의 터치 영역 확대 */
@@ -1510,7 +1510,12 @@ section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
   .gnb .right { gap: 6px; }
   .gnb .logo .lg { height: 18px; }
   .cta-m { padding: 0 9px; font-size: 12px; }
-  .theme-switch { width: 46px; }
+  .theme-switch { width: 46px; height: 24px; }
+  .theme-switch::after { width: 18px; height: 18px; }
+  [data-theme='light'] .theme-switch::after { transform: translateX(22px); }
+  .theme-switch svg { top: 5px; width: 12px; height: 12px; }
+  .theme-switch .moon { right: 5px; }
+  .theme-switch .sun { left: 5px; }
 }
 /* ───── 모바일 포트폴리오 툴바: 검색창이 줄을 독차지해 버튼을 밀어내지 않게 ───── */
 @media (max-width: 560px) {
