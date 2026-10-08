@@ -11,3 +11,5 @@ trigger: always_on
 - Tailwind CSS for styling (no custom CSS unless necessary)
 - Image components: use `next/image` with proper width/height
 - Route structure follows App Router conventions (src/app/)
+
+For detailed patterns, invoke the nextjs-patterns skill.

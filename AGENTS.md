@@ -5,16 +5,14 @@
 
 # Quick Start
 - Tech: Next.js 16, React 19, Tailwind CSS 4, Supabase
-- Dev: `npm run dev` | Build: `npm run build` | Check: `npm run check`
+- Dev: `npm run dev` | Build: `npm run build` | Check: `npm run typecheck`
 - Path alias: `@/*` → `src/*`
 - DO NOT change functionality or visuals - optimize only
 
-# Key Patterns
-- Use `@supabase/ssr` for server components, `@supabase/supabase-js` for client
-- Images: Next.js Image component from `next/image`
-- Auth: Supabase Auth with MFA support
-- Server Actions: 5MB body limit configured
-- Supabase client: `src/lib/supabase.ts`
+# Skills (Auto-loaded when relevant)
+- **css-guide**: Navigate globals.css sections (92KB, 1603 lines)
+- **nextjs-patterns**: Next.js App Router patterns and component guidelines
+- **supabase-guide**: Supabase database and authentication patterns
 
 # Verification
 Before completing tasks: run `npm run typecheck`
