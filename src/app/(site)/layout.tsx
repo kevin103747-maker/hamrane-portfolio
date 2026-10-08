@@ -9,8 +9,9 @@ import { Header } from '@/components/Header';
 import { Contact } from '@/components/Contact';
 import { PointerFx } from '@/components/PointerFx';
 import { BackToTop } from '@/components/BackToTop';
-import { ScrollHint } from '@/components/ScrollHint';  
+import { ScrollHint } from '@/components/ScrollHint';
 import { Tracker } from '@/components/Tracker';
+import { BottomNav } from '@/components/BottomNav';
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
   const [data, guide, status] = await Promise.all([getSiteData(), getGuideSettings(), getStatusSettings()]);
@@ -22,7 +23,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
           <PointerFx />
           <BackToTop />
           <Tracker />
-          <ScrollHint /> 
+          <ScrollHint />
           {children}
           <Contact guide={guide.contact} status={status} />
           <footer>
@@ -34,6 +35,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
               </nav>
             </div>
           </footer>
+          <BottomNav />
         </div>
       </ModalProvider>
     </SiteProvider>

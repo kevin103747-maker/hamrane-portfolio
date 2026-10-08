@@ -1140,6 +1140,26 @@ section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
 @media (pointer: coarse) {
   .theme-switch::before { content: ''; position: absolute; inset: -9px -4px; }
   .burger, .x, .hr-x { width: 44px; height: 44px; }
+
+  /* 링크와 버튼의 터치 영역 확대 */
+  a, button {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* 텍스트 링크는 예외 */
+  a:not(.cb):not(.bn-item):not(.hr-artist):not(.card):not(.fx-q):not(.chip):not(.hr-rt-tab):not(.hr-pv) {
+    min-height: auto;
+    min-width: auto;
+  }
+
+  /* 카드와 그리드 아이템은 전체를 터치 영역으로 */
+  .card, .bn-item, .chip, .hr-rt-tab, .hr-pv {
+    min-height: 44px;
+  }
 }
 
 /* 터치 기기: 탭한 뒤에 호버 효과가 남지 않게 */
@@ -1148,6 +1168,22 @@ section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
   .card:hover h3 { color: inherit; }
   .card:hover .ov { opacity: 0; }
   .card:hover .ov span { transform: scale(.8); }
+
+  /* 터치 피드백: 누를 때 살짝 어두워지는 효과 */
+  a:active, button:active {
+    opacity: 0.7;
+    transition: opacity 0.1s;
+  }
+
+  .card:active {
+    transform: scale(0.98);
+    transition: transform 0.1s;
+  }
+
+  .chip:active, .hr-rt-tab:active, .hr-pv:active {
+    transform: scale(0.95);
+    transition: transform 0.1s;
+  }
 }
 
 /* 필터 칩: 여러 줄로 쌓지 않고 좌우로 밀어서 보기 */
@@ -1462,6 +1498,29 @@ section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
 
 /* 서비스 혜택: 단가표 맨 위 한 줄 + 팝업 */
 .hr-bn { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); font-size: 13px; line-height: 1.5; color: var(--text-2); }
+
+/* ───── 하단 네비게이션 (모바일 전용) ───── */
+.bottom-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 40;
+  background: color-mix(in oklab, var(--bg) 95%, transparent); backdrop-filter: blur(20px);
+  border-top: 1px solid var(--line); padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+  padding-bottom: calc(8px + max(0px, env(safe-area-inset-bottom))); }
+.bottom-nav { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 8px 16px max(8px, env(safe-area-inset-bottom)); }
+.bn-item { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px;
+  border-radius: 12px; color: var(--text-3); transition: all .2s; min-height: 56px; justify-content: center; }
+.bn-item:active { transform: scale(.95); }
+.bn-item.on { color: var(--mint); background: var(--mint-soft); }
+.bn-icon { width: 22px; height: 22px; flex: none; }
+.bn-label { font-size: 11px; font-weight: 500; }
+
+@media (min-width: 561px) {
+  .bottom-nav { display: none; }
+}
+
+@media (max-width: 560px) {
+  .bottom-nav { display: grid; }
+  footer { padding-bottom: calc(64px + max(0px, env(safe-area-inset-bottom))); }
+  .contact-sec { padding-bottom: 24px; }
+}
 .hr-bn > i { flex: none; font: 700 11px/1 var(--f-mono); font-style: normal; letter-spacing: .04em; padding: 4px 8px; border-radius: 99px; color: var(--mint-ink); background: var(--mint); }
 .hr-bn > span { flex: 1; min-width: 0; }
 .hr-bn > span b { color: var(--text); font-weight: 600; }
