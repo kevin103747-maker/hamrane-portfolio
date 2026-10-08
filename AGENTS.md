@@ -9,10 +9,19 @@
 - Path alias: `@/*` → `src/*`
 - DO NOT change functionality or visuals - optimize only
 
-# Skills (Auto-loaded when relevant)
-- **css-guide**: Navigate globals.css sections (92KB, 1603 lines)
-- **nextjs-patterns**: Next.js App Router patterns and component guidelines
-- **supabase-guide**: Supabase database and authentication patterns
+# Key Patterns
+- Server components by default, add 'use client' only when needed
+- Supabase: `@supabase/ssr` for server, `@supabase/supabase-js` for client
+- Images: Next.js Image component from `next/image`
+- Auth: Supabase Auth with MFA support
+- Server Actions: 5MB body limit configured
+
+# CSS Navigation (globals.css: 92KB, 1603 lines)
+- Lines 1-43: Theme setup, CSS variables
+- Lines 44-70: Base styles, GNB
+- Lines 94-267: Common components (cards, modals, portfolio, pricing)
+- Lines 639-1029: Admin & pricing
+- Lines 1147-1603: Mobile responsiveness
 
 # Verification
 Before completing tasks: run `npm run typecheck`
