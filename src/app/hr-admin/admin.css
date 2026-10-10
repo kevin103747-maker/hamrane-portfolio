@@ -378,3 +378,21 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 .hr-sx-note { margin: 6px 0 0; font-size: 12px; color: var(--text-2); }
 .hr-sx-csv { display: inline-flex; align-items: center; height: 36px; padding: 0 14px; border: 1px solid var(--line-2); border-radius: 10px; color: inherit; font-size: 13px; text-decoration: none; }
 .hr-sx-csv:hover { border-color: var(--mint); color: var(--mint); }
+
+/* 견적서·명세서: 번호 · 보관함 */
+.hr-qt { display: grid; gap: 12px; }
+.hr-qt h2 { margin: 0; }
+.hr-qt-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.hr-qt-row > span { font-size: 13px; color: var(--text-2); }
+.hr-qt-row > input { flex: 1 1 180px; min-width: 0; }
+.hr-qt button, .hr-qt-chips button { height: 34px; padding: 0 12px; border: 1px solid var(--line-2); border-radius: 10px; background: var(--card-2); color: inherit; font-size: 13px; cursor: pointer; }
+.hr-qt button:hover:not(:disabled), .hr-qt-chips button:hover { border-color: var(--mint); color: var(--mint); }
+.hr-qt button:disabled { opacity: .45; cursor: default; }
+.hr-qt-slots { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.hr-qt-slots li { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; }
+.hr-qt-slots li.on { border-color: var(--mint); }
+.hr-qt-slots li b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.hr-qt-slots li small { color: var(--text-2); font-size: 12px; white-space: nowrap; }
+.hr-qt-chips { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.hr-qt-chips > span { font-size: 12px; color: var(--text-2); }
+.hr-qt-chips button { height: 30px; padding: 0 10px; }

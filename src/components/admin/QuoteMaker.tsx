@@ -1,6 +1,10 @@
 // src/components/admin/QuoteMaker.tsx — 견적서·명세서: 입력 → 캔버스 미리보기 → PNG 저장/복사
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import {
+  nextNo, renumber, validLabel, listSlots, saveSlot, removeSlot, readPreset, writePreset,
+  type QuoteSlot,
+} from '@/lib/quote-store';
 
 export type QuoteItem = { id: string; name: string; price: number | null; noun: string };
 export type QuoteGroup = { name: string; items: QuoteItem[] };
@@ -676,7 +680,7 @@ function drawQuote(
   if (d.date) put(d.date.replace(/-/g, '.'), W - PAD, y + 38, 500, 16, p.ink2, 'right');
   if (d.no.trim()) put(d.no.trim(), W - PAD, y + 62, 500, 14, p.ink3, 'right');
   y += logoH + 44;
-  
+
   // 제목: 프로젝트 이름이 있으면 위에 문서 종류를 작게 붙입니다.
   const projectName = d.project.trim();
   if (projectName) {
@@ -872,6 +876,8 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
       return {
         ...x,
         kind,
+        no: renumber(x.no, kind),
+        bank: x.bank || (kind === 'statement' ? readPreset().bank : ''),
         notes: keep ? x.notes : DEFAULT_NOTES[kind],
         done: kind === 'statement' ? x.done || today() : x.done,
       };
@@ -1060,6 +1066,7 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
       const n = normalize(j?.doc ?? j);
       if (!n) throw new Error('bad');
       setDoc(n);
+      setSlotId('');
       toast('불러왔어요.');
     } catch {
       toast('불러오지 못했어요. 이 페이지에서 저장한 .json 파일인지 확인해 주세요.');
@@ -1070,6 +1077,7 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
   const reset = () => {
     if (!window.confirm('입력한 내용을 모두 지우고 처음부터 시작할까요? (입금 계좌는 남겨 둡니다)')) return;
     try { localStorage.removeItem(KEY); } catch { /* 무시 */ }
+    setSlotId('');
     setDoc({
       ...blankDoc(doc.kind),
       date: today(),
@@ -1078,9 +1086,117 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
     });
   };
 
+
+  /* ── 번호 · 유효기간 · 보관함 · 자주 쓰는 값 · 글로 복사 ── */
+  const [slots, setSlots] = useState<QuoteSlot[]>([]);
+  const [slotName, setSlotName] = useState('');
+  const [slotId, setSlotId] = useState('');
+  useEffect(() => { setSlots(listSlots()); }, []);
+
+  const issueNo = () => upd({ no: nextNo(doc.kind, doc.date) });
+  const setValidDays = (days: number) => upd({ valid: validLabel(days, doc.date) });
+
+  const copyText = async () => {
+    try {
+      await navigator.clipboard.writeText(messengerText(doc));
+      toast('글로 복사했어요. 카톡·디스코드에 붙여넣기(⌘V) 하세요.');
+    } catch {
+      toast('복사하지 못했어요.');
+    }
+  };
+
+  const saveToSlot = (overwrite: boolean) => {
+    const target = overwrite ? slots.find((s) => s.id === slotId) : undefined;
+    if (overwrite && !target) return toast('덮어쓸 보관본이 없어요. "새로 보관"을 눌러 주세요.');
+    if (target && !window.confirm(`"${target.name}" 보관본을 지금 내용으로 덮어쓸까요?`)) return;
+    const name = slotName.trim() || target?.name || doc.project.trim() || doc.client.trim();
+    const next = saveSlot(name, JSON.stringify(doc), target?.id);
+    if (!next) return toast('저장 공간이 부족해요. 오래된 보관본을 지워 주세요.');
+    setSlots(next);
+    setSlotId(next[0].id);
+    setSlotName('');
+    toast(`"${next[0].name}" 이름으로 보관했어요.`);
+  };
+  const loadSlot = (s: QuoteSlot) => {
+    if (!window.confirm(`지금 작성 중인 내용이 "${s.name}"의 내용으로 바뀝니다. 계속할까요?`)) return;
+    try {
+      const n = normalize(JSON.parse(s.json));
+      if (!n) throw new Error('bad');
+      setDoc(n);
+      setSlotId(s.id);
+      toast(`"${s.name}" 보관본을 불러왔어요.`);
+    } catch {
+      toast('이 보관본을 읽지 못했어요.');
+    }
+  };
+  const dropSlot = (s: QuoteSlot) => {
+    if (!window.confirm(`"${s.name}" 보관본을 지울까요?`)) return;
+    setSlots(removeSlot(s.id));
+    if (slotId === s.id) setSlotId('');
+  };
+
+  const saveBankPreset = () => {
+    if (!doc.bank.trim()) return toast('저장할 입금 계좌를 먼저 적어 주세요.');
+    toast(writePreset({ bank: doc.bank.trim() }) ? '입금 계좌를 저장해 뒀어요.' : '저장하지 못했어요.');
+  };
+  const loadBankPreset = () => {
+    const p = readPreset();
+    if (!p.bank) return toast('저장해 둔 입금 계좌가 없어요.');
+    upd({ bank: p.bank });
+    toast('저장해 둔 입금 계좌를 넣었어요.');
+  };
+  const saveNotesPreset = () => {
+    const patch = isSt ? { notesStatement: doc.notes } : { notesQuote: doc.notes };
+    toast(writePreset(patch) ? `${KIND_NAME[doc.kind]} 안내 문구를 저장해 뒀어요.` : '저장하지 못했어요.');
+  };
+  const loadNotesPreset = () => {
+    const p = readPreset();
+    const v = isSt ? p.notesStatement : p.notesQuote;
+    if (!v) return toast(`저장해 둔 ${KIND_NAME[doc.kind]} 안내 문구가 없어요.`);
+    upd({ notes: v });
+    toast('저장해 둔 안내 문구를 넣었어요.');
+  };
+
   return (
     <div className="hr-qm">
       <div className="hr-qm-form">
+        <section className="hr-card hr-qt">
+          <h2>번호 · 보관함</h2>
+          <div className="hr-qt-row">
+            <button type="button" onClick={issueNo}>문서 번호 발급</button>
+            <button type="button" onClick={copyText}>글로 복사 (카톡·디스코드)</button>
+          </div>
+          <div className="hr-qt-row">
+            <input
+              aria-label="보관 이름" maxLength={40} value={slotName}
+              placeholder="보관 이름 (비우면 프로젝트·의뢰인 이름)"
+              onChange={(e) => setSlotName(e.target.value)}
+            />
+            <button type="button" disabled={!slotId} onClick={() => saveToSlot(true)}>덮어쓰기</button>
+            <button type="button" onClick={() => saveToSlot(false)}>새로 보관</button>
+          </div>
+          {slots.length > 0 && (
+            <ul className="hr-qt-slots">
+              {slots.map((s) => (
+                <li key={s.id} className={s.id === slotId ? 'on' : undefined}>
+                  <b title={s.name}>{s.name}</b>
+                  <small>{new Date(s.at).toLocaleDateString('ko-KR')}</small>
+                  <button type="button" onClick={() => loadSlot(s)}>불러오기</button>
+                  <button type="button" onClick={() => dropSlot(s)}>삭제</button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="hr-qt-row">
+            <span>자주 쓰는 값</span>
+            <button type="button" onClick={saveBankPreset}>입금 계좌 저장</button>
+            <button type="button" onClick={loadBankPreset}>계좌 불러오기</button>
+            <button type="button" onClick={saveNotesPreset}>{KIND_NAME[doc.kind]} 안내 문구 저장</button>
+            <button type="button" onClick={loadNotesPreset}>문구 불러오기</button>
+          </div>
+          <small>보관함과 저장값은 이 브라우저에만 남습니다. 브라우저 데이터를 지우면 사라지니, 중요한 건은 작업 파일(.json)도 같이 받아 두세요.</small>
+        </section>
+
         <section className="hr-card">
           <div className="hr-qm-kind">
             <h2>기본 정보</h2>
@@ -1094,6 +1210,7 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
             <label>의뢰인<input value={doc.client} placeholder="예: 홍길동" onChange={(e) => upd({ client: e.target.value })} /></label>
             <label>프로젝트 이름<input value={doc.project} placeholder="예: OO 콘서트 음원 작업" onChange={(e) => upd({ project: e.target.value })} /></label>
             <label>발행일<input type="date" value={doc.date} onChange={(e) => upd({ date: e.target.value })} /></label>
+            <label>문서 번호<input maxLength={30} value={doc.no} placeholder="비우면 이미지에 표시 안 함" onChange={(e) => upd({ no: e.target.value })} /></label>
             {isSt ? (
               <>
                 <label>작업 완료일<input type="date" value={doc.done} onChange={(e) => upd({ done: e.target.value })} /></label>
@@ -1115,7 +1232,15 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
                 )}
               </>
             ) : (
-              <label>유효기간<input maxLength={30} value={doc.valid} onChange={(e) => upd({ valid: e.target.value })} /></label>
+              <>
+                <label>유효기간<input maxLength={30} value={doc.valid} onChange={(e) => upd({ valid: e.target.value })} /></label>
+                <div className="hr-qt-chips">
+                  <span>유효기간 빠르게 넣기</span>
+                  {[7, 14, 30].map((n) => (
+                    <button key={n} type="button" onClick={() => setValidDays(n)}>{n}일</button>
+                  ))}
+                </div>
+              </>
             )}
           </div>
 
