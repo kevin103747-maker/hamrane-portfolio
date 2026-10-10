@@ -97,11 +97,55 @@ Use `grep` to find selectors in `src/app/globals.css` (1603 lines):
 - Mobile responsive: grep for `@media.*max-width`
 
 # Large Files Section Index
-### QuoteMaker.tsx (1235 lines)
-- Lines 1-49: Type definitions (QuoteItem, QuoteGroup, PresetLine, QuotePkg, Line, Song, Adj, Doc)
-- Lines 50-100: Constants (KEY, KIND_NAME, DEFAULT_NOTES, etc.)
-- Lines 101-700: Helper functions and components
-- Lines 701-1235: Main QuoteMaker component
+### QuoteMaker.tsx (51KB, 1235 lines)
+Use `grep` to find sections:
+- Types: grep for `export type`, `type`, `interface`
+- Constants: grep for `const KEY`, `KIND_NAME`, `DEFAULT_NOTES`
+- Helper functions: grep for `^const.*=`, `^function.*\(`
+- Main component: Line 701 `export function QuoteMaker`
+- Drawing functions: grep for `drawQuote`, `songBlock`, `stageBlock`, `totalsBlock`
+
+### admin.css (30KB)
+Use `grep` to find selectors:
+- Layout: grep for `.hr-`, `.hr-admin`
+- Tables: grep for `table`, `th`, `td`
+- Forms: grep for `input`, `select`, `button`
+- Cards: grep for `.hr-card`, `.hr-cta`
+- Spacing: grep for `padding`, `margin`
+
+### (panel)/actions.ts (20KB)
+Use `grep` to find functions:
+- Quote actions: grep for `quote`
+- Artist actions: grep for `artist`
+- General actions: grep for `export async function`
+
+### PortfolioView.tsx (18KB)
+Use `grep` to find:
+- Components: grep for `export function`, `export const`
+- Filters: grep for `filter`, `Filter`
+- Rendering: grep for `return`, `map`
+
+### stats/page.tsx (18KB)
+Use `grep` to find:
+- Data fetching: grep for `const.*= await`, `supabase`
+- Charts: grep for `Chart`, `graph`
+- Statistics: grep for `stat`, `count`
+
+### works/page.tsx (14KB)
+Use `grep` to find:
+- Table: grep for `table`, `WorkTable`
+- Actions: grep for `action`, `handle`
+- Filters: grep for `filter`
+
+### rates/actions.ts (13KB)
+Use `grep` to find:
+- Rate actions: grep for `rate`, `price`
+- Package actions: grep for `package`, `pkg`
+
+### RateBoard.tsx (11KB)
+Use `grep` to find:
+- Display: grep for `Rate`, `price`
+- Calculations: grep for `calc`, `compute`
 
 # Verification
 Before completing tasks: run `npm run typecheck`
