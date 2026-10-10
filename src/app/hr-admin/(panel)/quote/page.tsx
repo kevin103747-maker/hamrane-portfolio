@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation';
 import { requireAdmin } from '@/lib/auth/guard';
 import { can } from '@/lib/auth/permissions';
 import { adminDb } from '@/lib/auth/admin-db';
+import { getTurnaround } from '@/lib/turnaround-settings';
+import { turnFor } from '@/lib/turnaround';
 import { Help } from '@/components/admin/Section';
 import { QuoteMaker, type QuoteGroup, type QuotePkg, type PresetLine } from '@/components/admin/QuoteMaker';
 
@@ -26,10 +28,11 @@ export default async function QuotePage() {
   if (!can(me, 'rates')) redirect('/hr-admin');
 
   const db = adminDb();
-  const [g, r, p] = await Promise.all([
+  const [g, r, p, turnaround] = await Promise.all([
     db.from('part_groups').select('id, num, name').order('sort', { ascending: true }),
     db.from('rate_items').select('id, group_id, name, price, unit').order('sort', { ascending: true }),
-    db.from('packages').select('*').order('sort', { ascending: true }),
+     db.from('packages').select('*').order('sort', { ascending: true }),
+    getTurnaround(),
   ]);
   const items = r.data ?? [];
 
@@ -38,7 +41,14 @@ export default async function QuotePage() {
       name: txt(grp.name),
       items: items
         .filter((x) => x.group_id === grp.id)
-        .map((x) => ({ id: x.id as string, name: txt(x.name), price: amt(x.price), noun: nounOf(txt(x.unit)) })),
+        .map((x) => {
+          const t = turnFor(turnaround, grp.id as string, x.id as string);
+          return {
+            id: x.id as string, name: txt(x.name), price: amt(x.price), noun: nounOf(txt(x.unit)),
+            rush: t?.rush.on ? { days: t.rush.days, fee: t.rush.fee } : undefined,
+            same: t?.same.on ? { fee: t.same.fee } : undefined,
+          };
+        }),
     }))
     .filter((grp) => grp.items.length > 0);
 
@@ -54,7 +64,7 @@ export default async function QuotePage() {
       const u = amt(prices[id] ?? it.price);
       lines.push({
         name: txt(it.name), qty: qty[id] ?? 1, unit: u == null ? '' : String(u),
-        list: amt(it.price), noun: nounOf(txt(it.unit)),
+        list: amt(it.price), noun: nounOf(txt(it.unit)), iid: id,
       });
     }
     for (const e of (x.extras ?? []) as { name: string; price?: string }[]) {

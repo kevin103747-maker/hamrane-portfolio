@@ -5,10 +5,15 @@ import {
   nextNo, renumber, validLabel, listSlots, saveSlot, removeSlot, readPreset, writePreset,
   type QuoteSlot,
 } from '@/lib/quote-store';
+import { feeLabel, type Fee } from '@/lib/turnaround';
 
-export type QuoteItem = { id: string; name: string; price: number | null; noun: string };
+export type QuoteItem = {
+  id: string; name: string; price: number | null; noun: string;
+  rush?: { days: string; fee: Fee }; // 단가표에서 빠른 마감을 켠 항목
+  same?: { fee: Fee }; // 단가표에서 당일 마감을 켠 항목
+};
 export type QuoteGroup = { name: string; items: QuoteItem[] };
-export type PresetLine = { name: string; qty: number; unit: string; list: number | null; noun: string };
+export type PresetLine = { name: string; qty: number; unit: string; list: number | null; noun: string; iid?: string };
 export type QuotePkg = { id: string; label: string; lines: PresetLine[] };
 
 /** 항목 할인 표시 방식: off=사용 안 함, pct=할인율로 표시, amt=할인금액으로 표시 */
@@ -272,6 +277,7 @@ function normalize(raw: unknown): Doc | null {
           unit: str(q.unit).replace(/[^\d]/g, ''),
           list,
           noun: str(q.noun),
+          iid: str(q.iid) || undefined,
           note: str(q.note),
           dm,
           orig: str(q.orig).replace(/[^\d]/g, ''),
@@ -924,6 +930,7 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
       unit: it.price == null ? '' : String(it.price),
       list: it.price,
       noun: it.noun,
+      iid: it.id,
     };
     setSong(sid, (s) => ({ ...s, lines: [...s.lines, line] }));
   };
@@ -1084,6 +1091,54 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
       done: doc.kind === 'statement' ? today() : '',
       bank: doc.bank,
     });
+  };
+
+  /* ── 마감 옵션(빠른·당일) 추가요금 ── */
+  const addRush = (sid: string, l: Line, kind: 'rush' | 'same') => {
+    const it = items.find((x) => x.id === l.iid);
+    const opt = kind === 'rush' ? it?.rush : it?.same;
+    if (!it || !opt) return;
+    const fee = opt.fee;
+    const total = lineTotal(l);
+    let unit = '';
+    if (fee) {
+      if (fee.type === 'won') unit = String(fee.value * l.qty); // 정액은 개당 금액에 붙는 값이라 수량을 곱합니다.
+      else if (total != null) unit = String(Math.round((total * fee.value) / 100));
+    }
+    const days = kind === 'rush' ? (it.rush?.days ?? '').trim() : '';
+    const times = fee?.type === 'won' && l.qty > 1 ? ` × ${l.qty}${l.noun}` : '';
+    const extra: Line = {
+      ...blankLine(),
+      name: `${l.name.trim() || '항목'} · ${kind === 'rush' ? '빠른 마감' : '당일 마감'}`,
+      unit,
+      note: `${feeLabel(fee)}${times}${days ? ` · ${days}` : ''}`,
+      pay: l.pay,
+    };
+    setSong(sid, (s) => {
+      const i = s.lines.findIndex((x) => x.id === l.id);
+      const lines = [...s.lines];
+      lines.splice(i < 0 ? lines.length : i + 1, 0, extra);
+      return { ...s, lines };
+    });
+    toast(fee ? '마감 추가요금 줄을 넣었어요. 금액은 직접 고칠 수 있어요.' : '추가요금이 정해져 있지 않아 "협의"로 넣었어요.');
+  };
+
+  const rushOpts = (sid: string, l: Line) => {
+    const it = l.iid ? items.find((x) => x.id === l.iid) : undefined;
+    if (!it || (!it.rush && !it.same)) return null;
+    return (
+      <select
+        className="hr-qm-pay" aria-label="마감 옵션 추가요금" value=""
+        onChange={(e) => {
+          const v = e.target.value;
+          if (v === 'rush' || v === 'same') addRush(sid, l, v);
+        }}
+      >
+        <option value="">+ 마감 옵션…</option>
+        {it.rush && <option value="rush">빠른 마감 {feeLabel(it.rush.fee)}</option>}
+        {it.same && <option value="same">당일 마감 {feeLabel(it.same.fee)}</option>}
+      </select>
+    );
   };
 
 
@@ -1329,6 +1384,7 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
                       >
                         {dcOn ? '항목 할인 끄기' : '항목 할인'}
                       </button>
+                      {rushOpts(s.id, l)}
                       {st && (
                         <select
                           className="hr-qm-pay" aria-label="입금 단계" value={l.pay}
