@@ -1,9 +1,10 @@
-// src/app/hr-admin/(panel)/stats/page.tsx — 방문 통계 (기간 요약 · 하루 보기)
+// src/app/hr-admin/(panel)/stats/page.tsx — 방문 통계 (기간 요약 · 하루 보기 · 유입/기기/클릭)
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { requireAdmin } from '@/lib/auth/guard';
 import { can } from '@/lib/auth/permissions';
 import { adminDb } from '@/lib/auth/admin-db';
+import { PLATFORMS } from '@/lib/social';
 import { OwnerToggle } from '@/components/admin/OwnerToggle';
 
 const txt = (v: unknown): string =>
@@ -24,6 +25,16 @@ type DayData = {
   groups: { id: string; clicks: number; visitors: number }[];
 };
 
+type Extra = {
+  prev_views: number;
+  prev_visitors: number;
+  devices: { d: string; views: number; visitors: number }[];
+  refs: { ref: string; sessions: number; visitors: number }[];
+  clicks: { label: string; clicks: number; visitors: number }[];
+};
+
+type Row = { key: string; name: string; value: number; sub: string };
+
 const RANGES = [7, 30, 90] as const;
 const PAGE_NAME: Record<string, string> = { '/': '홈', '/portfolio': '포트폴리오', '/pricing': '외주 단가', '/guide': '의뢰 가이드' };
 const WEEK = ['일', '월', '화', '수', '목', '금', '토'];
@@ -43,6 +54,27 @@ const label = (day: string): string => {
   const t = new Date(`${day}T00:00:00Z`);
   return `${t.getUTCMonth() + 1}월 ${t.getUTCDate()}일 (${WEEK[t.getUTCDay()]})`;
 };
+
+const safeDecode = (s: string): string => {
+  try { return decodeURIComponent(s); } catch { return s; }
+};
+
+/** 막대 한 줄씩 그리는 목록 */
+function Rows({ rows, empty }: { rows: Row[]; empty: string }) {
+  if (rows.length === 0) return <p>{empty}</p>;
+  const max = Math.max(1, ...rows.map((r) => r.value));
+  return (
+    <>
+      {rows.map((r) => (
+        <div key={r.key} className="hr-sx-row">
+          <b>{r.name}</b>
+          <span className="t"><i style={{ width: `${(r.value / max) * 100}%` }} /></span>
+          <em>{r.sub}</em>
+        </div>
+      ))}
+    </>
+  );
+}
 
 export default async function StatsPage({
   searchParams,
@@ -68,7 +100,8 @@ export default async function StatsPage({
     <>
       <h1>방문 통계</h1>
       <p className="hr-lead">
-        날짜별 방문과, 단가표에서 어떤 분야를 눌러 봤는지 보여 줍니다. 날짜를 누르면 그날 하루만 자세히 볼 수 있습니다.
+        날짜별 방문, 유입 경로, 기기 비율, 문의·채널 클릭, 단가표에서 어떤 분야와 항목을 눌러 봤는지 보여 줍니다.
+        날짜를 누르면 그날 하루만 자세히 볼 수 있습니다.
         실제 배포 주소에서의 방문만 기록되고, 로컬 개발과 미리보기 배포는 기록되지 않습니다.
       </p>
     </>
@@ -174,10 +207,13 @@ export default async function StatsPage({
   }
 
   /* ───────── 기간 요약 ───────── */
-  const [ov, g, r] = await Promise.all([
+  const [ov, g, r, ex, ri, wk] = await Promise.all([
     db.rpc('stat_overview', { p_days: n, p_owner: own }),
     db.from('part_groups').select('id, name').order('sort', { ascending: true }).order('id', { ascending: true }),
     db.from('rate_items').select('group_id'),
+    db.rpc('stat_extra', { p_days: n, p_owner: own }),
+    db.from('rate_items').select('id, name'),
+    db.from('works').select('id, title'),
   ]);
 
   if (ov.error || !ov.data) {
@@ -185,6 +221,7 @@ export default async function StatsPage({
   }
 
   const o = ov.data as Overview;
+  const e = ex.error ? null : ((ex.data as Extra | null) ?? null);
 
   // 방문이 없는 날도 0으로 채워서 날짜가 끊기지 않게 합니다. (한국 시간 기준)
   const base = Date.parse(`${kst}T00:00:00Z`);
@@ -207,16 +244,108 @@ export default async function StatsPage({
     .sort((a, b) => b.clicks - a.clicks);
   const maxClick = Math.max(1, ...groupRows.map((x) => x.clicks));
 
+  // 직전 기간과 비교
+  const delta = (cur: number, prev: number) => {
+    if (!prev) return { text: `직전 ${n}일 기록 없음`, cls: '' };
+    const p = Math.round(((cur - prev) / prev) * 100);
+    if (p === 0) return { text: `직전 ${n}일과 같음 (${prev})`, cls: '' };
+    return { text: `직전 ${n}일 대비 ${p > 0 ? '▲' : '▼'} ${Math.abs(p)}% (${prev})`, cls: p > 0 ? 'up' : 'down' };
+  };
+  const dViews = e ? delta(o.total_views, e.prev_views) : null;
+  const dVisitors = e ? delta(o.total_visitors, e.prev_visitors) : null;
+
+  // 기기 비율
+  const devList = e?.devices ?? [];
+  const devTotal = Math.max(1, devList.reduce((s, x) => s + x.views, 0));
+  const devRows: Row[] = devList.map((x) => ({
+    key: x.d,
+    name: x.d === 'm' ? '모바일 (좁은 화면)' : x.d === 'd' ? 'PC · 넓은 화면' : '구분 전 기록',
+    value: x.views,
+    sub: `${Math.round((x.views / devTotal) * 100)}% · ${x.views}회 · ${x.visitors}명`,
+  }));
+
+  // 유입 경로
+  const refRows: Row[] = (e?.refs ?? []).map((x) => ({
+    key: x.ref,
+    name: x.ref === '(direct)' ? '직접 접속 · 앱 (링크 정보 없음)' : x.ref,
+    value: x.sessions,
+    sub: `${x.sessions}회 · ${x.visitors}명`,
+  }));
+
+  // 문의 · 채널 클릭
+  const clickList = e?.clicks ?? [];
+  const contactRows: Row[] = clickList
+    .flatMap((c): Row[] => {
+      const m = /^(contact|ch):(.+)$/.exec(c.label);
+      if (!m) return [];
+      const name =
+        m[1] === 'contact'
+          ? m[2] === 'go' ? '문의 바로가기 버튼' : '문의 영역의 외부 링크'
+          : `채널 · ${PLATFORMS.find((p) => p.key === m[2])?.label ?? m[2]}`;
+      return [{ key: c.label, name, value: c.clicks, sub: `${c.clicks}회 · ${c.visitors}명` }];
+    })
+    .sort((a, b) => b.value - a.value);
+
+  // 단가표 항목 (팝업 열람 · 문의)
+  const rateName = new Map((ri.data ?? []).map((x) => [String(x.id), txt(x.name) || String(x.id)]));
+  const rateAgg = new Map<string, { open: number; ask: number }>();
+  for (const c of clickList) {
+    const m = /^(rate|ask):(.+)$/.exec(c.label);
+    if (!m) continue;
+    const cur = rateAgg.get(m[2]) ?? { open: 0, ask: 0 };
+    if (m[1] === 'rate') cur.open += c.clicks;
+    else cur.ask += c.clicks;
+    rateAgg.set(m[2], cur);
+  }
+  const rateRows: Row[] = [...rateAgg.entries()]
+    .sort((a, b) => b[1].open + b[1].ask - (a[1].open + a[1].ask))
+    .slice(0, 12)
+    .map(([id, v]) => ({
+      key: id,
+      name: rateName.get(id) ?? id,
+      value: v.open,
+      sub: `열람 ${v.open}회 · 문의 ${v.ask}회`,
+    }));
+
+  // 인기 작품
+  const workName = new Map((wk.data ?? []).map((x) => [String(x.id), txt(x.title) || String(x.id)]));
+  const workRows: Row[] = clickList
+    .flatMap((c): Row[] => {
+      const m = /^work:(.+)$/.exec(c.label);
+      if (!m) return [];
+      const id = safeDecode(m[1]);
+      return [{ key: c.label, name: workName.get(id) ?? workName.get(m[1]) ?? id, value: c.clicks, sub: `${c.clicks}회 · ${c.visitors}명` }];
+    })
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 10);
+
+  const csvHref = `/hr-admin/stats/csv?d=${n}${own ? '&own=1' : ''}`;
+
   return (
     <div className="hr-pn-body">
       {head}
       {toolbar}
+      <p><a className="hr-sx-csv" href={csvHref}>CSV 내려받기 (최근 {n}일)</a></p>
 
       <div className="hr-sx-cards">
-        <div className="hr-sx-card"><small>페이지 조회수</small><b>{o.total_views.toLocaleString('ko-KR')}</b></div>
-        <div className="hr-sx-card"><small>방문자 (브라우저 기준)</small><b>{o.total_visitors.toLocaleString('ko-KR')}</b></div>
+        <div className="hr-sx-card">
+          <small>페이지 조회수</small>
+          <b>{o.total_views.toLocaleString('ko-KR')}</b>
+          {dViews && <em className={`dl ${dViews.cls}`}>{dViews.text}</em>}
+        </div>
+        <div className="hr-sx-card">
+          <small>방문자 (브라우저 기준)</small>
+          <b>{o.total_visitors.toLocaleString('ko-KR')}</b>
+          {dVisitors && <em className={`dl ${dVisitors.cls}`}>{dVisitors.text}</em>}
+        </div>
         <div className="hr-sx-card"><small>하루 최고 조회수</small><b>{peak.toLocaleString('ko-KR')}</b></div>
       </div>
+      {e && <p className="hr-sx-note">직전 기간 기록이 일부만 쌓여 있으면 비교 수치가 실제보다 낮게 나올 수 있습니다.</p>}
+      {ex.error && (
+        <p role="alert" className="hr-flash bad">
+          추가 통계(유입·기기·클릭)를 불러오지 못했습니다: {ex.error.message}. Supabase에서 stat_extra 함수를 만들었는지 확인하세요.
+        </p>
+      )}
 
       <h2 className="hr-h2">날짜별 조회수</h2>
       <div className="hr-sx-chart" role="group" aria-label="날짜별 페이지 조회수 (막대를 누르면 그날 보기)">
@@ -260,6 +389,26 @@ export default async function StatsPage({
           <em>{x.clicks}회 · {x.visitors}명</em>
         </div>
       ))}
+
+      <h2 className="hr-h2">단가표 항목별 관심</h2>
+      <p className="hr-lead">
+        카드의 &quot;마감 옵션·총 금액 보기&quot;를 연 횟수와, 그 팝업에서 &quot;이 작업으로 문의&quot;를 누른 횟수입니다. 팝업이 없는 항목은 집계되지 않습니다.
+      </p>
+      <Rows rows={rateRows} empty="아직 기록이 없습니다." />
+
+      <h2 className="hr-h2">인기 작품</h2>
+      <p className="hr-lead">포트폴리오·홈에서 작품 카드를 눌러 연 횟수입니다. 상위 10개만 보여 줍니다.</p>
+      <Rows rows={workRows} empty="아직 기록이 없습니다." />
+
+      <h2 className="hr-h2">문의 · 채널 클릭</h2>
+      <Rows rows={contactRows} empty="아직 기록이 없습니다." />
+
+      <h2 className="hr-h2">어디서 들어왔나</h2>
+      <p className="hr-lead">탭을 연 뒤 첫 방문만 셉니다. 링크에 ?utm_source=이름 을 붙이면 그 이름으로 구분됩니다.</p>
+      <Rows rows={refRows} empty="아직 기록이 없습니다." />
+
+      <h2 className="hr-h2">모바일 · PC 비율</h2>
+      <Rows rows={devRows} empty="아직 기록이 없습니다." />
 
       <h2 className="hr-h2">페이지별 조회수</h2>
       {o.pages.length === 0 && <p>아직 기록이 없습니다.</p>}

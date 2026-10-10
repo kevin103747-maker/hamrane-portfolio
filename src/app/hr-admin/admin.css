@@ -370,3 +370,11 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 .hr-qm-sum { margin: 0; font-size: 13px; color: var(--text-2); }
 .hr-qm-sum b { color: var(--text); }
 .hr-qm-hint { margin: 0; align-self: end; font-size: 12px; color: var(--text-2); line-height: 1.5; }
+
+/* 통계: 직전 기간 비교 · CSV 버튼 · 안내 */
+.hr-sx-card .dl { display: block; margin-top: 4px; font-size: 12px; font-style: normal; color: var(--text-2); }
+.hr-sx-card .dl.up { color: var(--mint); }
+.hr-sx-card .dl.down { color: #e0787a; }
+.hr-sx-note { margin: 6px 0 0; font-size: 12px; color: var(--text-2); }
+.hr-sx-csv { display: inline-flex; align-items: center; height: 36px; padding: 0 14px; border: 1px solid var(--line-2); border-radius: 10px; color: inherit; font-size: 13px; text-decoration: none; }
+.hr-sx-csv:hover { border-color: var(--mint); color: var(--mint); }

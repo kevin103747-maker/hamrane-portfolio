@@ -1,4 +1,4 @@
-// src/components/Tracker.tsx — 공개 페이지 방문 기록 (화면에는 아무것도 그리지 않습니다)
+// src/components/Tracker.tsx — 공개 페이지 방문·클릭 기록 (화면에는 아무것도 그리지 않습니다)
 'use client';
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
@@ -20,6 +20,27 @@ export function Tracker() {
     }
     track('view', path);
   }, [path]);
+
+  // 문의 바로가기·채널 아이콘 클릭을 한 곳에서 셉니다.
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      const a = (e.target as Element | null)?.closest?.('a[href]') as HTMLAnchorElement | null;
+      if (!a) return;
+      const ch = a.dataset.ch;
+      if (ch) {
+        track('click', `ch:${ch}`);
+        return;
+      }
+      const href = a.getAttribute('href') ?? '';
+      if (href === '#contact' || href.endsWith('#contact')) {
+        track('click', 'contact:go');
+      } else if (a.closest('#contact') && /^https?:/i.test(href)) {
+        track('click', 'contact:link');
+      }
+    };
+    document.addEventListener('click', onClick, true);
+    return () => document.removeEventListener('click', onClick, true);
+  }, []);
 
   return null;
 }

@@ -115,7 +115,7 @@ function RateModal({ groupName, i, onClose }: { groupName: string; i: BoardItem;
         </div>
 
         <div className="hr-pm-foot">
-          <a className="hr-pm-ask" href="#contact" onClick={onClose}>
+          <a className="hr-pm-ask" href="#contact" onClick={() => { track('click', `ask:${i.id}`); onClose(); }}>
             이 작업으로 문의 <Icon name="arrow" />
           </a>
         </div>
@@ -157,7 +157,7 @@ function RateCard({ groupName, i, showDisc }: { groupName: string; i: BoardItem;
 
 
       {i.turn && (
-        <button ref={btnRef} type="button" className="hr-rt-more" aria-haspopup="dialog" onClick={() => setOpen(true)}>
+        <button ref={btnRef} type="button" className="hr-rt-more" aria-haspopup="dialog" onClick={() => { track('click', `rate:${i.id}`); setOpen(true); }}>
           마감 옵션·총 금액 보기 <Icon name="arrow" />
         </button>
       )}

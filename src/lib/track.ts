@@ -1,6 +1,9 @@
-// src/lib/track.ts — 방문·분야 클릭을 서버로 보냅니다. 브라우저에서만 호출하세요.
+// src/lib/track.ts — 방문·분야·클릭을 서버로 보냅니다. 브라우저에서만 호출하세요.
 const VID = 'hr-vid';     // 방문자 임의 ID (개인정보 아님)
 const OWNER = 'hr-owner'; // '1' = 내 기기(제외), '0' = 직접 포함으로 바꿈
+const REF = 'hr-ref';     // 이 탭에서 유입 경로를 이미 보냈는지
+
+export type TrackKind = 'view' | 'group' | 'click';
 
 export const isOwnerDevice = (): boolean => {
   try { return localStorage.getItem(OWNER) === '1'; } catch { return false; }
@@ -29,13 +32,48 @@ function visitorId(): string {
   }
 }
 
-export function track(kind: 'view' | 'group', value: string) {
+/** 탭을 연 뒤 첫 방문 때만 유입 경로(도메인)를 돌려줍니다. 사이트 안 이동에서는 undefined. */
+function firstReferrer(): string | undefined {
+  try {
+    if (sessionStorage.getItem(REF) === '1') return undefined;
+    sessionStorage.setItem(REF, '1');
+  } catch {
+    return undefined;
+  }
+  try {
+    const utm = new URLSearchParams(location.search)
+      .get('utm_source')
+      ?.toLowerCase()
+      .replace(/[^a-z0-9._-]/g, '')
+      .slice(0, 40);
+    if (utm) return utm;
+    if (!document.referrer) return '(direct)';
+    const host = new URL(document.referrer).hostname.replace(/^www\./, '').toLowerCase();
+    const mine = location.hostname.replace(/^www\./, '').toLowerCase();
+    return host && host !== mine ? host.slice(0, 60) : '(direct)';
+  } catch {
+    return '(direct)';
+  }
+}
+
+export function track(kind: TrackKind, value: string) {
   const vid = visitorId();
   if (!vid) return; // 저장소를 못 쓰면 기록하지 않습니다.
+  const body: Record<string, unknown> = {
+    kind,
+    value,
+    vid,
+    owner: isOwnerDevice(),
+    dev: window.innerWidth < 768 ? 'm' : 'd',
+  };
+  if (kind === 'view') {
+    const ref = firstReferrer();
+    if (ref) body.ref = ref;
+  }
   fetch('/api/stat', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ kind, value, vid, owner: isOwnerDevice() }),
+    body: JSON.stringify(body),
     keepalive: true,
   }).catch(() => {});
 }
