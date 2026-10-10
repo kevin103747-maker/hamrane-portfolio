@@ -345,3 +345,28 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 .hr-sx-list .hr-tbl th { position: sticky; top: 0; background: var(--card); }
 .hr-sx-list a { color: var(--mint); text-decoration: none; }
 .hr-sx-list a:hover { text-decoration: underline; }
+
+/* 견적서·명세서: 항목 할인 · 단계별 입금 */
+.hr-qm-line .n3 { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.hr-qm-dtog, .hr-qm-bulk button { height: 30px; padding: 0 12px; border: 1px solid var(--line-2); border-radius: 99px; background: transparent; color: inherit; font: inherit; font-size: 12px; cursor: pointer; }
+.hr-qm-dtog:hover, .hr-qm-bulk button:hover { border-color: var(--mint); color: var(--mint); }
+.hr-qm-dtog.on { border-color: var(--mint); color: var(--mint); }
+.hr-qm-pay { height: 30px; padding: 0 8px; border: 1px solid var(--line-2); border-radius: 10px; background: var(--card-2); color: var(--text); font: inherit; font-size: 12px; }
+.hr-qm-adj .hr-qm-pay { height: 36px; }
+
+.hr-qm-dc { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 10px; border: 1px dashed var(--line-2); border-radius: 12px; }
+.hr-qm-dc .hr-qm-seg, .hr-qm-dc .hr-qm-dcs { grid-column: 1 / -1; }
+.hr-qm-dc label { display: grid; gap: 4px; font-size: 12px; color: var(--text-2); }
+.hr-qm-dc label input { min-width: 0; }
+.hr-qm-dcs { margin: 0; font-size: 12px; color: var(--text-2); line-height: 1.5; }
+.hr-qm-dcs.bad { color: #d97706; }
+@media (max-width: 640px) { .hr-qm-dc { grid-template-columns: 1fr; } }
+
+.hr-qm-bulk { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 4px 0 8px; font-size: 12px; color: var(--text-2); }
+.hr-qm-stage { display: grid; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 13px; }
+.hr-qm-stage small { color: var(--text-2); line-height: 1.5; }
+.hr-qm-stage label { display: grid; gap: 4px; }
+.hr-qm-chk { display: flex !important; align-items: center; gap: 8px; font-weight: 600; }
+.hr-qm-sum { margin: 0; font-size: 13px; color: var(--text-2); }
+.hr-qm-sum b { color: var(--text); }
+.hr-qm-hint { margin: 0; align-self: end; font-size: 12px; color: var(--text-2); line-height: 1.5; }

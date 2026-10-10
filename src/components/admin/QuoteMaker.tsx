@@ -7,10 +7,26 @@ export type QuoteGroup = { name: string; items: QuoteItem[] };
 export type PresetLine = { name: string; qty: number; unit: string; list: number | null; noun: string };
 export type QuotePkg = { id: string; label: string; lines: PresetLine[] };
 
-/** unit: 개당 금액(숫자 글자). '' = 협의, '0' = 무료 / list: 단가표 정가 / noun: 세는 말(트랙 등) */
-type Line = PresetLine & { id: string; note: string };
+/** 항목 할인 표시 방식: off=사용 안 함, pct=할인율로 표시, amt=할인금액으로 표시 */
+type DMode = 'off' | 'pct' | 'amt';
+/** 단계별 입금: 입금 완료 / 이번 입금 / 추후 입금 */
+const PAYS = ['paid', 'now', 'later'] as const;
+type Pay = (typeof PAYS)[number];
+const PAY_NAME: Record<Pay, string> = { paid: '입금 완료', now: '이번 입금', later: '추후 입금' };
+
+/**
+ * unit: 개당 금액(숫자 글자). '' = 협의, '0' = 무료 / list: 단가표 정가 / noun: 세는 말(트랙 등)
+ * 항목 할인(금액은 모두 "수량을 곱한 이 항목 합계" 기준)
+ *  orig: 원가 직접 입력('' = 단가표 정가 × 수량) / dv: 할인율(%) 또는 할인금액 / af: 할인 후 가격
+ *  by: 마지막에 직접 입력한 쪽 ('v' = 할인값, 'a' = 할인 후 가격). 나머지 한쪽은 자동 계산
+ */
+type Line = PresetLine & {
+  id: string; note: string;
+  dm: DMode; orig: string; dv: string; af: string; by: 'v' | 'a';
+  pay: Pay;
+};
 type Song = { id: string; title: string; lines: Line[] };
-type Adj = { id: string; label: string; amount: string };
+type Adj = { id: string; label: string; amount: string; pay: Pay };
 type Theme = 'light' | 'dark';
 type Mode = 'detail' | 'summary';
 type Kind = 'quote' | 'statement';
@@ -22,6 +38,8 @@ type Doc = {
   due: string; // 명세서: 입금 기한
   bank: string; // 명세서: 입금 계좌
   paid: string; // 명세서: 기 입금액(선입금), 숫자 글자
+  stage: boolean; // 명세서: 단계별 입금 사용
+  later: string; // 명세서: 추후 입금 안내 문구
   songs: Song[]; adjs: Adj[]; notes: string; theme: Theme; mode: Mode;
 };
 
@@ -43,17 +61,100 @@ const adjN = (s: string) => {
   const n = toN(s);
   return n == null ? 0 : s.trim().startsWith('-') ? -n : n;
 };
+const toPay = (v: unknown): Pay => (v === 'paid' || v === 'later' ? v : 'now');
+const toDm = (v: unknown): DMode => (v === 'pct' || v === 'amt' ? v : 'off');
+/** 할인율 입력 정리: 숫자와 소수점 한 자리만, 100 초과 불가 */
+const cleanPct = (s: string): string => {
+  const m = s.replace(/[^\d.]/g, '');
+  const [a, ...r] = m.split('.');
+  const v = r.length ? `${a}.${r.join('').slice(0, 1)}` : a;
+  return Number(v) > 100 ? '100' : v;
+};
+
+/* ───────────── 항목 할인 계산 ───────────── */
+type Disc = { base: number; after: number; off: number; pct: number };
+
+/** 원가(수량 반영): 직접 입력 → 단가표 정가×수량 → 개당 금액×수량 순서로 찾습니다. */
+const baseOf = (l: Line): number | null => {
+  const o = toN(l.orig);
+  if (o != null) return o;
+  if (l.list != null) return l.list * l.qty;
+  const u = toN(l.unit);
+  return u == null ? null : u * l.qty;
+};
+/** 원가 칸을 비웠을 때 쓰이는 기본 원가 */
+const defaultBase = (l: Line): number | null => baseOf({ ...l, orig: '' });
+
+/** 할인이 켜져 있고 실제로 깎이는 경우에만 값을 돌려줍니다. */
+function discOf(l: Line): Disc | null {
+  if (l.dm === 'off') return null;
+  const base = baseOf(l);
+  if (base == null || base <= 0) return null;
+  let after: number;
+  if (l.by === 'a') {
+    const a = toN(l.af);
+    if (a == null) return null;
+    after = Math.min(base, a);
+  } else {
+    if (l.dv === '') return null;
+    const cut =
+      l.dm === 'pct'
+        ? Math.round((base * Math.min(100, Number(l.dv) || 0)) / 100)
+        : Math.min(base, toN(l.dv) ?? 0);
+    after = base - cut;
+  }
+  const off = base - after;
+  if (off <= 0) return null;
+  return { base, after, off, pct: Math.round((off / base) * 1000) / 10 };
+}
+
+/** 항목 합계: 할인이 적용되면 할인 후 금액, 아니면 개당 금액 × 수량. null 은 협의 */
 const lineTotal = (l: Line): number | null => {
+  const d = discOf(l);
+  if (d) return d.after;
   const u = toN(l.unit);
   return u == null ? null : u * l.qty;
 };
 const songTotal = (s: Song) => s.lines.reduce((t, l) => t + (lineTotal(l) ?? 0), 0);
 const today = () => new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
 
+/* ───────────── 단계별 입금 집계 ───────────── */
+type PayRow = { label: string; amount: number | null };
+type PayGroup = { rows: PayRow[]; sum: number };
+
+function payGroups(d: Doc): Record<Pay, PayGroup> {
+  const g: Record<Pay, PayGroup> = {
+    paid: { rows: [], sum: 0 },
+    now: { rows: [], sum: 0 },
+    later: { rows: [], sum: 0 },
+  };
+  const multi = d.songs.length > 1;
+  d.songs.forEach((s, i) => {
+    const sn = s.title.trim() || `곡 ${i + 1}`;
+    s.lines.forEach((l) => {
+      const name = `${l.name.trim() || '항목'}${l.qty > 1 ? ` ×${l.qty}` : ''}`;
+      const t = lineTotal(l);
+      g[l.pay].rows.push({ label: multi ? `${sn} · ${name}` : name, amount: t });
+      if (t != null) g[l.pay].sum += t;
+    });
+  });
+  d.adjs.forEach((a) => {
+    const n = adjN(a.amount);
+    if (n === 0) return;
+    g[a.pay].rows.push({ label: a.label.trim() || '조정', amount: n });
+    g[a.pay].sum += n;
+  });
+  return g;
+}
+
+const blankLine = (): Line => ({
+  id: uid(), name: '', qty: 1, unit: '', list: null, noun: '', note: '',
+  dm: 'off', orig: '', dv: '', af: '', by: 'v', pay: 'now',
+});
 const blankSong = (): Song => ({ id: uid(), title: '', lines: [] });
 const blankDoc = (kind: Kind = 'quote'): Doc => ({
   kind, client: '', project: '', date: '', valid: '발행일로부터 14일',
-  done: '', due: '', bank: '', paid: '',
+  done: '', due: '', bank: '', paid: '', stage: false, later: '',
   songs: [blankSong()], adjs: [], notes: DEFAULT_NOTES[kind], theme: 'light', mode: 'detail',
 });
 
@@ -66,15 +167,18 @@ function normalize(raw: unknown): Doc | null {
   const kind: Kind = j.kind === 'statement' ? 'statement' : 'quote';
   const base = blankDoc(kind);
 
-  const songs: Song[] = j.songs.map((s) => {
+  const songs: Song[] = j.songs.map((s): Song => {
     const o = (s ?? {}) as Record<string, unknown>;
     const lines = Array.isArray(o.lines) ? o.lines : [];
     return {
       id: str(o.id) || uid(),
       title: str(o.title),
-      lines: lines.map((l) => {
+      lines: lines.map((l): Line => {
         const q = (l ?? {}) as Record<string, unknown>;
         const list = typeof q.list === 'number' && Number.isFinite(q.list) ? q.list : null;
+        const dm = toDm(q.dm);
+        const by: 'v' | 'a' = q.by === 'a' ? 'a' : 'v';
+        const dvRaw = str(q.dv);
         return {
           id: str(q.id) || uid(),
           name: str(q.name),
@@ -83,13 +187,24 @@ function normalize(raw: unknown): Doc | null {
           list,
           noun: str(q.noun),
           note: str(q.note),
+          dm,
+          orig: str(q.orig).replace(/[^\d]/g, ''),
+          dv: dm === 'amt' ? dvRaw.replace(/[^\d]/g, '') : cleanPct(dvRaw),
+          af: str(q.af).replace(/[^\d]/g, ''),
+          by,
+          pay: toPay(q.pay),
         };
       }),
     };
   });
-  const adjs: Adj[] = (Array.isArray(j.adjs) ? j.adjs : []).map((a) => {
+  const adjs: Adj[] = (Array.isArray(j.adjs) ? j.adjs : []).map((a): Adj => {
     const o = (a ?? {}) as Record<string, unknown>;
-    return { id: str(o.id) || uid(), label: str(o.label), amount: str(o.amount).replace(/[^\d-]/g, '') };
+    return {
+      id: str(o.id) || uid(),
+      label: str(o.label),
+      amount: str(o.amount).replace(/[^\d-]/g, ''),
+      pay: toPay(o.pay),
+    };
   });
 
   return {
@@ -102,6 +217,8 @@ function normalize(raw: unknown): Doc | null {
     due: str(j.due),
     bank: str(j.bank),
     paid: str(j.paid).replace(/[^\d]/g, ''),
+    stage: j.stage === true,
+    later: str(j.later),
     songs,
     adjs,
     notes: typeof j.notes === 'string' ? j.notes : base.notes,
@@ -115,19 +232,30 @@ const W = 1080;
 const PAD = 64;
 const CARD_PAD = 36;
 
-type Pal = { bg: string; card: string; ink: string; ink2: string; ink3: string; line: string; accent: string };
+type Pal = {
+  bg: string; card: string; ink: string; ink2: string; ink3: string; line: string; accent: string;
+  onAccent: string; tint: string;
+};
 const PAL: Record<Theme, Pal> = {
-  light: { bg: '#f3f5ef', card: '#ffffff', ink: '#18241e', ink2: '#4d5f55', ink3: '#6f8178', line: 'rgba(40,70,52,.14)', accent: '#3f8458' },
-  dark: { bg: '#0f1715', card: '#1a2421', ink: '#eef3ef', ink2: '#a9b8b0', ink3: '#7d9187', line: 'rgba(190,230,205,.14)', accent: '#86efac' },
+  light: {
+    bg: '#f3f5ef', card: '#ffffff', ink: '#18241e', ink2: '#4d5f55', ink3: '#6f8178',
+    line: 'rgba(40,70,52,.14)', accent: '#3f8458', onAccent: '#ffffff', tint: 'rgba(63,132,88,.10)',
+  },
+  dark: {
+    bg: '#0f1715', card: '#1a2421', ink: '#eef3ef', ink2: '#a9b8b0', ink3: '#7d9187',
+    line: 'rgba(190,230,205,.14)', accent: '#86efac', onAccent: '#0f1715', tint: 'rgba(134,239,172,.10)',
+  },
 };
 
 /** 줄 아래 작은 글씨: "20,000원 × 8트랙 · 메모" */
 function subText(l: Line): string {
   const u = toN(l.unit);
+  const dc = discOf(l);
   const parts: string[] = [];
   if (l.qty > 1) {
     const mul = l.noun ? `${l.qty}${l.noun}` : `${l.qty}`;
-    const base = u === 0 ? l.list : u;
+    // 원가를 직접 입력했다면 개당 금액을 알 수 없어 곱셈 표기는 생략합니다.
+    const base = dc ? (l.orig !== '' ? null : (l.list ?? u)) : u === 0 ? l.list : u;
     parts.push(base != null && base > 0 ? `${won(base)}원 × ${mul}` : `× ${mul}`);
   }
   if (l.note.trim()) parts.push(l.note.trim());
@@ -144,6 +272,10 @@ function drawQuote(
   const p = PAL[d.theme];
   const CW = W - PAD * 2;
   const isSt = d.kind === 'statement';
+  const st = isSt && d.stage; // 단계별 입금 사용 중
+  const G = st ? payGroups(d) : null;
+  // 입금 완료·추후 입금 항목이 하나라도 있을 때만 강조/흐림/입금 안내 카드를 씁니다.
+  const hl = !!G && (G.paid.rows.length > 0 || G.later.rows.length > 0);
   let on = paint;
   const font = (w: number, s: number) => `${w} ${s}px ${ff}`;
 
@@ -203,8 +335,56 @@ function drawQuote(
     ctx.stroke();
   };
 
-  /** 줄 오른쪽 금액: 일반 / 무료(정가 취소선) / 협의 */
-  const amountAt = (l: Line, rx: number, base: number) => {
+  /** "이번 입금" 부분 강조 배경 */
+  const tint = (x: number, y: number, w: number, h: number) => {
+    if (!on) return;
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, 12);
+    ctx.fillStyle = p.tint;
+    ctx.fill();
+  };
+
+  /** 입금 단계 표시 (높이 24). 이번 입금=채움, 입금 완료=실선, 추후 입금=점선 */
+  const chip = (label: string, x: number, y: number, kind: Pay): number => {
+    ctx.font = font(600, 13);
+    const w = ctx.measureText(label).width + 22;
+    if (on) {
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, 24, 12);
+      if (kind === 'now') {
+        ctx.fillStyle = p.accent;
+        ctx.fill();
+      } else {
+        ctx.strokeStyle = kind === 'paid' ? p.ink3 : p.ink2;
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash(kind === 'later' ? [4, 3] : []);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+    put(label, x + 11, y + 17, 600, 13, kind === 'now' ? p.onAccent : kind === 'paid' ? p.ink3 : p.ink2);
+    return w;
+  };
+
+  /** 줄 오른쪽 금액: 일반 / 항목 할인(원가 취소선) / 무료(정가 취소선) / 협의 */
+  const amountAt = (l: Line, rx: number, base: number, dim = false) => {
+    const dc = discOf(l);
+    if (dc) {
+      const free = dc.after === 0;
+      const wf = put(free ? '무료' : `${won(dc.after)}원`, rx, base, 700, 20, free ? p.accent : dim ? p.ink3 : p.ink, 'right');
+      const sx = rx - wf - 14;
+      const tw = put(`${won(dc.base)}원`, sx, base - 1, 400, 16, p.ink3, 'right');
+      if (on) {
+        ctx.strokeStyle = p.ink3;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(sx - tw, base - 7);
+        ctx.lineTo(sx, base - 7);
+        ctx.stroke();
+      }
+      put(l.dm === 'pct' ? `${dc.pct}% 할인` : `${won(dc.off)}원 할인`, rx, base + 24, 600, 15, p.accent, 'right');
+      return;
+    }
     const u = toN(l.unit);
     if (u == null) {
       put('협의', rx, base, 500, 20, p.ink3, 'right');
@@ -224,7 +404,7 @@ function drawQuote(
         }
       }
     } else {
-      put(`${won(u * l.qty)}원`, rx, base, 600, 20, p.ink, 'right');
+      put(`${won(u * l.qty)}원`, rx, base, 600, 20, dim ? p.ink3 : p.ink, 'right');
     }
   };
 
@@ -238,7 +418,7 @@ function drawQuote(
 
     if (showHead) {
       const name = s.title.trim() || `곡 ${i + 1}`;
-      const priced = s.lines.some((l) => toN(l.unit) != null);
+      const priced = s.lines.some((l) => lineTotal(l) != null);
       const amt = s.lines.length === 0 ? '' : priced ? `${won(songTotal(s))}원` : '협의';
       ctx.font = font(700, 28);
       const aw = amt ? ctx.measureText(amt).width : 0;
@@ -254,7 +434,9 @@ function drawQuote(
       put('구성 항목이 없습니다', ix + off, y + 17 * 1.05, 400, 17, p.ink3);
       y += 28;
     } else if (d.mode === 'summary') {
-      const names = s.lines.map((l) => `${l.name.trim() || '항목'}${l.qty > 1 ? ` ×${l.qty}` : ''}`);
+      const names = s.lines.map(
+        (l) => `${l.name.trim() || '항목'}${l.qty > 1 ? ` ×${l.qty}` : ''}${st ? ` (${PAY_NAME[l.pay]})` : ''}`,
+      );
       y += 4;
       wrap(names.join('  ·  '), iw - off, 400, 17).forEach((ln) => {
         put(ln, ix + off, y + 17 * 1.05, 400, 17, p.ink3);
@@ -265,14 +447,21 @@ function drawQuote(
         y += 14;
         if (k > 0 || showHead) hline(ix, ix + iw, y);
         y += 16;
-        const nameW = iw - 240;
+        const dc = discOf(l);
+        const nameW = iw - (dc ? 330 : 240);
         const nl = wrap(l.name.trim() || '(항목 이름 없음)', nameW, 500, 20);
         const sub = subText(l);
         const sl = sub ? wrap(sub, nameW, 400, 15) : [];
-        nl.forEach((ln, j) => put(ln, ix, y + j * 28 + 20 * 1.05, 500, 20, p.ink));
-        sl.forEach((ln, j) => put(ln, ix, y + nl.length * 28 + 2 + j * 22 + 15 * 1.05, 400, 15, p.ink3));
-        amountAt(l, ix + iw, y + 20 * 1.05);
-        y += nl.length * 28 + (sl.length ? 2 + sl.length * 22 : 0);
+        const chipH = st ? 32 : 0;
+        const leftH = nl.length * 28 + chipH + (sl.length ? 2 + sl.length * 22 : 0);
+        const rowH = Math.max(leftH, dc ? 52 : 28);
+        const dim = hl && l.pay !== 'now';
+        if (hl && l.pay === 'now') tint(ix - 14, y - 10, iw + 28, rowH + 20);
+        nl.forEach((ln, j) => put(ln, ix, y + j * 28 + 20 * 1.05, 500, 20, dim ? p.ink2 : p.ink));
+        if (st) chip(PAY_NAME[l.pay], ix, y + nl.length * 28 + 4, l.pay);
+        sl.forEach((ln, j) => put(ln, ix, y + nl.length * 28 + chipH + 2 + j * 22 + 15 * 1.05, 400, 15, p.ink3));
+        amountAt(l, ix + iw, y + 20 * 1.05, dim);
+        y += rowH;
       });
     }
     return y - y0 + CARD_PAD;
@@ -281,9 +470,49 @@ function drawQuote(
   const songSum = d.songs.reduce((t, s) => t + songTotal(s), 0);
   const adjs = d.adjs.filter((a) => adjN(a.amount) !== 0);
   const grand = songSum + adjs.reduce((t, a) => t + adjN(a.amount), 0);
-  const tbd = d.songs.some((s) => s.lines.some((l) => toN(l.unit) == null));
-  const paid = isSt ? (toN(d.paid) ?? 0) : 0;
+  const tbd = d.songs.some((s) => s.lines.some((l) => lineTotal(l) == null));
+  // 단계별 입금을 쓰는 동안에는 기 입금액 칸 대신 파트별 입금 단계로 계산합니다.
+  const paid = isSt && !st ? (toN(d.paid) ?? 0) : 0;
   const remain = grand - paid;
+
+  /* ── 입금 안내 카드 (단계별 입금: 입금 완료 / 이번 입금 / 추후 입금) ── */
+  const stageBlock = (x0: number, y0: number, w: number): number => {
+    if (!G) return 0;
+    const g = G;
+    const ix = x0 + CARD_PAD;
+    const iw = w - CARD_PAD * 2;
+    let y = y0 + CARD_PAD;
+    put('입금 안내', ix, y + 15 * 1.05, 600, 15, p.ink3);
+    y += 36;
+    const kinds = PAYS.filter((k) => g[k].rows.length > 0);
+    kinds.forEach((k, gi) => {
+      const hot = k === 'now';
+      const rows = g[k].rows.map((r) => ({ r, lines: wrap(r.label, iw - 230, 400, 18) }));
+      const gh = 36 + rows.reduce((t, x) => t + x.lines.length * 26 + 6, 0) + 6;
+      if (hot) tint(ix - 16, y - 10, iw + 32, gh + 14);
+      const title =
+        k === 'later' ? `추후 입금 · ${d.later.trim() || '입금일 별도 협의'}` : hot ? '이번 입금' : '입금 완료';
+      put(title, ix, y + 20 * 1.05, 700, 20, hot ? p.accent : p.ink2);
+      put(`${won(g[k].sum)}원`, ix + iw, y + 20 * 1.05, 700, 20, hot ? p.accent : p.ink2, 'right');
+      y += 36;
+      rows.forEach(({ r, lines }) => {
+        lines.forEach((ln, j) => put(ln, ix + 14, y + j * 26 + 18 * 1.05, 400, 18, hot ? p.ink : p.ink3));
+        const a = r.amount;
+        put(
+          a == null ? '협의' : a === 0 ? '무료' : `${a < 0 ? '-' : ''}${won(Math.abs(a))}원`,
+          ix + iw, y + 18 * 1.05, 500, 18, hot ? p.ink : p.ink3, 'right',
+        );
+        y += lines.length * 26 + 6;
+      });
+      y += 6;
+      if (gi < kinds.length - 1) {
+        y += 10;
+        hline(ix, ix + iw, y);
+        y += 18;
+      }
+    });
+    return y - y0 + CARD_PAD;
+  };
 
   /* ── 총 금액 카드 ── */
   const totalsBlock = (x0: number, y0: number, w: number): number => {
@@ -295,6 +524,7 @@ function drawQuote(
       put(value, ix + iw, y + 18 * 1.05, 600, 18, color, 'right');
       y += 36;
     };
+    const minus = (n: number) => `${n >= 0 ? '-' : '+'}${won(Math.abs(n))}원`;
 
     if (adjs.length) {
       row('곡 합계', `${won(songSum)}원`, p.ink);
@@ -307,14 +537,24 @@ function drawQuote(
       row('작업 금액', `${won(grand)}원`, p.ink);
       row('기 입금액', `-${won(paid)}원`, p.accent);
     }
-    if (adjs.length || paid > 0) {
+    if (G && hl) {
+      row('작업 금액 (전체)', `${won(grand)}원`, p.ink);
+      if (G.paid.rows.length) row('입금 완료', minus(G.paid.sum), p.accent);
+      if (G.later.rows.length) row('추후 입금', minus(G.later.sum), p.accent);
+    }
+    if (adjs.length || paid > 0 || (G && hl)) {
       y += 4;
       hline(ix, ix + iw, y);
       y += 22;
     }
 
-    const label = !isSt ? '총 금액' : remain < 0 ? '환불 금액' : paid > 0 ? '남은 금액' : '청구 금액';
-    const shown = isSt ? Math.abs(remain) : grand;
+    const nowAmt = G ? G.now.sum : remain;
+    const label = !isSt
+      ? '총 금액'
+      : G
+        ? nowAmt < 0 ? '환불 금액' : '이번 입금 금액'
+        : remain < 0 ? '환불 금액' : paid > 0 ? '남은 금액' : '청구 금액';
+    const shown = isSt ? Math.abs(nowAmt) : grand;
     put(label, ix, y + 44 * 1.05, 600, 22, p.ink2);
     put(`${won(shown)}원`, ix + iw, y + 44 * 1.05, 800, 44, p.accent, 'right');
     y += 44 * 1.3 + 6;
@@ -397,6 +637,14 @@ function drawQuote(
     y += h + 20;
   });
 
+  // 입금 안내 카드 (단계별 입금을 쓰고, 입금 완료/추후 입금 항목이 있을 때만)
+  if (hl) {
+    const sh = withDraw(false, () => stageBlock(PAD, y, CW));
+    card(PAD, y, CW, sh);
+    stageBlock(PAD, y, CW);
+    y += sh + 20;
+  }
+
   // 총 금액 카드
   const th = withDraw(false, () => totalsBlock(PAD, y, CW));
   card(PAD, y, CW, th);
@@ -460,7 +708,9 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
   const logos = useRef<Partial<Record<Theme, HTMLImageElement | null>>>({});
   const items = groups.flatMap((g) => g.items);
   const isSt = doc.kind === 'statement';
-  const pending = doc.songs.reduce((n, s) => n + s.lines.filter((l) => toN(l.unit) == null).length, 0);
+  const st = isSt && doc.stage;
+  const split = st ? payGroups(doc) : null;
+  const pending = doc.songs.reduce((n, s) => n + s.lines.filter((l) => lineTotal(l) == null).length, 0);
 
   const toast = (m: string) => {
     setMsg(m);
@@ -512,7 +762,9 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
       const cv = cvRef.current;
       if (!cv) return;
       const ff = getComputedStyle(document.body).fontFamily || 'sans-serif';
-      const sample = JSON.stringify(doc) + '견적서 명세서 곡 합계 총 금액 청구 남은 입금 계좌 무료 협의 안내 원 VAT 포함 의뢰인 유효기간';
+      const sample =
+        JSON.stringify(doc) +
+        '견적서 명세서 곡 합계 총 금액 청구 남은 입금 계좌 무료 협의 안내 원 VAT 포함 의뢰인 유효기간 할인 완료 추후 이번 전체 별도';
       try {
         await Promise.all([400, 500, 600, 700, 800].map((w) => document.fonts.load(`${w} 20px ${ff}`, sample)));
       } catch {
@@ -545,6 +797,8 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
     setDoc((x) => ({ ...x, songs: x.songs.map((s) => (s.id === sid ? fn(s) : s)) }));
   const setLine = (sid: string, lid: string, patch: Partial<Line>) =>
     setSong(sid, (s) => ({ ...s, lines: s.lines.map((l) => (l.id === lid ? { ...l, ...patch } : l)) }));
+  const setSongPay = (sid: string, pay: Pay) =>
+    setSong(sid, (s) => ({ ...s, lines: s.lines.map((l) => ({ ...l, pay })) }));
 
   const addSong = () => setDoc((x) => ({ ...x, songs: [...x.songs, blankSong()] }));
   const delSong = (sid: string) =>
@@ -575,22 +829,104 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
     const it = items.find((x) => x.id === itemId);
     if (!it) return;
     const line: Line = {
-      id: uid(), name: it.name, qty: 1, unit: it.price == null ? '' : String(it.price),
-      list: it.price, noun: it.noun, note: '',
+      ...blankLine(),
+      name: it.name,
+      unit: it.price == null ? '' : String(it.price),
+      list: it.price,
+      noun: it.noun,
     };
     setSong(sid, (s) => ({ ...s, lines: [...s.lines, line] }));
   };
-  const addCustom = (sid: string) =>
-    setSong(sid, (s) => ({ ...s, lines: [...s.lines, { id: uid(), name: '', qty: 1, unit: '', list: null, noun: '', note: '' }] }));
+  const addCustom = (sid: string) => setSong(sid, (s) => ({ ...s, lines: [...s.lines, blankLine()] }));
   const addPkg = (sid: string, pid: string) => {
     const pk = pkgs.find((x) => x.id === pid);
     if (!pk) return;
-    setSong(sid, (s) => ({ ...s, lines: [...s.lines, ...pk.lines.map((l) => ({ ...l, id: uid(), note: '' }))] }));
+    setSong(sid, (s) => ({
+      ...s,
+      lines: [...s.lines, ...pk.lines.map((l): Line => ({ ...blankLine(), ...l, id: uid(), note: '' }))],
+    }));
   };
   const delLine = (sid: string, lid: string) =>
     setSong(sid, (s) => ({ ...s, lines: s.lines.filter((l) => l.id !== lid) }));
 
-  const addAdj = () => setDoc((x) => ({ ...x, adjs: [...x.adjs, { id: uid(), label: '', amount: '' }] }));
+  /* ── 항목 할인 입력 ── */
+  const onOrig = (sid: string, l: Line, v: string) => setLine(sid, l.id, { orig: v.replace(/[^\d]/g, '') });
+  const onDv = (sid: string, l: Line, v: string) =>
+    setLine(sid, l.id, { dv: l.dm === 'pct' ? cleanPct(v) : v.replace(/[^\d]/g, ''), by: 'v' });
+  const onAf = (sid: string, l: Line, v: string) => setLine(sid, l.id, { af: v.replace(/[^\d]/g, ''), by: 'a' });
+  /** 할인율 ↔ 할인금액 표시 전환: 가격은 그대로 두고 입력값 표기만 바꿉니다. */
+  const switchDm = (sid: string, l: Line, dm: DMode) => {
+    if (dm === l.dm) return;
+    const d = discOf(l);
+    setLine(sid, l.id, {
+      dm,
+      dv: l.by === 'v' ? (d ? String(dm === 'pct' ? d.pct : d.off) : '') : l.dv,
+    });
+  };
+
+  const discPanel = (sid: string, l: Line) => {
+    const d = discOf(l);
+    const base = baseOf(l);
+    const def = defaultBase(l);
+    const pct = l.dm === 'pct';
+    const dvShown =
+      l.by === 'v'
+        ? pct ? l.dv : l.dv === '' ? '' : won(Number(l.dv))
+        : d ? (pct ? String(d.pct) : won(d.off)) : '';
+    const afShown = l.by === 'a' ? (l.af === '' ? '' : won(Number(l.af))) : d ? won(d.after) : '';
+
+    let note = '할인율·할인금액·할인 후 가격 중 하나만 넣으면 나머지는 자동으로 계산돼요. (금액은 수량을 곱한 합계 기준)';
+    let bad = false;
+    if (d) {
+      note = `${won(d.base)}원 → ${won(d.after)}원 · ${won(d.off)}원(${d.pct}%) 할인`;
+    } else if (base == null || base <= 0) {
+      note = '원가를 알 수 없어요. 원가 칸에 금액을 넣어 주세요.';
+      bad = true;
+    } else if (l.by === 'a' && l.af !== '' && (toN(l.af) ?? 0) >= base) {
+      note = '할인 후 가격이 원가 이상이라 할인이 적용되지 않아요.';
+      bad = true;
+    }
+
+    return (
+      <div className="hr-qm-dc">
+        <div className="hr-qm-seg" role="group" aria-label="할인 표시 방식">
+          <button type="button" className={pct ? 'on' : ''} onClick={() => switchDm(sid, l, 'pct')}>할인율(%)로 표시</button>
+          <button type="button" className={!pct ? 'on' : ''} onClick={() => switchDm(sid, l, 'amt')}>할인금액(원)으로 표시</button>
+        </div>
+        <label>
+          원가
+          <input
+            inputMode="numeric"
+            value={l.orig === '' ? '' : won(Number(l.orig))}
+            placeholder={def != null ? `${won(def)} (기본)` : '원가 입력'}
+            onChange={(e) => onOrig(sid, l, e.target.value)}
+          />
+        </label>
+        <label>
+          {pct ? '할인율 (%)' : '할인금액 (원)'}
+          <input
+            inputMode={pct ? 'decimal' : 'numeric'}
+            value={dvShown}
+            placeholder={pct ? '예: 20' : '예: 30,000'}
+            onChange={(e) => onDv(sid, l, e.target.value)}
+          />
+        </label>
+        <label>
+          할인 후 가격
+          <input
+            inputMode="numeric"
+            value={afShown}
+            placeholder="예: 120,000"
+            onChange={(e) => onAf(sid, l, e.target.value)}
+          />
+        </label>
+        <p className={`hr-qm-dcs${bad ? ' bad' : ''}`}>{note}</p>
+      </div>
+    );
+  };
+
+  const addAdj = () =>
+    setDoc((x) => ({ ...x, adjs: [...x.adjs, { id: uid(), label: '', amount: '', pay: 'now' }] }));
   const setAdj = (id: string, patch: Partial<Adj>) =>
     setDoc((x) => ({ ...x, adjs: x.adjs.map((a) => (a.id === id ? { ...a, ...patch } : a)) }));
   const delAdj = (id: string) => setDoc((x) => ({ ...x, adjs: x.adjs.filter((a) => a.id !== id) }));
@@ -679,19 +1015,54 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
                 <label>작업 완료일<input type="date" value={doc.done} onChange={(e) => upd({ done: e.target.value })} /></label>
                 <label>입금 기한<input maxLength={30} value={doc.due} placeholder="예: 2026.10.12" onChange={(e) => upd({ due: e.target.value })} /></label>
                 <label>입금 계좌<input maxLength={60} value={doc.bank} placeholder="예: 은행 000-0000-0000 예금주" onChange={(e) => upd({ bank: e.target.value })} /></label>
-                <label>
-                  기 입금액 (선입금)
-                  <input
-                    inputMode="numeric" placeholder="없으면 비워 두세요"
-                    value={doc.paid === '' ? '' : Number(doc.paid).toLocaleString('ko-KR')}
-                    onChange={(e) => upd({ paid: e.target.value.replace(/[^\d]/g, '') })}
-                  />
-                </label>
+                {st ? (
+                  <p className="hr-qm-hint">
+                    단계별 입금을 쓰는 동안은 파트별 입금 단계로 계산해서 ‘기 입금액’ 칸은 쓰지 않아요.
+                  </p>
+                ) : (
+                  <label>
+                    기 입금액 (선입금)
+                    <input
+                      inputMode="numeric" placeholder="없으면 비워 두세요"
+                      value={doc.paid === '' ? '' : Number(doc.paid).toLocaleString('ko-KR')}
+                      onChange={(e) => upd({ paid: e.target.value.replace(/[^\d]/g, '') })}
+                    />
+                  </label>
+                )}
               </>
             ) : (
               <label>유효기간<input maxLength={30} value={doc.valid} onChange={(e) => upd({ valid: e.target.value })} /></label>
             )}
           </div>
+
+          {isSt && (
+            <div className="hr-qm-stage">
+              <label className="hr-qm-chk">
+                <input type="checkbox" checked={doc.stage} onChange={(e) => upd({ stage: e.target.checked })} />
+                단계별 입금 사용
+              </label>
+              <small>
+                프로젝트 전체는 그대로 보여 주고, 파트마다 ‘입금 완료 / 이번 입금 / 추후 입금’을 표시해요.
+                끄면 지금처럼 나옵니다.
+              </small>
+              {st && (
+                <>
+                  <label>
+                    추후 입금 안내 문구 (선택)
+                    <input
+                      maxLength={30} value={doc.later} placeholder="비우면 ‘입금일 별도 협의’로 나와요"
+                      onChange={(e) => upd({ later: e.target.value })}
+                    />
+                  </label>
+                  {split && (
+                    <p className="hr-qm-sum">
+                      입금 완료 <b>{won(split.paid.sum)}원</b> · 이번 입금 <b>{won(split.now.sum)}원</b> · 추후 입금 <b>{won(split.later.sum)}원</b>
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          )}
         </section>
 
         {doc.songs.map((s, si) => {
@@ -709,8 +1080,18 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
                 <button type="button" disabled={doc.songs.length < 2} onClick={() => delSong(s.id)}>삭제</button>
               </div>
 
+              {st && s.lines.length > 0 && (
+                <div className="hr-qm-bulk">
+                  <span>이 곡 전체를</span>
+                  {PAYS.map((k) => (
+                    <button key={k} type="button" onClick={() => setSongPay(s.id, k)}>{PAY_NAME[k]}</button>
+                  ))}
+                </div>
+              )}
+
               {s.lines.map((l) => {
                 const t = lineTotal(l);
+                const dcOn = l.dm !== 'off';
                 return (
                   <div key={l.id} className="hr-qm-line">
                     <input aria-label="항목 이름" value={l.name} placeholder="항목 이름" onChange={(e) => setLine(s.id, l.id, { name: e.target.value })} />
@@ -729,8 +1110,26 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
                       <span className="hr-qm-lt">
                         {l.list != null ? `정가 ${won(l.list)}원 · ` : ''}
                         {t == null ? '협의' : t === 0 ? '무료' : `${won(t)}원`}
+                        {dcOn && discOf(l) ? ' · 할인 적용' : ''}
                       </span>
                     </div>
+                    <div className="n3">
+                      <button
+                        type="button" className={`hr-qm-dtog${dcOn ? ' on' : ''}`} aria-pressed={dcOn}
+                        onClick={() => setLine(s.id, l.id, { dm: dcOn ? 'off' : 'pct' })}
+                      >
+                        {dcOn ? '항목 할인 끄기' : '항목 할인'}
+                      </button>
+                      {st && (
+                        <select
+                          className="hr-qm-pay" aria-label="입금 단계" value={l.pay}
+                          onChange={(e) => setLine(s.id, l.id, { pay: toPay(e.target.value) })}
+                        >
+                          {PAYS.map((k) => <option key={k} value={k}>{PAY_NAME[k]}</option>)}
+                        </select>
+                      )}
+                    </div>
+                    {dcOn && discPanel(s.id, l)}
                   </div>
                 );
               })}
@@ -772,6 +1171,14 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
                   setAdj(a.id, { amount: (neg ? '-' : '') + digits });
                 }}
               />
+              {st && (
+                <select
+                  className="hr-qm-pay" aria-label="입금 단계" value={a.pay}
+                  onChange={(e) => setAdj(a.id, { pay: toPay(e.target.value) })}
+                >
+                  {PAYS.map((k) => <option key={k} value={k}>{PAY_NAME[k]}</option>)}
+                </select>
+              )}
               <button type="button" aria-label="삭제" onClick={() => delAdj(a.id)}>×</button>
             </div>
           ))}
