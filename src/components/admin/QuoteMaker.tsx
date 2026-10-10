@@ -340,7 +340,7 @@ function normalize(raw: unknown): Doc | null {
     done: str(j.done),
     due: str(j.due),
     bank: str(j.bank),
-    bkName: str(j.bkName).slice(0, 20),
+    bkName: str(j.bkName).slice(0, 30),
     bkNo: str(j.bkNo).slice(0, 40),
     bkHolder: str(j.bkHolder).slice(0, 40),
     paid: str(j.paid).replace(/[^\d]/g, ''),
@@ -1370,7 +1370,7 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
                 <label>작업 완료일<input type="date" value={doc.done} onChange={(e) => upd({ done: e.target.value })} /></label>
                 <label>입금 기한<input maxLength={30} value={doc.due} placeholder="예: 2026.10.12" onChange={(e) => upd({ due: e.target.value })} /></label>
                 <div className="hr-qm-bk">
-                  <label>은행<input maxLength={20} value={doc.bkName} placeholder="예: 국민은행" onChange={(e) => upd({ bkName: e.target.value })} /></label>
+                  <label>은행<input maxLength={30} value={doc.bkName} placeholder="예: 국민은행" onChange={(e) => upd({ bkName: e.target.value })} /></label>
                   <label>계좌번호<input maxLength={40} value={doc.bkNo} placeholder="예: 000-00-000000" onChange={(e) => upd({ bkNo: e.target.value })} /></label>
                   <label>예금주<input maxLength={40} value={doc.bkHolder} placeholder="예: 홍길동" onChange={(e) => upd({ bkHolder: e.target.value })} /></label>
                   <div className="hr-qm-bk-act">
