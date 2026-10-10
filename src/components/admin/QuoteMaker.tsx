@@ -342,7 +342,7 @@ function normalize(raw: unknown): Doc | null {
     bank: str(j.bank),
     bkName: str(j.bkName).slice(0, 20),
     bkNo: str(j.bkNo).slice(0, 40),
-    bkHolder: str(j.bkHolder).slice(0, 20),
+    bkHolder: str(j.bkHolder).slice(0, 30),
     paid: str(j.paid).replace(/[^\d]/g, ''),
     stage: j.stage === true,
     later: str(j.later),
@@ -716,31 +716,37 @@ function drawQuote(
       });
       return y - y0 + CARD_PAD - 8;
     }
-    ctx.font = font(500, 20);
+    ctx.font = font(600, 21);
     const nameW = b.name ? ctx.measureText(b.name).width + 14 : 0;
-    ctx.font = font(600, 24);
+    ctx.font = font(600, 23);
     const noW = b.no ? ctx.measureText(b.no).width : 0;
     if (nameW + noW <= iw) {
-      if (b.name) put(b.name, ix, y + 24 * 1.05, 500, 20, p.ink2);
-      if (b.no) put(b.no, ix + nameW, y + 24 * 1.05, 600, 24, p.ink);
+      if (b.name) put(b.name, ix, y + 23 * 1.05, 600, 21, p.ink);
+      if (b.no) put(b.no, ix + nameW, y + 23 * 1.05, 600, 23, p.ink);
       if (b.name || b.no) y += 34;
     } else {
       if (b.name) {
-        put(b.name, ix, y + 20 * 1.05, 500, 20, p.ink2);
-        y += 30;
+        wrap(b.name, iw, 600, 21).forEach((ln) => {
+          put(ln, ix, y + 21 * 1.05, 600, 21, p.ink);
+          y += 30;
+        });
       }
-      wrap(b.no, iw, 600, 24).forEach((ln) => {
-        put(ln, ix, y + 24 * 1.05, 600, 24, p.ink);
-        y += 34;
+      wrap(b.no, iw, 600, 23).forEach((ln) => {
+        put(ln, ix, y + 23 * 1.05, 600, 23, p.ink);
+        y += 33;
       });
     }
     if (b.holder) {
-      const lw = put('예금주', ix, y + 17 * 1.05, 400, 16, p.ink3);
-      put(b.holder, ix + lw + 10, y + 17 * 1.05, 500, 17, p.ink2);
-      y += 28;
+      const lw = put('예금주', ix, y + 20 * 1.05, 500, 16, p.ink3);
+      const hx = ix + lw + 12;
+      wrap(b.holder, iw - lw - 12, 600, 20).forEach((ln) => {
+        put(ln, hx, y + 20 * 1.05, 600, 20, p.ink);
+        y += 28;
+      });
     }
     return y - y0 + CARD_PAD - 8;
   };
+
 
   /* ── 위에서부터 차례로 ── */
   let y = PAD;
@@ -1366,7 +1372,7 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
                 <div className="hr-qm-bk">
                   <label>은행<input maxLength={20} value={doc.bkName} placeholder="예: 국민은행" onChange={(e) => upd({ bkName: e.target.value })} /></label>
                   <label>계좌번호<input maxLength={40} value={doc.bkNo} placeholder="예: 000-00-000000" onChange={(e) => upd({ bkNo: e.target.value })} /></label>
-                  <label>예금주<input maxLength={20} value={doc.bkHolder} placeholder="예: 홍길동" onChange={(e) => upd({ bkHolder: e.target.value })} /></label>
+                  <label>예금주<input maxLength={30} value={doc.bkHolder} placeholder="예: 홍길동" onChange={(e) => upd({ bkHolder: e.target.value })} /></label>
                   <div className="hr-qm-bk-act">
                     <button type="button" onClick={copyBankNo}>계좌번호 복사</button>
                   </div>
