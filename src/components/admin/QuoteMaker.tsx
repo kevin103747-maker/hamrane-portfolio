@@ -30,7 +30,7 @@ const PAY_NAME: Record<Pay, string> = { paid: '입금 완료', now: '이번 입�
  *  by: 마지막에 직접 입력한 쪽 ('v' = 할인값, 'a' = 할인 후 가격). 나머지 한쪽은 자동 계산
  */
 type Line = PresetLine & {
-  id: string; note: string;
+  id: string; note: string; who: string; org: string;
   dm: DMode; orig: string; dv: string; af: string; by: 'v' | 'a';
   pay: Pay;
 };
@@ -239,9 +239,12 @@ export function messengerText(d: Doc): string {
 }
 const blankLine = (): Line => ({
   
-  id: uid(), name: '', qty: 1, unit: '', list: null, noun: '', note: '',
+  id: uid(), name: '', qty: 1, unit: '', list: null, noun: '', note: '', who: '', org: '',
   dm: 'off', orig: '', dv: '', af: '', by: 'v', pay: 'now',
 });
+/** 담당자·소속을 한 줄로 합칩니다. 둘 다 비면 빈 글자. 예: "홍길동 / 하늘크루" */
+const whoText = (l: Pick<Line, 'who' | 'org'>): string =>
+  [l.who.trim(), l.org.trim()].filter(Boolean).join(' / ');
 const blankSong = (): Song => ({ id: uid(), title: '', lines: [] });
 const blankDoc = (kind: Kind = 'quote'): Doc => ({
   kind, no: '', client: '', project: '', date: '', valid: '발행일로부터 14일',
@@ -279,6 +282,8 @@ function normalize(raw: unknown): Doc | null {
           noun: str(q.noun),
           iid: str(q.iid) || undefined,
           note: str(q.note),
+          who: str(q.who).slice(0, 30),
+          org: str(q.org).slice(0, 30),
           dm,
           orig: str(q.orig).replace(/[^\d]/g, ''),
           dv: dm === 'amt' ? dvRaw.replace(/[^\d]/g, '') : cleanPct(dvRaw),
