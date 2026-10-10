@@ -32,6 +32,7 @@ type Mode = 'detail' | 'summary';
 type Kind = 'quote' | 'statement';
 type Doc = {
   kind: Kind;
+  no: string; // 문서 번호 (예: Q-20261010-01). 비어 있으면 표시하지 않음
   client: string; project: string; date: string;
   valid: string; // 견적서: 유효기간
   done: string; // 명세서: 작업 완료일 (YYYY-MM-DD)
@@ -147,13 +148,94 @@ function payGroups(d: Doc): Record<Pay, PayGroup> {
   return g;
 }
 
+/** 카톡·디스코드에 붙여넣을 요약 글. 이미지와 같은 계산(항목 할인·조정·단계별 입금)을 씁니다. */
+export function messengerText(d: Doc): string {
+  const isSt = d.kind === 'statement';
+  const money = (t: number | null) => (t == null ? '협의' : t === 0 ? '무료' : `${won(t)}원`);
+  const out: string[] = [];
+
+  out.push(`[${KIND_NAME[d.kind]}] ${d.project.trim() || (isSt ? '작업 명세서' : '프로젝트 견적서')}`);
+  if (d.no.trim()) out.push(`번호: ${d.no.trim()}`);
+  const client = d.client.trim();
+  if (client) out.push(`의뢰인: ${client.endsWith('님') ? client : `${client}님`}`);
+  if (d.date) out.push(`발행일: ${d.date.replace(/-/g, '.')}`);
+  if (isSt) {
+    if (d.done) out.push(`작업 완료일: ${d.done.replace(/-/g, '.')}`);
+    if (d.due.trim()) out.push(`입금 기한: ${d.due.trim()}`);
+  } else if (d.valid.trim()) {
+    out.push(`유효기간: ${d.valid.trim()}`);
+  }
+
+  const staged = isSt && d.stage;
+  const multi = d.songs.length > 1;
+  let gross = 0;
+  d.songs.forEach((s, i) => {
+    out.push('');
+    out.push(`■ ${s.title.trim() || `곡 ${i + 1}`}`);
+    s.lines.forEach((l) => {
+      const dc = discOf(l);
+      const t = lineTotal(l);
+      let row = `- ${l.name.trim() || '항목'}${l.qty > 1 ? ` ×${l.qty}` : ''}: `;
+      if (dc) {
+        row += `${won(dc.base)}원 → ${money(t)} (${l.dm === 'pct' ? `${dc.pct}% 할인` : `${won(dc.off)}원 할인`})`;
+      } else {
+        row += money(t);
+      }
+      out.push(row + (staged ? ` [${PAY_NAME[l.pay]}]` : ''));
+    });
+    if (multi) out.push(`  소계 ${won(songTotal(s))}원`);
+    gross += songTotal(s);
+  });
+
+  let adjSum = 0;
+  const adjs = d.adjs.filter((a) => adjN(a.amount) !== 0);
+  if (adjs.length) {
+    out.push('');
+    adjs.forEach((a) => {
+      const n = adjN(a.amount);
+      adjSum += n;
+      out.push(`${a.label.trim() || '조정'}: ${n < 0 ? '-' : '+'}${won(Math.abs(n))}원${staged ? ` [${PAY_NAME[a.pay]}]` : ''}`);
+    });
+  }
+
+  const total = gross + adjSum;
+  out.push('');
+  out.push(`합계: ${won(total)}원 (VAT 포함)`);
+
+  if (isSt) {
+    if (staged) {
+      const g = payGroups(d);
+      out.push(`입금 완료: ${won(g.paid.sum)}원`);
+      out.push(`이번에 입금할 금액: ${won(g.now.sum)}원`);
+      out.push(`추후 입금: ${won(g.later.sum)}원${d.later.trim() ? ` (${d.later.trim()})` : ''}`);
+    } else {
+      const paid = toN(d.paid) ?? 0;
+      if (paid > 0) {
+        out.push(`기 입금액: -${won(paid)}원`);
+        out.push(`남은 금액: ${won(Math.max(0, total - paid))}원`);
+      }
+    }
+    if (d.bank.trim()) {
+      out.push('');
+      out.push(`입금 계좌: ${d.bank.trim()}`);
+    }
+  }
+
+  const notes = d.notes.trim();
+  if (notes) {
+    out.push('');
+    out.push(notes);
+  }
+  return out.join('\n');
+}
 const blankLine = (): Line => ({
+  
   id: uid(), name: '', qty: 1, unit: '', list: null, noun: '', note: '',
   dm: 'off', orig: '', dv: '', af: '', by: 'v', pay: 'now',
 });
 const blankSong = (): Song => ({ id: uid(), title: '', lines: [] });
 const blankDoc = (kind: Kind = 'quote'): Doc => ({
-  kind, client: '', project: '', date: '', valid: '발행일로부터 14일',
+  kind, no: '', client: '', project: '', date: '', valid: '발행일로부터 14일',
   done: '', due: '', bank: '', paid: '', stage: false, later: '',
   songs: [blankSong()], adjs: [], notes: DEFAULT_NOTES[kind], theme: 'light', mode: 'detail',
 });
@@ -209,6 +291,7 @@ function normalize(raw: unknown): Doc | null {
 
   return {
     kind,
+    no: str(j.no).slice(0, 30),
     client: str(j.client),
     project: str(j.project),
     date: str(j.date),
@@ -591,8 +674,9 @@ function drawQuote(
   }
   put(isSt ? 'STATEMENT' : 'PROJECT QUOTE', W - PAD, y + 16, 600, 14, p.ink3, 'right');
   if (d.date) put(d.date.replace(/-/g, '.'), W - PAD, y + 38, 500, 16, p.ink2, 'right');
+  if (d.no.trim()) put(d.no.trim(), W - PAD, y + 62, 500, 14, p.ink3, 'right');
   y += logoH + 44;
-
+  
   // 제목: 프로젝트 이름이 있으면 위에 문서 종류를 작게 붙입니다.
   const projectName = d.project.trim();
   if (projectName) {
