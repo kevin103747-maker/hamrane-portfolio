@@ -396,3 +396,10 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 .hr-qt-chips { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .hr-qt-chips > span { font-size: 12px; color: var(--text-2); }
 .hr-qt-chips button { height: 30px; padding: 0 10px; }
+
+/* 견적서·명세서: 미리보기가 입력칸을 덮는 문제 보정 (관리자 메뉴가 폭을 차지하므로 1400px 이하에서 1열) */
+@media (max-width: 1400px) {
+  .hr-qm { grid-template-columns: minmax(0, 1fr); }
+  .hr-qm > aside { position: static; top: auto; }
+  .hr-qm-cvwrap { max-height: none; }
+}
