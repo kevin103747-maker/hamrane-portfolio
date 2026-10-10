@@ -7,7 +7,7 @@
 - Tech: Next.js 16, React 19, Tailwind CSS 4, Supabase
 - Dev: `npm run dev` | Build: `npm run build` | Check: `npm run typecheck`
 - Path alias: `@/*` → `src/*`
-- DO NOT change functionality or visuals - optimize only
+- Note: "DO NOT change functionality or visuals" applies to optimization/cleanup tasks only. For new feature requests, implement as requested.
 
 # File Navigation Index
 
@@ -18,6 +18,9 @@
 - Modals.tsx, ModalContext.ts - Modal system
 - Icons.tsx - Icon components
 - Contact.tsx - Contact form
+- Tracker.tsx - Visit statistics tracking
+- PortfolioView.tsx (18KB) - Portfolio view component
+- RateBoard.tsx (11KB) - Rate board display
 
 ### Admin Components (src/components/admin/)
 - AdminNav.tsx - Admin navigation
@@ -26,6 +29,8 @@
 - FeaturedPicker.tsx, ScopeFeatured.tsx - Featured works
 - DiscountFields.tsx, ExtrasEditor.tsx - Pricing components
 - PublishButton.tsx, ConfirmButton.tsx - Action buttons
+- OwnerMark.tsx - Owner marking for works
+- QuoteMaker.tsx (51KB, 1235 lines) - Quote/statement maker (large file, see section index below)
 
 ## Library (src/lib/)
 ### Database & Auth
@@ -37,13 +42,17 @@
 - artist-admin.ts - Artist data
 - admin-menu.ts - Admin menu structure
 - sample-data.ts - Sample data for seeding
+- track.ts - Visit tracking
 
 ### Domain Specific
 - guide.ts, guide-settings.ts - Guide/commission data
-- pricing/bonus/discounts/turnaround - Pricing system
+- bonus.ts, bonus-settings.ts - Bonus settings
+- discounts.ts, discounts-settings.ts - Discount rules
+- turnaround.ts, turnaround-settings.ts - Turnaround times
 - status.ts, status-settings.ts - Status tracking
 - featured.ts - Featured works
 - social.ts, social-settings.ts - Social links
+- rate-badge.ts - Rate badge logic
 
 ### Utilities
 - filters.ts - Filter logic
@@ -63,6 +72,12 @@
 - login/ - Login page
 - mfa/ - 2FA page
 - (panel)/ - Admin sub-pages (artists, rates, discounts, guide, settings, etc.)
+- admin.css (30KB) - Admin-specific styles (separated from globals.css)
+- api/stat/route.ts - Visit statistics API
+- (panel)/actions.ts (20KB) - Admin server actions
+- (panel)/stats/page.tsx (18KB) - Statistics page
+- (panel)/works/page.tsx (14KB) - Works management
+- (panel)/rates/actions.ts (13KB) - Rate actions
 
 # Key Patterns
 - Server components by default, add 'use client' only when needed
@@ -71,12 +86,22 @@
 - Auth: Supabase Auth with MFA support
 - Server Actions: 5MB body limit configured
 
-# CSS Navigation (globals.css: 92KB, 1603 lines)
-- Lines 1-43: Theme setup, CSS variables
-- Lines 44-70: Base styles, GNB
-- Lines 94-267: Common components (cards, modals, portfolio, pricing)
-- Lines 639-1029: Admin & pricing
-- Lines 1147-1603: Mobile responsiveness
+# CSS Navigation
+Use `grep` to find selectors in `src/app/globals.css` (1603 lines):
+- Theme/CSS variables: grep for `:root`, `[data-theme=`
+- Base styles: grep for `html`, `body`, `a`, `button`
+- GNB/Header: grep for `.gnb`, `.menu`, `.logo`
+- Cards: grep for `.card`, `.ph`
+- Modals: grep for `.modal`
+- Admin styles: See `src/app/hr-admin/admin.css` (separated file)
+- Mobile responsive: grep for `@media.*max-width`
+
+# Large Files Section Index
+### QuoteMaker.tsx (1235 lines)
+- Lines 1-49: Type definitions (QuoteItem, QuoteGroup, PresetLine, QuotePkg, Line, Song, Adj, Doc)
+- Lines 50-100: Constants (KEY, KIND_NAME, DEFAULT_NOTES, etc.)
+- Lines 101-700: Helper functions and components
+- Lines 701-1235: Main QuoteMaker component
 
 # Verification
 Before completing tasks: run `npm run typecheck`
