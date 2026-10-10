@@ -408,3 +408,10 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 .hr-qm-who button { white-space: nowrap; padding: 0 12px; border: 1px solid var(--line-2); border-radius: 8px; background: var(--card-2); color: var(--text-2); font-size: 13px; cursor: pointer; }
 .hr-qm-who button:hover { border-color: var(--mint); color: var(--mint); }
 @media (max-width: 640px) { .hr-qm-who { grid-template-columns: minmax(0, 1fr); } .hr-qm-who button { min-height: 38px; } }
+
+.hr-qm-acc { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px; min-width: 0; }
+.hr-qm-acc select { min-width: 0; }
+.hr-qm-acc button { white-space: nowrap; min-height: 38px; padding: 0 12px; border: 1px solid var(--line-2); border-radius: 8px; background: var(--card-2); color: var(--text-2); font-size: 13px; cursor: pointer; }
+.hr-qm-acc button:hover:not(:disabled) { border-color: var(--mint); color: var(--mint); }
+.hr-qm-acc button:disabled { opacity: .4; cursor: default; }
+@media (max-width: 640px) { .hr-qm-acc { grid-template-columns: minmax(0, 1fr) auto auto; } }

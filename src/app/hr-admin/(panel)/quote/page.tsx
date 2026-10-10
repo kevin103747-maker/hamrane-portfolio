@@ -7,6 +7,7 @@ import { getTurnaround } from '@/lib/turnaround-settings';
 import { turnFor } from '@/lib/turnaround';
 import { Help } from '@/components/admin/Section';
 import { QuoteMaker, type QuoteGroup, type QuotePkg, type PresetLine } from '@/components/admin/QuoteMaker';
+import { loadAccounts } from '@/lib/quote-accounts';
 
 const txt = (v: unknown): string =>
   typeof v === 'string' ? v : ((v as { ko?: string } | null)?.ko ?? '');
@@ -28,11 +29,12 @@ export default async function QuotePage() {
   if (!can(me, 'rates')) redirect('/hr-admin');
 
   const db = adminDb();
-  const [g, r, p, turnaround] = await Promise.all([
+  const [g, r, p, turnaround, accounts] = await Promise.all([
     db.from('part_groups').select('id, num, name').order('sort', { ascending: true }),
     db.from('rate_items').select('id, group_id, name, price, unit').order('sort', { ascending: true }),
-     db.from('packages').select('*').order('sort', { ascending: true }),
+    db.from('packages').select('*').order('sort', { ascending: true }),
     getTurnaround(),
+    loadAccounts(),
   ]);
   const items = r.data ?? [];
 
@@ -97,11 +99,11 @@ export default async function QuotePage() {
           협의로 남은 항목은 확정 금액으로 바꿔 주세요.
         </p>
         <p>
-          입력한 내용은 이 브라우저에만 임시 저장되며 서버에는 올라가지 않습니다.
+          입력한 내용은 이 브라우저에만 임시 저장되며 서버에는 올라가지 않습니다. 다만 <b>자주 쓰는 입금 계좌 목록</b>은 서버에 저장되어 다른 기기에서도 불러올 수 있습니다.
           견적서를 보낼 때 <b>작업 파일 저장</b>(.json)도 같이 받아 두면, 나중에 <b>불러오기</b>로 이어서 명세서를 만들 수 있습니다.
         </p>
       </Help>
-      <QuoteMaker groups={groups} pkgs={pkgs} />
+      <QuoteMaker groups={groups} pkgs={pkgs} accounts={accounts} />
     </div>
   );
 }

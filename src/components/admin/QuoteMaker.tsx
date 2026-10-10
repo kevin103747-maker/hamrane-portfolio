@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   nextNo, renumber, validLabel, listSlots, saveSlot, removeSlot, readPreset, writePreset,
-  type QuoteSlot,
+  type QuoteSlot, type SavedAccount,
 } from '@/lib/quote-store';
+import { saveAccount, removeAccount } from '@/app/hr-admin/(panel)/quote/actions';
 import { feeLabel, type Fee } from '@/lib/turnaround';
 
 export type QuoteItem = {
@@ -869,7 +870,7 @@ function paintQuote(cv: HTMLCanvasElement, d: Doc, logo: HTMLImageElement | null
 }
 
 /* ───────────── 화면 ───────────── */
-export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: QuotePkg[] }) {
+export function QuoteMaker({ groups, pkgs, accounts }: { groups: QuoteGroup[]; pkgs: QuotePkg[]; accounts: SavedAccount[] }) {
   const [doc, setDoc] = useState<Doc>(() => blankDoc());
   const [ready, setReady] = useState(false);
   const [height, setHeight] = useState(0);
@@ -1016,6 +1017,10 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
   };
   const addCustom = (sid: string) => setSong(sid, (s) => ({ ...s, lines: [...s.lines, blankLine()] }));
   const [whoOpen, setWhoOpen] = useState<string[]>([]);
+  const [accs, setAccs] = useState<SavedAccount[]>(accounts);
+  const [accId, setAccId] = useState('');
+  const [accBusy, setAccBusy] = useState(false);
+
   const toggleWho = (id: string) =>
     setWhoOpen((a) => (a.includes(id) ? a.filter((x) => x !== id) : [...a, id]));
   const applyWho = (sid: string, from: Line) =>
@@ -1287,6 +1292,49 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
     }
   };
 
+  const pickAccount = (id: string) => {
+    setAccId(id);
+    const a = accs.find((x) => x.id === id);
+    if (!a) return;
+    upd({ bank: '', bkName: a.name, bkNo: a.no, bkHolder: a.holder });
+    toast('저장해 둔 계좌를 넣었어요.');
+  };
+  const saveAcc = async () => {
+    if (!(doc.bkName.trim() || doc.bkNo.trim() || doc.bkHolder.trim())) return toast('저장할 은행·계좌번호·예금주를 먼저 적어 주세요.');
+    const label = window.prompt('목록에 보일 이름을 적어 주세요. (비워 두면 은행과 예금주로 자동 정해져요)', '');
+    if (label === null) return;
+    setAccBusy(true);
+    try {
+      const r = await saveAccount({ label, name: doc.bkName, no: doc.bkNo, holder: doc.bkHolder });
+      if (!r.ok) return toast(r.error);
+      setAccs(r.list);
+      const mine = r.list.find((a) => a.name === doc.bkName.trim() && a.no === doc.bkNo.trim() && a.holder === doc.bkHolder.trim());
+      setAccId(mine ? mine.id : '');
+      toast('계좌를 저장해 뒀어요.');
+    } catch {
+      toast('저장하지 못했어요. 잠시 뒤 다시 시도해 주세요.');
+    } finally {
+      setAccBusy(false);
+    }
+  };
+  const delAcc = async () => {
+    const a = accs.find((x) => x.id === accId);
+    if (!a) return;
+    if (!window.confirm(`'${a.label || a.name || '이 계좌'}'를 목록에서 지울까요?`)) return;
+    setAccBusy(true);
+    try {
+      const r = await removeAccount(a.id);
+      if (!r.ok) return toast(r.error);
+      setAccs(r.list);
+      setAccId('');
+      toast('계좌를 지웠어요.');
+    } catch {
+      toast('지우지 못했어요. 잠시 뒤 다시 시도해 주세요.');
+    } finally {
+      setAccBusy(false);
+    }
+  };
+
   const saveBankPreset = () => {
     if (!bankText(doc)) return toast('저장할 입금 계좌를 먼저 적어 주세요.');
     const used = doc.bkName.trim() || doc.bkNo.trim() || doc.bkHolder.trim();
@@ -1348,7 +1396,7 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
             <button type="button" onClick={saveNotesPreset}>{KIND_NAME[doc.kind]} 안내 문구 저장</button>
             <button type="button" onClick={loadNotesPreset}>문구 불러오기</button>
           </div>
-          <small>보관함과 저장값은 이 브라우저에만 남습니다. 브라우저 데이터를 지우면 사라지니, 중요한 건은 작업 파일(.json)도 같이 받아 두세요.</small>
+          <small>보관함과 저장값은 이 브라우저에만 남습니다. 브라우저 데이터를 지우면 사라지니, 중요한 건은 작업 파일(.json)도 같이 받아 두세요. 입금 계좌 칸 위의 ‘저장한 계좌’ 목록만 서버에 저장돼 다른 기기에서도 보여요.</small>
         </section>
 
         <section className="hr-card">
@@ -1369,6 +1417,16 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
               <>
                 <label>작업 완료일<input type="date" value={doc.done} onChange={(e) => upd({ done: e.target.value })} /></label>
                 <label>입금 기한<input maxLength={30} value={doc.due} placeholder="예: 2026.10.12" onChange={(e) => upd({ due: e.target.value })} /></label>
+                <div className="hr-qm-acc">
+                  <select aria-label="저장해 둔 계좌 불러오기" value={accId} onChange={(e) => pickAccount(e.target.value)}>
+                    <option value="">{accs.length ? '저장한 계좌 불러오기…' : '저장한 계좌 없음'}</option>
+                    {accs.map((a) => (
+                      <option key={a.id} value={a.id}>{a.label || [a.name, a.holder].filter(Boolean).join(' ') || '이름 없음'}</option>
+                    ))}
+                  </select>
+                  <button type="button" onClick={saveAcc} disabled={accBusy}>이 계좌 저장</button>
+                  <button type="button" onClick={delAcc} disabled={accBusy || !accId}>삭제</button>
+                </div>
                 <div className="hr-qm-bk">
                   <label>은행<input maxLength={30} value={doc.bkName} placeholder="예: 국민은행" onChange={(e) => upd({ bkName: e.target.value })} /></label>
                   <label>계좌번호<input maxLength={40} value={doc.bkNo} placeholder="예: 000-00-000000" onChange={(e) => upd({ bkNo: e.target.value })} /></label>
