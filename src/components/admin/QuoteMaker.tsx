@@ -182,24 +182,6 @@ export function messengerText(d: Doc): string {
   d.songs.forEach((s, i) => {
     out.push('');
     const whoSet = Array.from(new Set(s.lines.map((l) => whoText(l))));
-type BankSrc = Pick<Doc, 'bank' | 'bkName' | 'bkNo' | 'bkHolder'>;
-
-/** 입금 계좌를 칸별로 돌려줍니다. 새 칸이 하나라도 있으면 그것을, 없으면 옛 한 줄 칸(bank)을 legacy 로 돌려줍니다. */
-const bankOf = (d: BankSrc) => {
-  const name = d.bkName.trim();
-  const no = d.bkNo.trim();
-  const holder = d.bkHolder.trim();
-  if (name || no || holder) return { name, no, holder, legacy: '' };
-  return { name: '', no: '', holder: '', legacy: d.bank.trim() };
-};
-
-/** 글로 쓸 때의 한 줄 표기. 예: "국민은행 000-00-000000 (예금주 홍길동)" */
-const bankText = (d: BankSrc): string => {
-  const b = bankOf(d);
-  if (b.legacy) return b.legacy;
-  const head = [b.name, b.no].filter(Boolean).join(' ');
-  return [head, b.holder ? `(예금주 ${b.holder})` : ''].filter(Boolean).join(' ');
-};
 
     const common = s.lines.length > 1 && whoSet.length === 1 ? whoSet[0] : '';
     out.push(`■ ${s.title.trim() || `곡 ${i + 1}`}`);
