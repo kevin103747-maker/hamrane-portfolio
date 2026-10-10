@@ -47,6 +47,7 @@ type Doc = {
   done: string; // 명세서: 작업 완료일 (YYYY-MM-DD)
   due: string; // 명세서: 입금 기한
   bank: string; // 명세서: 입금 계좌
+  bkName: string; bkNo: string; bkHolder: string; // 명세서: 입금 계좌 칸별(은행 / 계좌번호 / 예금주). 모두 비면 위의 bank(한 줄)를 씁니다
   paid: string; // 명세서: 기 입금액(선입금), 숫자 글자
   stage: boolean; // 명세서: 단계별 입금 사용
   later: string; // 명세서: 추후 입금 안내 문구
@@ -181,6 +182,25 @@ export function messengerText(d: Doc): string {
   d.songs.forEach((s, i) => {
     out.push('');
     const whoSet = Array.from(new Set(s.lines.map((l) => whoText(l))));
+type BankSrc = Pick<Doc, 'bank' | 'bkName' | 'bkNo' | 'bkHolder'>;
+
+/** 입금 계좌를 칸별로 돌려줍니다. 새 칸이 하나라도 있으면 그것을, 없으면 옛 한 줄 칸(bank)을 legacy 로 돌려줍니다. */
+const bankOf = (d: BankSrc) => {
+  const name = d.bkName.trim();
+  const no = d.bkNo.trim();
+  const holder = d.bkHolder.trim();
+  if (name || no || holder) return { name, no, holder, legacy: '' };
+  return { name: '', no: '', holder: '', legacy: d.bank.trim() };
+};
+
+/** 글로 쓸 때의 한 줄 표기. 예: "국민은행 000-00-000000 (예금주 홍길동)" */
+const bankText = (d: BankSrc): string => {
+  const b = bankOf(d);
+  if (b.legacy) return b.legacy;
+  const head = [b.name, b.no].filter(Boolean).join(' ');
+  return [head, b.holder ? `(예금주 ${b.holder})` : ''].filter(Boolean).join(' ');
+};
+
     const common = s.lines.length > 1 && whoSet.length === 1 ? whoSet[0] : '';
     out.push(`■ ${s.title.trim() || `곡 ${i + 1}`}`);
     if (common) out.push(`  담당: ${common}`);
@@ -228,9 +248,10 @@ export function messengerText(d: Doc): string {
         out.push(`남은 금액: ${won(Math.max(0, total - paid))}원`);
       }
     }
-    if (d.bank.trim()) {
+    const bt = bankText(d);
+    if (bt) {
       out.push('');
-      out.push(`입금 계좌: ${d.bank.trim()}`);
+      out.push(`입금 계좌: ${bt}`);
     }
   }
 
@@ -249,10 +270,29 @@ const blankLine = (): Line => ({
 /** 담당자·소속을 한 줄로 합칩니다. 둘 다 비면 빈 글자. 예: "홍길동 / 하늘크루" */
 const whoText = (l: Pick<Line, 'who' | 'org'>): string =>
   [l.who.trim(), l.org.trim()].filter(Boolean).join(' / ');
+type BankSrc = Pick<Doc, 'bank' | 'bkName' | 'bkNo' | 'bkHolder'>;
+
+/** 입금 계좌를 칸별로 돌려줍니다. 새 칸이 하나라도 있으면 그것을, 없으면 옛 한 줄 칸(bank)을 legacy 로 돌려줍니다. */
+const bankOf = (d: BankSrc) => {
+  const name = d.bkName.trim();
+  const no = d.bkNo.trim();
+  const holder = d.bkHolder.trim();
+  if (name || no || holder) return { name, no, holder, legacy: '' };
+  return { name: '', no: '', holder: '', legacy: d.bank.trim() };
+};
+
+/** 글로 쓸 때의 한 줄 표기. 예: "국민은행 000-00-000000 (예금주 홍길동)" */
+const bankText = (d: BankSrc): string => {
+  const b = bankOf(d);
+  if (b.legacy) return b.legacy;
+  const head = [b.name, b.no].filter(Boolean).join(' ');
+  return [head, b.holder ? `(예금주 ${b.holder})` : ''].filter(Boolean).join(' ');
+};
+
 const blankSong = (): Song => ({ id: uid(), title: '', lines: [] });
 const blankDoc = (kind: Kind = 'quote'): Doc => ({
   kind, no: '', client: '', project: '', date: '', valid: '발행일로부터 14일',
-  done: '', due: '', bank: '', paid: '', stage: false, later: '',
+  done: '', due: '', bank: '', bkName: '', bkNo: '', bkHolder: '', paid: '', stage: false, later: '',
   songs: [blankSong()], adjs: [], notes: DEFAULT_NOTES[kind], theme: 'light', mode: 'detail',
 });
 
@@ -318,6 +358,9 @@ function normalize(raw: unknown): Doc | null {
     done: str(j.done),
     due: str(j.due),
     bank: str(j.bank),
+    bkName: str(j.bkName).slice(0, 20),
+    bkNo: str(j.bkNo).slice(0, 40),
+    bkHolder: str(j.bkHolder).slice(0, 20),
     paid: str(j.paid).replace(/[^\d]/g, ''),
     stage: j.stage === true,
     later: str(j.later),
@@ -676,7 +719,7 @@ function drawQuote(
   };
 
   /* ── 입금 계좌 카드 (명세서) ── */
-  const bank = isSt ? d.bank.trim() : '';
+  const bank = isSt ? bankText(d) : '';
   const bankBlock = (x0: number, y0: number, w: number): number => {
     const ix = x0 + CARD_PAD;
     const iw = w - CARD_PAD * 2;
@@ -1114,7 +1157,7 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
       ...blankDoc(doc.kind),
       date: today(),
       done: doc.kind === 'statement' ? today() : '',
-      bank: doc.bank,
+      bank: doc.bank, bkName: doc.bkName, bkNo: doc.bkNo, bkHolder: doc.bkHolder,
     });
   };
 
