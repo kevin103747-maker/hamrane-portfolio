@@ -331,3 +331,17 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 .hr-sx-row .t { height: 10px; border-radius: 99px; background: var(--card-2); overflow: hidden; }
 .hr-sx-row .t i { display: block; height: 100%; background: var(--mint); }
 .hr-sx-row em { font: normal 12px var(--f-mono); color: var(--text-2); white-space: nowrap; }
+
+/* 방문 통계: 하루 보기 */
+.hr-sx-chart a { flex: 1; min-width: 2px; height: 100%; display: flex; align-items: flex-end; }
+.hr-sx-chart a:hover i { opacity: 1; }
+.hr-sx-bar .off { padding: 6px 12px; border: 1px solid var(--line); border-radius: 99px; font-size: 13px; opacity: .35; }
+.hr-sx-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 14px; font-size: 13px; color: var(--text-2); }
+.hr-sx-pick label { display: inline-flex; align-items: center; gap: 8px; }
+.hr-sx-pick input[type="date"] { height: 34px; padding: 0 10px; border: 1px solid var(--line-2); border-radius: 10px; background: var(--card-2); color: var(--text); font: inherit; }
+.hr-sx-pick button { height: 34px; padding: 0 14px; border: 1px solid var(--line-2); border-radius: 99px; background: transparent; color: inherit; font: inherit; font-size: 13px; cursor: pointer; }
+.hr-sx-pick button:hover { border-color: var(--mint); color: var(--mint); }
+.hr-sx-list { max-height: 360px; overflow: auto; border: 1px solid var(--line); border-radius: 12px; }
+.hr-sx-list .hr-tbl th { position: sticky; top: 0; background: var(--card); }
+.hr-sx-list a { color: var(--mint); text-decoration: none; }
+.hr-sx-list a:hover { text-decoration: underline; }
