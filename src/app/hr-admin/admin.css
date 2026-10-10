@@ -402,3 +402,9 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 .hr-qm-form, .hr-qm-prev { grid-template-columns: minmax(0, 1fr); }
 .hr-qm .hr-card { grid-template-columns: minmax(0, 1fr); min-width: 0; }
 .hr-qm-songhead { flex-wrap: wrap; }
+
+.hr-qm-who { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 6px; min-width: 0; }
+.hr-qm-who input { min-width: 0; }
+.hr-qm-who button { white-space: nowrap; padding: 0 12px; border: 1px solid var(--line-2); border-radius: 8px; background: var(--card-2); color: var(--text-2); font-size: 13px; cursor: pointer; }
+.hr-qm-who button:hover { border-color: var(--mint); color: var(--mint); }
+@media (max-width: 640px) { .hr-qm-who { grid-template-columns: minmax(0, 1fr); } .hr-qm-who button { min-height: 38px; } }

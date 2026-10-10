@@ -180,7 +180,10 @@ export function messengerText(d: Doc): string {
   let gross = 0;
   d.songs.forEach((s, i) => {
     out.push('');
+    const whoSet = Array.from(new Set(s.lines.map((l) => whoText(l))));
+    const common = s.lines.length > 1 && whoSet.length === 1 ? whoSet[0] : '';
     out.push(`■ ${s.title.trim() || `곡 ${i + 1}`}`);
+    if (common) out.push(`  담당: ${common}`);
     s.lines.forEach((l) => {
       const dc = discOf(l);
       const t = lineTotal(l);
@@ -190,7 +193,8 @@ export function messengerText(d: Doc): string {
       } else {
         row += money(t);
       }
-      out.push(row + (staged ? ` [${PAY_NAME[l.pay]}]` : ''));
+      const w = whoText(l);
+      out.push(row + (w && !common ? ` (담당: ${w})` : '') + (staged ? ` [${PAY_NAME[l.pay]}]` : ''));
     });
     if (multi) out.push(`  소계 ${won(songTotal(s))}원`);
     gross += songTotal(s);
@@ -950,6 +954,12 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
     setSong(sid, (s) => ({ ...s, lines: [...s.lines, line] }));
   };
   const addCustom = (sid: string) => setSong(sid, (s) => ({ ...s, lines: [...s.lines, blankLine()] }));
+  const [whoOpen, setWhoOpen] = useState<string[]>([]);
+  const toggleWho = (id: string) =>
+    setWhoOpen((a) => (a.includes(id) ? a.filter((x) => x !== id) : [...a, id]));
+  const applyWho = (sid: string, from: Line) =>
+    setSong(sid, (s) => ({ ...s, lines: s.lines.map((l) => ({ ...l, who: from.who, org: from.org })) }));
+
   const addPkg = (sid: string, pid: string) => {
     const pk = pkgs.find((x) => x.id === pid);
     if (!pk) return;
@@ -1399,6 +1409,12 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
                       >
                         {dcOn ? '항목 할인 끄기' : '항목 할인'}
                       </button>
+                      <button
+                        type="button" className={`hr-qm-dtog${whoOpen.includes(l.id) || whoText(l) ? ' on' : ''}`}
+                        aria-pressed={whoOpen.includes(l.id)} onClick={() => toggleWho(l.id)}
+                      >
+                        담당자
+                      </button>
                       {rushOpts(s.id, l)}
                       {st && (
                         <select
@@ -1410,6 +1426,19 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
                       )}
                     </div>
                     {dcOn && discPanel(s.id, l)}
+                    {whoOpen.includes(l.id) && (
+                      <div className="hr-qm-who">
+                        <input
+                          aria-label="담당자" value={l.who} maxLength={30} placeholder="담당자"
+                          onChange={(e) => setLine(s.id, l.id, { who: e.target.value })}
+                        />
+                        <input
+                          aria-label="소속" value={l.org} maxLength={30} placeholder="소속 (회사·크루·팀)"
+                          onChange={(e) => setLine(s.id, l.id, { org: e.target.value })}
+                        />
+                        <button type="button" onClick={() => applyWho(s.id, l)}>이 곡 전체에 적용</button>
+                      </div>
+                    )}
                   </div>
                 );
               })}
