@@ -708,10 +708,37 @@ function drawQuote(
     let y = y0 + CARD_PAD;
     put('입금 계좌', ix, y + 15 * 1.05, 500, 15, p.ink3);
     y += 32;
-    wrap(bank, iw, 600, 22).forEach((ln) => {
-      put(ln, ix, y + 22 * 1.05, 600, 22, p.ink);
-      y += 32;
-    });
+    const b = bankOf(d);
+    if (b.legacy) {
+      wrap(b.legacy, iw, 600, 22).forEach((ln) => {
+        put(ln, ix, y + 22 * 1.05, 600, 22, p.ink);
+        y += 32;
+      });
+      return y - y0 + CARD_PAD - 8;
+    }
+    ctx.font = font(500, 20);
+    const nameW = b.name ? ctx.measureText(b.name).width + 14 : 0;
+    ctx.font = font(600, 24);
+    const noW = b.no ? ctx.measureText(b.no).width : 0;
+    if (nameW + noW <= iw) {
+      if (b.name) put(b.name, ix, y + 24 * 1.05, 500, 20, p.ink2);
+      if (b.no) put(b.no, ix + nameW, y + 24 * 1.05, 600, 24, p.ink);
+      if (b.name || b.no) y += 34;
+    } else {
+      if (b.name) {
+        put(b.name, ix, y + 20 * 1.05, 500, 20, p.ink2);
+        y += 30;
+      }
+      wrap(b.no, iw, 600, 24).forEach((ln) => {
+        put(ln, ix, y + 24 * 1.05, 600, 24, p.ink);
+        y += 34;
+      });
+    }
+    if (b.holder) {
+      const lw = put('예금주', ix, y + 17 * 1.05, 400, 16, p.ink3);
+      put(b.holder, ix + lw + 10, y + 17 * 1.05, 500, 17, p.ink2);
+      y += 28;
+    }
     return y - y0 + CARD_PAD - 8;
   };
 
@@ -927,7 +954,10 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
         ...x,
         kind,
         no: renumber(x.no, kind),
-        bank: x.bank || (kind === 'statement' ? readPreset().bank : ''),
+        bank: x.bank || (kind === 'statement' && !bankText(x) ? readPreset().bank : ''),
+        bkName: x.bkName || (kind === 'statement' && !bankText(x) ? readPreset().bkName : ''),
+        bkNo: x.bkNo || (kind === 'statement' && !bankText(x) ? readPreset().bkNo : ''),
+        bkHolder: x.bkHolder || (kind === 'statement' && !bankText(x) ? readPreset().bkHolder : ''),
         notes: keep ? x.notes : DEFAULT_NOTES[kind],
         done: kind === 'statement' ? x.done || today() : x.done,
       };
@@ -1240,14 +1270,27 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
     if (slotId === s.id) setSlotId('');
   };
 
+  const copyBankNo = async () => {
+    const no = bankOf(doc).no;
+    if (!no) return toast('복사할 계좌번호가 없어요.');
+    try {
+      await navigator.clipboard.writeText(no);
+      toast('계좌번호를 복사했어요.');
+    } catch {
+      toast('복사하지 못했어요.');
+    }
+  };
+
   const saveBankPreset = () => {
-    if (!doc.bank.trim()) return toast('저장할 입금 계좌를 먼저 적어 주세요.');
-    toast(writePreset({ bank: doc.bank.trim() }) ? '입금 계좌를 저장해 뒀어요.' : '저장하지 못했어요.');
+    if (!bankText(doc)) return toast('저장할 입금 계좌를 먼저 적어 주세요.');
+    const used = doc.bkName.trim() || doc.bkNo.trim() || doc.bkHolder.trim();
+    const patch = { bank: used ? '' : doc.bank.trim(), bkName: doc.bkName.trim(), bkNo: doc.bkNo.trim(), bkHolder: doc.bkHolder.trim() };
+    toast(writePreset(patch) ? '입금 계좌를 저장해 뒀어요.' : '저장하지 못했어요.');
   };
   const loadBankPreset = () => {
     const p = readPreset();
-    if (!p.bank) return toast('저장해 둔 입금 계좌가 없어요.');
-    upd({ bank: p.bank });
+    if (!(p.bank || p.bkName || p.bkNo || p.bkHolder)) return toast('저장해 둔 입금 계좌가 없어요.');
+    upd({ bank: p.bank, bkName: p.bkName, bkNo: p.bkNo, bkHolder: p.bkHolder });
     toast('저장해 둔 입금 계좌를 넣었어요.');
   };
   const saveNotesPreset = () => {
@@ -1320,7 +1363,20 @@ export function QuoteMaker({ groups, pkgs }: { groups: QuoteGroup[]; pkgs: Quote
               <>
                 <label>작업 완료일<input type="date" value={doc.done} onChange={(e) => upd({ done: e.target.value })} /></label>
                 <label>입금 기한<input maxLength={30} value={doc.due} placeholder="예: 2026.10.12" onChange={(e) => upd({ due: e.target.value })} /></label>
-                <label>입금 계좌<input maxLength={60} value={doc.bank} placeholder="예: 은행 000-0000-0000 예금주" onChange={(e) => upd({ bank: e.target.value })} /></label>
+                <div className="hr-qm-bk">
+                  <label>은행<input maxLength={20} value={doc.bkName} placeholder="예: 국민은행" onChange={(e) => upd({ bkName: e.target.value })} /></label>
+                  <label>계좌번호<input maxLength={40} value={doc.bkNo} placeholder="예: 000-00-000000" onChange={(e) => upd({ bkNo: e.target.value })} /></label>
+                  <label>예금주<input maxLength={20} value={doc.bkHolder} placeholder="예: 홍길동" onChange={(e) => upd({ bkHolder: e.target.value })} /></label>
+                  <div className="hr-qm-bk-act">
+                    <button type="button" onClick={copyBankNo}>계좌번호 복사</button>
+                  </div>
+                </div>
+                {doc.bank.trim() && !doc.bkName.trim() && !doc.bkNo.trim() && !doc.bkHolder.trim() && (
+                  <p className="hr-qm-hint">
+                    이전 방식으로 적은 계좌가 있어요: {doc.bank} (위 칸에 적으면 그 내용이 대신 쓰여요){' '}
+                    <button type="button" onClick={() => upd({ bank: '' })}>한 줄 계좌 지우기</button>
+                  </p>
+                )}
                 {st ? (
                   <p className="hr-qm-hint">
                     단계별 입금을 쓰는 동안은 파트별 입금 단계로 계산해서 ‘기 입금액’ 칸은 쓰지 않아요.

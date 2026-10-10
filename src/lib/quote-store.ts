@@ -93,14 +93,17 @@ export function removeSlot(id: string): QuoteSlot[] {
 
 /* ───────── 자주 쓰는 입금 계좌·안내 문구 ───────── */
 
-export type QuotePreset = { bank: string; notesQuote: string; notesStatement: string };
-const EMPTY_PRESET: QuotePreset = { bank: '', notesQuote: '', notesStatement: '' };
+export type QuotePreset = { bank: string; bkName: string; bkNo: string; bkHolder: string; notesQuote: string; notesStatement: string };
+const EMPTY_PRESET: QuotePreset = { bank: '', bkName: '', bkNo: '', bkHolder: '', notesQuote: '', notesStatement: '' };
 
 export function readPreset(): QuotePreset {
   try {
     const o = JSON.parse(localStorage.getItem(PRESET) ?? '{}') as Partial<QuotePreset>;
     const s = (v: unknown) => (typeof v === 'string' ? v : '');
-    return { bank: s(o.bank), notesQuote: s(o.notesQuote), notesStatement: s(o.notesStatement) };
+    return {
+      bank: s(o.bank), bkName: s(o.bkName), bkNo: s(o.bkNo), bkHolder: s(o.bkHolder),
+      notesQuote: s(o.notesQuote), notesStatement: s(o.notesStatement),
+    };
   } catch {
     return EMPTY_PRESET;
   }
