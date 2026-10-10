@@ -513,6 +513,9 @@ function drawQuote(
     let y = y0 + CARD_PAD;
     const showHead = d.songs.length > 1 || s.title.trim() !== '';
     const off = showHead ? 48 : 0;
+    const whoSet = Array.from(new Set(s.lines.map((l) => whoText(l))));
+    const common = showHead && s.lines.length > 1 && whoSet.length === 1 ? whoSet[0] : '';
+    const lineSub = (l: Line) => [subText(l), common ? '' : whoText(l)].filter(Boolean).join('  ·  ');
 
     if (showHead) {
       const name = s.title.trim() || `곡 ${i + 1}`;
@@ -525,6 +528,13 @@ function drawQuote(
       tl.forEach((ln, k) => put(ln, ix + off, y + k * 36 + 28 * 1.05, 700, 28, p.ink));
       if (amt) put(amt, ix + iw, y + 28 * 1.05, 700, 28, p.ink, 'right');
       y += tl.length * 36 + 6;
+      if (common) {
+        wrap(common, iw - off, 400, 16).forEach((ln) => {
+          put(ln, ix + off, y + 16 * 1.05, 400, 16, p.ink3);
+          y += 24;
+        });
+        y += 2;
+      }
     }
 
     if (s.lines.length === 0) {
@@ -548,7 +558,7 @@ function drawQuote(
         const dc = discOf(l);
         const nameW = iw - (dc ? 330 : 240);
         const nl = wrap(l.name.trim() || '(항목 이름 없음)', nameW, 500, 20);
-        const sub = subText(l);
+        const sub = lineSub(l);
         const sl = sub ? wrap(sub, nameW, 400, 15) : [];
         const chipH = st ? 32 : 0;
         const leftH = nl.length * 28 + chipH + (sl.length ? 2 + sl.length * 22 : 0);
