@@ -118,3 +118,6 @@ export function writePreset(patch: Partial<QuotePreset>): boolean {
     return false;
   }
 }
+
+/** 서버(Supabase)에 저장해 둔 자주 쓰는 입금 계좌 */
+export type SavedAccount = { id: string; label: string; name: string; no: string; holder: string };
