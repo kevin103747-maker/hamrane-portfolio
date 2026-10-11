@@ -31,7 +31,7 @@ const PAY_NAME: Record<Pay, string> = { paid: '입금 완료', now: '이번 입�
  *  by: 마지막에 직접 입력한 쪽 ('v' = 할인값, 'a' = 할인 후 가격). 나머지 한쪽은 자동 계산
  */
 type Line = PresetLine & {
-  id: string; note: string; who: string; org: string; wip: boolean;
+  id: string; note: string; who: string; org: string; wip: boolean; wait: boolean;
   dm: DMode; orig: string; dv: string; af: string; by: 'v' | 'a';
   pay: Pay;
 };
@@ -172,7 +172,7 @@ export function messengerText(d: Doc): string {
   if (d.date) out.push(`발행일: ${d.date.replace(/-/g, '.')}`);
   if (isSt) {
     const wipNote = wipLabel(d);
-    if (wipNote) out.push(wipNote);
+    if (wipNote) out.push(`작업 현황: ${wipNote}`);
     else if (d.done) out.push(`작업 완료일: ${d.done.replace(/-/g, '.')}`);
     if (d.due.trim()) out.push(`입금 기한: ${d.due.trim()}`);
   } else if (d.valid.trim()) {
@@ -199,7 +199,7 @@ export function messengerText(d: Doc): string {
         row += money(t);
       }
       const w = whoText(l);
-      out.push(row + (w && !common ? ` (담당: ${w})` : '') + (isSt && l.wip ? ' (진행 중)' : '') + (staged ? ` [${PAY_NAME[l.pay]}]` : ''));
+      out.push(row + (w && !common ? ` (담당: ${w})` : '') + (isSt && l.wip ? ' (진행 중)' : isSt && l.wait ? ' (대기 중)' : '') + (staged ? ` [${PAY_NAME[l.pay]}]` : ''));
     });
     if (multi) out.push(`  소계 ${won(songTotal(s))}원`);
     gross += songTotal(s);
@@ -249,29 +249,34 @@ export function messengerText(d: Doc): string {
 }
 const blankLine = (): Line => ({
   
-  id: uid(), name: '', qty: 1, unit: '', list: null, noun: '', note: '', who: '', org: '', wip: false,
+  id: uid(), name: '', qty: 1, unit: '', list: null, noun: '', note: '', who: '', org: '', wip: false, wait: false,
   dm: 'off', orig: '', dv: '', af: '', by: 'v', pay: 'now',
 });
-/** 명세서용 진행 현황: 전체 항목 수와 진행 중 항목 수 */
+/** 명세서용 진행 현황: 전체 항목 수, 진행 중 항목 수, 대기 중 항목 수 */
 const wipCount = (d: Pick<Doc, 'songs'>) => {
   let total = 0;
   let wip = 0;
+  let wait = 0;
   for (const s of d.songs) {
     for (const l of s.lines) {
       total += 1;
       if (l.wip) wip += 1;
+      else if (l.wait) wait += 1;
     }
   }
-  return { total, wip };
+  return { total, wip, wait };
 };
 
-/** 진행 중 항목이 있는 명세서에만 나오는 현황 문구. 없으면 '' (기존 작업 완료일 표시 유지) */
+/** 진행 중·대기 중 항목이 있는 명세서에만 나오는 현황 문구. 없으면 '' (기존 작업 완료일 표시 유지) */
 const wipLabel = (d: Doc): string => {
   if (d.kind !== 'statement') return '';
-  const { total, wip } = wipCount(d);
-  return wip > 0 ? `진행 현황 ${total}개 중 ${total - wip}개 완료` : '';
+  const { total, wip, wait } = wipCount(d);
+  if (wip + wait === 0) return '';
+  const parts = [`완료 ${total - wip - wait}`];
+  if (wip) parts.push(`진행 중 ${wip}`);
+  if (wait) parts.push(`대기 ${wait}`);
+  return parts.join(' · ');
 };
-
 
 /** 담당자·소속을 한 줄로 합칩니다. 둘 다 비면 빈 글자. 예: "홍길동 / 하늘크루" */
 const whoText = (l: Pick<Line, 'who' | 'org'>): string =>
@@ -334,6 +339,7 @@ function normalize(raw: unknown): Doc | null {
           note: str(q.note),
           who: str(q.who).slice(0, 30),
           wip: q.wip === true,
+          wait: q.wait === true,
           org: str(q.org).slice(0, 30),
           dm,
           orig: str(q.orig).replace(/[^\d]/g, ''),
@@ -559,6 +565,23 @@ function drawQuote(
       put(`${won(u * l.qty)}원`, rx, base, 600, 20, dim ? p.ink3 : p.ink, 'right');
     }
   };
+  /** 명세서 항목의 진행 상태 태그(진행 중 / 대기 중). 입금 칩보다 약하게 테두리만 그립니다. */
+  const tag = (label: string, x: number, y: number, active: boolean) => {
+    ctx.font = font(600, 13);
+    const w = ctx.measureText(label).width + 22;
+    if (on) {
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, 24, 12);
+      ctx.strokeStyle = active ? p.accent : p.ink3;
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash(active ? [] : [4, 3]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    put(label, x + 11, y + 5 + 13 * 1.05, 600, 13, active ? p.accent : p.ink3);
+    return w;
+  };
+
 
   /* ── 곡 카드 ── */
   const songBlock = (s: Song, i: number, x0: number, y0: number, w: number): number => {
@@ -569,7 +592,7 @@ function drawQuote(
     const off = showHead ? 48 : 0;
     const whoSet = Array.from(new Set(s.lines.map((l) => whoText(l))));
     const common = showHead && s.lines.length > 1 && whoSet.length === 1 ? whoSet[0] : '';
-    const lineSub = (l: Line) => [st && l.wip ? '진행 중' : '', subText(l), common ? '' : whoText(l)].filter(Boolean).join('  ·  ');
+    const lineSub = (l: Line) => [subText(l), common ? '' : whoText(l)].filter(Boolean).join('  ·  ');
 
     if (showHead) {
       const name = s.title.trim() || `곡 ${i + 1}`;
@@ -597,7 +620,7 @@ function drawQuote(
       y += 28;
     } else if (d.mode === 'summary') {
       const names = s.lines.map(
-        (l) => `${l.name.trim() || '항목'}${l.qty > 1 ? ` ×${l.qty}` : ''}${st && l.wip ? ' (진행 중)' : ''}${st ? ` (${PAY_NAME[l.pay]})` : ''}`,
+        (l) => `${l.name.trim() || '항목'}${l.qty > 1 ? ` ×${l.qty}` : ''}${d.kind === 'statement' && l.wip ? ' (진행 중)' : d.kind === 'statement' && l.wait ? ' (대기 중)' : ''}${st ? ` (${PAY_NAME[l.pay]})` : ''}`,
       );
       y += 4;
       wrap(names.join('  ·  '), iw - off, 400, 17).forEach((ln) => {
@@ -614,13 +637,22 @@ function drawQuote(
         const nl = wrap(l.name.trim() || '(항목 이름 없음)', nameW, 500, 20);
         const sub = lineSub(l);
         const sl = sub ? wrap(sub, nameW, 400, 15) : [];
-        const chipH = st ? 32 : 0;
+        const status = d.kind === 'statement' ? (l.wip ? '진행 중' : l.wait ? '대기 중' : '') : '';
+        const chipH = st || status ? 32 : 0;
         const leftH = nl.length * 28 + chipH + (sl.length ? 2 + sl.length * 22 : 0);
         const rowH = Math.max(leftH, dc ? 52 : 28);
         const dim = hl && l.pay !== 'now';
         if (hl && l.pay === 'now') tint(ix - 14, y - 10, iw + 28, rowH + 20);
         nl.forEach((ln, j) => put(ln, ix, y + j * 28 + 20 * 1.05, 500, 20, dim ? p.ink2 : p.ink));
         if (st) chip(PAY_NAME[l.pay], ix, y + nl.length * 28 + 4, l.pay);
+        if (status) {
+          let tx = ix;
+          if (st) {
+            ctx.font = font(600, 13);
+            tx = ix + ctx.measureText(PAY_NAME[l.pay]).width + 22 + 8;
+          }
+          tag(status, tx, y + nl.length * 28 + 4, !!l.wip);
+        }
         sl.forEach((ln, j) => put(ln, ix, y + nl.length * 28 + chipH + 2 + j * 22 + 15 * 1.05, 400, 15, p.ink3));
         amountAt(l, ix + iw, y + 20 * 1.05, dim);
         y += rowH;
@@ -1439,7 +1471,7 @@ export function QuoteMaker({ groups, pkgs, accounts }: { groups: QuoteGroup[]; p
             <label>문서 번호<input maxLength={30} value={doc.no} placeholder="비우면 이미지에 표시 안 함" onChange={(e) => upd({ no: e.target.value })} /></label>
             {isSt ? (
               <>
-                <label>작업 완료일{wipCount(doc).wip > 0 ? ' (진행 중 항목이 있으면 이미지에 나오지 않아요)' : ''}<input type="date" value={doc.done} onChange={(e) => upd({ done: e.target.value })} /></label>
+                <label>작업 완료일{wipLabel(doc) ? ' (진행·대기 항목이 있으면 이미지에 나오지 않아요)' : ''}<input type="date" value={doc.done} onChange={(e) => upd({ done: e.target.value })} /></label>
                 <label>입금 기한<input maxLength={30} value={doc.due} placeholder="예: 2026.10.12" onChange={(e) => upd({ due: e.target.value })} /></label>
                 <div className="hr-qm-acc">
                   <select aria-label="저장해 둔 계좌 불러오기" value={accId} onChange={(e) => pickAccount(e.target.value)}>
@@ -1573,12 +1605,20 @@ export function QuoteMaker({ groups, pkgs, accounts }: { groups: QuoteGroup[]; p
                     </div>
                     <div className="n3">
                       {doc.kind === 'statement' && (
-                        <button
-                          type="button" className={`hr-qm-dtog${l.wip ? ' on' : ''}`} aria-pressed={l.wip}
-                          onClick={() => setLine(s.id, l.id, { wip: !l.wip })}
-                        >
-                          {l.wip ? '진행 중 해제' : '진행 중'}
-                        </button>
+                        <>
+                          <button
+                            type="button" className={`hr-qm-dtog${l.wip ? ' on' : ''}`} aria-pressed={l.wip}
+                            onClick={() => setLine(s.id, l.id, { wip: !l.wip, wait: false })}
+                          >
+                            {l.wip ? '진행 중 해제' : '진행 중'}
+                          </button>
+                          <button
+                            type="button" className={`hr-qm-dtog${l.wait ? ' on' : ''}`} aria-pressed={l.wait}
+                            onClick={() => setLine(s.id, l.id, { wait: !l.wait, wip: false })}
+                          >
+                            {l.wait ? '대기 중 해제' : '대기 중'}
+                          </button>
+                        </>
                       )}
                       <button
                         type="button" className={`hr-qm-dtog${dcOn ? ' on' : ''}`} aria-pressed={dcOn}
