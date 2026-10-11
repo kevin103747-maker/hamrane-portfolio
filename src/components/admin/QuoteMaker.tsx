@@ -961,10 +961,10 @@ export function QuoteMaker({ groups, pkgs, accounts }: { groups: QuoteGroup[]; p
         ...x,
         kind,
         no: renumber(x.no, kind),
-        bank: x.bank || (kind === 'statement' && !bankText(x) ? readPreset().bank : ''),
-        bkName: x.bkName || (kind === 'statement' && !bankText(x) ? readPreset().bkName : ''),
-        bkNo: x.bkNo || (kind === 'statement' && !bankText(x) ? readPreset().bkNo : ''),
-        bkHolder: x.bkHolder || (kind === 'statement' && !bankText(x) ? readPreset().bkHolder : ''),
+        bank: x.bank,
+        bkName: x.bkName,
+        bkNo: x.bkNo,
+        bkHolder: x.bkHolder,
         notes: keep ? x.notes : DEFAULT_NOTES[kind],
         done: kind === 'statement' ? x.done || today() : x.done,
       };
@@ -1391,12 +1391,10 @@ export function QuoteMaker({ groups, pkgs, accounts }: { groups: QuoteGroup[]; p
           )}
           <div className="hr-qt-row">
             <span>자주 쓰는 값</span>
-            <button type="button" onClick={saveBankPreset}>입금 계좌 저장</button>
-            <button type="button" onClick={loadBankPreset}>계좌 불러오기</button>
             <button type="button" onClick={saveNotesPreset}>{KIND_NAME[doc.kind]} 안내 문구 저장</button>
             <button type="button" onClick={loadNotesPreset}>문구 불러오기</button>
           </div>
-          <small>보관함과 저장값은 이 브라우저에만 남습니다. 브라우저 데이터를 지우면 사라지니, 중요한 건은 작업 파일(.json)도 같이 받아 두세요. 입금 계좌 칸 위의 ‘저장한 계좌’ 목록만 서버에 저장돼 다른 기기에서도 보여요.</small>
+          <small>입금 계좌는 입금 계좌 칸 위의 ‘저장한 계좌’ 목록에 서버로 저장돼 다른 기기에서도 보여요. 보관함과 안내 문구는 이 브라우저에만 남으니, 브라우저 데이터를 지우면 사라집니다. 중요한 건은 작업 파일(.json)도 같이 받아 두세요.</small>
         </section>
 
         <section className="hr-card">
