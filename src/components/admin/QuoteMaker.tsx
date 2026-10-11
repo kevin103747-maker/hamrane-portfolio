@@ -171,7 +171,9 @@ export function messengerText(d: Doc): string {
   if (client) out.push(`의뢰인: ${client.endsWith('님') ? client : `${client}님`}`);
   if (d.date) out.push(`발행일: ${d.date.replace(/-/g, '.')}`);
   if (isSt) {
-    if (d.done) out.push(`작업 완료일: ${d.done.replace(/-/g, '.')}`);
+    const wipNote = wipLabel(d);
+    if (wipNote) out.push(wipNote);
+    else if (d.done) out.push(`작업 완료일: ${d.done.replace(/-/g, '.')}`);
     if (d.due.trim()) out.push(`입금 기한: ${d.due.trim()}`);
   } else if (d.valid.trim()) {
     out.push(`유효기간: ${d.valid.trim()}`);
@@ -197,7 +199,7 @@ export function messengerText(d: Doc): string {
         row += money(t);
       }
       const w = whoText(l);
-      out.push(row + (w && !common ? ` (담당: ${w})` : '') + (staged ? ` [${PAY_NAME[l.pay]}]` : ''));
+      out.push(row + (w && !common ? ` (담당: ${w})` : '') + (isSt && l.wip ? ' (진행 중)' : '') + (staged ? ` [${PAY_NAME[l.pay]}]` : ''));
     });
     if (multi) out.push(`  소계 ${won(songTotal(s))}원`);
     gross += songTotal(s);
@@ -262,6 +264,14 @@ const wipCount = (d: Pick<Doc, 'songs'>) => {
   }
   return { total, wip };
 };
+
+/** 진행 중 항목이 있는 명세서에만 나오는 현황 문구. 없으면 '' (기존 작업 완료일 표시 유지) */
+const wipLabel = (d: Doc): string => {
+  if (d.kind !== 'statement') return '';
+  const { total, wip } = wipCount(d);
+  return wip > 0 ? `진행 현황 ${total}개 중 ${total - wip}개 완료` : '';
+};
+
 
 /** 담당자·소속을 한 줄로 합칩니다. 둘 다 비면 빈 글자. 예: "홍길동 / 하늘크루" */
 const whoText = (l: Pick<Line, 'who' | 'org'>): string =>
@@ -797,7 +807,9 @@ function drawQuote(
   const metas: [string, string][] = [];
   if (client) metas.push(['의뢰인', client.endsWith('님') ? client : `${client}님`]);
   if (isSt) {
-    if (d.done) metas.push(['작업 완료일', d.done.replace(/-/g, '.')]);
+    const wipNote = wipLabel(d);
+    if (wipNote) metas.push(['작업 현황', wipNote]);
+    else if (d.done) metas.push(['작업 완료일', d.done.replace(/-/g, '.')]);
     if (d.due.trim()) metas.push(['입금 기한', d.due.trim()]);
   } else if (d.valid.trim()) {
     metas.push(['유효기간', d.valid.trim()]);
