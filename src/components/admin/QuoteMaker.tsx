@@ -569,7 +569,7 @@ function drawQuote(
     const off = showHead ? 48 : 0;
     const whoSet = Array.from(new Set(s.lines.map((l) => whoText(l))));
     const common = showHead && s.lines.length > 1 && whoSet.length === 1 ? whoSet[0] : '';
-    const lineSub = (l: Line) => [subText(l), common ? '' : whoText(l)].filter(Boolean).join('  ·  ');
+    const lineSub = (l: Line) => [st && l.wip ? '진행 중' : '', subText(l), common ? '' : whoText(l)].filter(Boolean).join('  ·  ');
 
     if (showHead) {
       const name = s.title.trim() || `곡 ${i + 1}`;
@@ -597,7 +597,7 @@ function drawQuote(
       y += 28;
     } else if (d.mode === 'summary') {
       const names = s.lines.map(
-        (l) => `${l.name.trim() || '항목'}${l.qty > 1 ? ` ×${l.qty}` : ''}${st ? ` (${PAY_NAME[l.pay]})` : ''}`,
+        (l) => `${l.name.trim() || '항목'}${l.qty > 1 ? ` ×${l.qty}` : ''}${st && l.wip ? ' (진행 중)' : ''}${st ? ` (${PAY_NAME[l.pay]})` : ''}`,
       );
       y += 4;
       wrap(names.join('  ·  '), iw - off, 400, 17).forEach((ln) => {
@@ -1439,7 +1439,7 @@ export function QuoteMaker({ groups, pkgs, accounts }: { groups: QuoteGroup[]; p
             <label>문서 번호<input maxLength={30} value={doc.no} placeholder="비우면 이미지에 표시 안 함" onChange={(e) => upd({ no: e.target.value })} /></label>
             {isSt ? (
               <>
-                <label>작업 완료일<input type="date" value={doc.done} onChange={(e) => upd({ done: e.target.value })} /></label>
+                <label>작업 완료일{wipCount(doc).wip > 0 ? ' (진행 중 항목이 있으면 이미지에 나오지 않아요)' : ''}<input type="date" value={doc.done} onChange={(e) => upd({ done: e.target.value })} /></label>
                 <label>입금 기한<input maxLength={30} value={doc.due} placeholder="예: 2026.10.12" onChange={(e) => upd({ due: e.target.value })} /></label>
                 <div className="hr-qm-acc">
                   <select aria-label="저장해 둔 계좌 불러오기" value={accId} onChange={(e) => pickAccount(e.target.value)}>
@@ -1572,6 +1572,14 @@ export function QuoteMaker({ groups, pkgs, accounts }: { groups: QuoteGroup[]; p
                       </span>
                     </div>
                     <div className="n3">
+                      {doc.kind === 'statement' && (
+                        <button
+                          type="button" className={`hr-qm-dtog${l.wip ? ' on' : ''}`} aria-pressed={l.wip}
+                          onClick={() => setLine(s.id, l.id, { wip: !l.wip })}
+                        >
+                          {l.wip ? '진행 중 해제' : '진행 중'}
+                        </button>
+                      )}
                       <button
                         type="button" className={`hr-qm-dtog${dcOn ? ' on' : ''}`} aria-pressed={dcOn}
                         onClick={() => setLine(s.id, l.id, { dm: dcOn ? 'off' : 'pct' })}
