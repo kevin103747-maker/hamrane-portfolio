@@ -1549,21 +1549,17 @@ section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
 .hr-bn { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); font-size: 13px; line-height: 1.5; color: var(--text-2); }
 
 /* ───── 하단 네비게이션 (모바일 전용) ───── */
-.bottom-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 40;
+.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 40;
+  display: none; grid-template-columns: repeat(4, 1fr); gap: 4px;
   background: color-mix(in oklab, var(--bg) 95%, transparent); backdrop-filter: blur(20px);
-  border-top: 1px solid var(--line); padding: 8px 0 max(8px, env(safe-area-inset-bottom));
-  padding-bottom: calc(8px + max(0px, env(safe-area-inset-bottom))); }
-.bottom-nav { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 8px 16px max(8px, env(safe-area-inset-bottom)); }
+  border-top: 1px solid var(--line);
+  padding: 8px 16px max(8px, env(safe-area-inset-bottom)); }
 .bn-item { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px;
   border-radius: 12px; color: var(--text-3); transition: all .2s; min-height: 56px; justify-content: center; }
 .bn-item:active { transform: scale(.95); }
 .bn-item.on { color: var(--mint); background: var(--mint-soft); }
 .bn-icon { width: 22px; height: 22px; flex: none; }
 .bn-label { font-size: 11px; font-weight: 500; }
-
-@media (min-width: 561px) {
-  .bottom-nav { display: none; }
-}
 
 @media (max-width: 560px) {
   .bottom-nav { display: grid; }
