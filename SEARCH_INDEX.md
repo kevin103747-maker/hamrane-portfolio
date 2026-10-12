@@ -21,6 +21,17 @@
 - `QuoteMaker` - Quote/statement maker → `src/components/admin/QuoteMaker.tsx`
 - `QuoteItem` - Quote item type → `src/components/admin/QuoteMaker.tsx`
 - `QuoteGroup` - Quote group type → `src/components/admin/QuoteMaker.tsx`
+- `QuoteStore` (브라우저 localStorage 전용, 서버 코드에서 import 금지):
+  - `nextNo()` - Next document number → `src/lib/quote-store.ts`
+  - `renumber()` - Convert Q-/S- prefix → `src/lib/quote-store.ts`
+  - `validLabel()` - Validity period label → `src/lib/quote-store.ts`
+  - `listSlots()` - List saved slots → `src/lib/quote-store.ts`
+  - `saveSlot()` - Save to slot → `src/lib/quote-store.ts`
+  - `removeSlot()` - Remove slot → `src/lib/quote-store.ts`
+  - `readPreset()` - Read preset → `src/lib/quote-store.ts`
+  - `writePreset()` - Write preset → `src/lib/quote-store.ts`
+  - `SavedAccount` type - Account type definition → `src/lib/quote-store.ts`
+- `loadAccounts()` - Load saved accounts (server-only, 클라이언트 컴포넌트에서 import 금지) → `src/lib/quote-accounts.ts`
 
 ### Admin Components
 - `AdminNav` - Admin navigation → `src/components/admin/AdminNav.tsx`
@@ -29,17 +40,38 @@
 - `WorkPicker` - Work selection → `src/components/admin/WorkPicker.tsx`
 - `FeaturedPicker` - Featured selection → `src/components/admin/FeaturedPicker.tsx`
 
+### QuoteMaker Internal Functions (grep -n "<name>" src/components/admin/QuoteMaker.tsx)
+- `messengerText()` - Generate messenger text (exported) → line 163
+- `normalize()` - Normalize saved draft → line 312
+- `blankDoc()` - Create blank document → line 304
+- `blankLine()` - Create blank line → line 250
+- `whoText()` - Format who/org text → line 282
+- `bankOf()` - Get bank info → line 287
+- `bankText()` - Format bank text → line 296
+- `wipCount()` - Count WIP/wait items → line 256
+- `wipLabel()` - WIP label → line 271
+- `drawQuote()` - Draw quote canvas → line 427
+- `songBlock()` - Draw song block → line 587
+- `stageBlock()` - Draw stage block → line 673
+- `totalsBlock()` - Draw totals block → line 712
+
+### Tracking
+- `isOwnerDevice()` - Check owner device → `src/lib/track.ts`
+- `markOwnerDevice()` - Mark as owner device → `src/lib/track.ts`
+- `setOwnerDevice()` - Set owner device flag → `src/lib/track.ts`
+- `track()` - Send tracking event → `src/lib/track.ts`
+
 ### Utilities
 - `copyToClipboard` - Copy text → `src/lib/copy.ts`
-- `today()` - Today's date → `src/components/admin/QuoteMaker.tsx`
-- `won()` - Format currency → `src/components/admin/QuoteMaker.tsx`
+- `today()` - Today's date → `src/components/admin/QuoteMaker.tsx` (내부 helper, 외부 import 불가)
+- `won()` - Format currency → `src/components/admin/QuoteMaker.tsx` (내부 helper, 외부 import 불가)
 
 ## Key File Locations
 
 ### Supabase Client
-- Server: `src/lib/supabase/server.ts`
-- Client: `src/lib/supabase/client.ts`
-- Main: `src/lib/supabase.ts`
+- Public site (read-only): `src/lib/supabase.ts`
+- Server (cookie-based): `src/lib/auth/server.ts`
+- Browser (login/MFA): `src/lib/auth/browser.ts`
 
 ### Auth
 - Guard: `src/lib/auth/guard.ts`
@@ -59,29 +91,4 @@
 - Pricing: `src/app/(site)/pricing/page.tsx`
 - Guide: `src/app/(site)/guide/page.tsx`
 
-## One-Liner Grep Commands
 
-### Find all admin pages
-```bash
-grep -r "export default" src/app/hr-admin/ --include="*.tsx"
-```
-
-### Find all server actions
-```bash
-grep -r "'use server'" src/
-```
-
-### Find all Supabase queries
-```bash
-grep -r "supabase.from" src/
-```
-
-### Find all exports
-```bash
-grep -r "export" src/ --include="*.ts" --include="*.tsx"
-```
-
-### Find component names
-```bash
-grep -r "export.*function\|export.*const" src/components/ --include="*.tsx"
-```

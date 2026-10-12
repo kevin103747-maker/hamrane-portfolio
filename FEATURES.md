@@ -26,6 +26,8 @@
 ## Quote/Statement
 - **Quote Maker**: `src/components/admin/QuoteMaker.tsx`
 - **Quote Page**: `src/app/hr-admin/(panel)/quote/page.tsx`
+- **Quote Store**: `src/lib/quote-store.ts` (문서 번호, 보관함, 프리셋)
+- **Quote Accounts**: `src/lib/quote-accounts.ts` (서버 저장 입금 계좌)
 
 ## Admin Panel
 - **Admin Nav**: `src/components/admin/AdminNav.tsx`
@@ -39,6 +41,7 @@
 - **Track Logic**: `src/lib/track.ts`
 - **Stats API**: `src/app/api/stat/route.ts`
 - **Stats Page**: `src/app/hr-admin/(panel)/stats/page.tsx`
+- **Stats CSV**: `src/app/hr-admin/(panel)/stats/csv/route.ts`
 - **Stats Utils**: `src/lib/stats.ts`
 
 ## Site Configuration
@@ -53,6 +56,8 @@
 - **Modal**: `src/components/Modals.tsx`, `src/components/ModalContext.ts`
 - **Icons**: `src/components/Icons.tsx`
 - **Contact**: `src/components/Contact.tsx`
+- **Recent Marquee**: `src/components/RecentMarquee.tsx`
+- **Social Links**: `src/components/SocialLinks.tsx`
 - **Owner Mark**: `src/components/admin/OwnerMark.tsx`
 
 ## Utilities
@@ -64,26 +69,3 @@
 ## Styles
 - **Global CSS**: `src/app/globals.css`
 - **Admin CSS**: `src/app/hr-admin/admin.css`
-
-## Grep Quick Reference
-
-### Find by Feature
-```bash
-# Authentication
-grep -r "auth\|guard\|permission" src/lib/auth/
-
-# Portfolio
-grep -r "work\|portfolio\|WorkCard" src/components/ src/lib/
-
-# Pricing
-grep -r "price\|rate\|discount\|bonus" src/lib/ src/components/
-
-# Quote
-grep -r "quote\|QuoteMaker" src/components/ src/app/hr-admin/
-
-# Admin
-grep -r "admin\|AdminNav\|ArtistPicker" src/components/admin/ src/app/hr-admin/
-
-# Stats
-grep -r "stat\|track\|Tracker" src/lib/ src/components/ src/app/api/
-```
