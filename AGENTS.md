@@ -9,75 +9,173 @@
 - Path alias: `@/*` → `src/*`
 - Note: "DO NOT change functionality or visuals" applies to optimization/cleanup tasks only. For new feature requests, implement as requested.
 
-# File Navigation Index
+# Grep-Based Navigation Guide
 
-## Components (src/components/)
-### UI Components
-- Header.tsx, BottomNav.tsx - Navigation
-- WorkCard.tsx, Thumb.tsx - Portfolio cards
-- Modals.tsx, ModalContext.ts - Modal system
-- Icons.tsx - Icon components
-- Contact.tsx - Contact form
-- Tracker.tsx - Visit statistics tracking
-- PortfolioView.tsx (18KB) - Portfolio view component
-- RateBoard.tsx (11KB) - Rate board display
+## Common Search Patterns
 
-### Admin Components (src/components/admin/)
-- AdminNav.tsx - Admin navigation
-- ArtistPicker.tsx, ArtistTable.tsx - Artist management
-- WorkPicker.tsx, WorkBasics.tsx - Work editing
-- FeaturedPicker.tsx, ScopeFeatured.tsx - Featured works
-- DiscountFields.tsx, ExtrasEditor.tsx - Pricing components
-- PublishButton.tsx, ConfirmButton.tsx - Action buttons
-- OwnerMark.tsx - Owner marking for works
-- QuoteMaker.tsx (51KB, 1235 lines) - Quote/statement maker (large file, see section index below)
+### Find Functions/Components
+```bash
+# Exported functions
+grep -r "export function" src/
+grep -r "export const" src/
 
-## Library (src/lib/)
-### Database & Auth
-- supabase.ts - Supabase client
-- auth/ - Authentication (server.ts, browser.ts, guard.ts, permissions.ts, admin-db.ts, upload.ts)
+# Component definitions
+grep -r "export default function" src/
+grep -r "export default async function" src/
 
-### Data Management
-- site-data.ts - Site configuration
-- artist-admin.ts - Artist data
-- admin-menu.ts - Admin menu structure
-- sample-data.ts - Sample data for seeding
-- track.ts - Visit tracking
+# Server actions
+grep -r "'use server'" src/
+```
 
-### Domain Specific
-- guide.ts, guide-settings.ts - Guide/commission data
-- bonus.ts, bonus-settings.ts - Bonus settings
-- discounts.ts, discounts-settings.ts - Discount rules
-- turnaround.ts, turnaround-settings.ts - Turnaround times
-- status.ts, status-settings.ts - Status tracking
-- featured.ts - Featured works
-- social.ts, social-settings.ts - Social links
-- rate-badge.ts - Rate badge logic
+### Find Types/Interfaces
+```bash
+# Type definitions
+grep -r "export type" src/
+grep -r "export interface" src/
+grep -r "type.*=" src/
+```
 
-### Utilities
-- filters.ts - Filter logic
-- copy.ts - Copy to clipboard
-- stats.ts - Statistics
-- i18n.ts - Internationalization
-- types.ts - TypeScript types
+### Find Imports/Exports
+```bash
+# Import statements
+grep -r "import.*from" src/
 
-## Pages (src/app/)
-### Public Pages (src/app/(site)/)
-- page.tsx - Home
-- portfolio/ - Portfolio page
-- pricing/ - Pricing page
-- guide/ - Commission guide
+# Export statements
+grep -r "export {" src/
+```
 
-### Admin Panel (src/app/hr-admin/)
-- login/ - Login page
-- mfa/ - 2FA page
-- (panel)/ - Admin sub-pages (artists, rates, discounts, guide, settings, etc.)
-- admin.css (30KB) - Admin-specific styles (separated from globals.css)
-- api/stat/route.ts - Visit statistics API
-- (panel)/actions.ts (20KB) - Admin server actions
-- (panel)/stats/page.tsx (18KB) - Statistics page
-- (panel)/works/page.tsx (14KB) - Works management
-- (panel)/rates/actions.ts (13KB) - Rate actions
+### Find Supabase Usage
+```bash
+# Supabase client usage
+grep -r "createClient" src/
+grep -r "supabase.from" src/
+grep -r "supabase.auth" src/
+```
+
+## Feature-Based Search
+
+### Authentication
+```bash
+# Auth-related files
+grep -r "auth" src/lib/ src/app/
+grep -r "guard" src/lib/auth/
+grep -r "permissions" src/lib/auth/
+```
+
+### Admin Panel
+```bash
+# Admin components
+grep -r "admin" src/components/ src/app/hr-admin/
+
+# Admin styles
+grep -r "\.hr-" src/app/hr-admin/admin.css
+```
+
+### Portfolio/Works
+```bash
+# Work-related
+grep -r "work" src/lib/ src/components/ --include="*.ts" --include="*.tsx"
+grep -r "WorkCard" src/components/
+```
+
+### Pricing
+```bash
+# Pricing system
+grep -r "price\|rate\|discount\|bonus" src/lib/ --include="*.ts"
+grep -r "package" src/lib/ --include="*.ts"
+```
+
+### Statistics/Tracking
+```bash
+# Stats and tracking
+grep -r "stat\|track" src/lib/ src/components/ src/app/api/
+```
+
+## File-Specific Grep Patterns
+
+### globals.css (1603 lines)
+```bash
+# Theme variables
+grep ":root\|\[data-theme" src/app/globals.css
+
+# Component classes
+grep "\.card\|\.modal\|\.gnb" src/app/globals.css
+
+# Responsive breakpoints
+grep "@media.*max-width" src/app/globals.css
+```
+
+### admin.css (30KB)
+```bash
+# Admin layout
+grep "\.hr-\|\.hr-admin" src/app/hr-admin/admin.css
+
+# Tables
+grep "table\|th\|td" src/app/hr-admin/admin.css
+
+# Forms
+grep "input\|select\|button" src/app/hr-admin/admin.css
+```
+
+### QuoteMaker.tsx (51KB, 1235 lines)
+```bash
+# Types
+grep "export type\|type.*=" src/components/admin/QuoteMaker.tsx
+
+# Main functions
+grep "function.*(\|const.*=" src/components/admin/QuoteMaker.tsx
+
+# Drawing functions
+grep "drawQuote\|songBlock\|stageBlock" src/components/admin/QuoteMaker.tsx
+```
+
+### Large Files (>10KB)
+```bash
+# QuoteMaker types and constants
+grep "KEY\|KIND_NAME\|DEFAULT_NOTES" src/components/admin/QuoteMaker.tsx
+
+# Admin actions
+grep "export async function" src/app/hr-admin/(panel)/actions.ts
+
+# Portfolio view
+grep "export function\|export const" src/components/PortfolioView.tsx
+
+# Stats page
+grep "supabase\|Chart\|stat" src/app/hr-admin/(panel)/stats/page.tsx
+```
+
+## Cross-File Search
+
+### Find Where a Function is Used
+```bash
+# Find import of specific component
+grep -r "QuoteMaker" src/
+
+# Find usage of a specific function
+grep -r "functionName" src/
+```
+
+### Find Supabase Table References
+```bash
+# Find table names in queries
+grep -r "supabase.from" src/ | grep -o "from('.*')" | sort -u
+```
+
+## File Structure Quick Reference
+
+### Components (src/components/)
+- **UI**: Header, BottomNav, WorkCard, Thumb, Modals, Icons, Contact, Tracker
+- **Admin**: AdminNav, ArtistPicker, ArtistTable, WorkPicker, FeaturedPicker, DiscountFields, ExtrasEditor, PublishButton, ConfirmButton, OwnerMark, QuoteMaker
+
+### Library (src/lib/)
+- **Auth**: supabase.ts, auth/ (server, browser, guard, permissions, admin-db, upload)
+- **Data**: site-data.ts, artist-admin.ts, admin-menu.ts, sample-data.ts, track.ts
+- **Domain**: guide, bonus, discounts, turnaround, status, featured, social, rate-badge
+- **Utils**: filters, copy, stats, i18n, types
+
+### Pages (src/app/)
+- **Public**: (site)/ (page, portfolio, pricing, guide)
+- **Admin**: hr-admin/ (login, mfa, (panel) sub-pages, admin.css, api/stat)
 
 # Key Patterns
 - Server components by default, add 'use client' only when needed
@@ -85,67 +183,6 @@
 - Images: Next.js Image component from `next/image`
 - Auth: Supabase Auth with MFA support
 - Server Actions: 5MB body limit configured
-
-# CSS Navigation
-Use `grep` to find selectors in `src/app/globals.css` (1603 lines):
-- Theme/CSS variables: grep for `:root`, `[data-theme=`
-- Base styles: grep for `html`, `body`, `a`, `button`
-- GNB/Header: grep for `.gnb`, `.menu`, `.logo`
-- Cards: grep for `.card`, `.ph`
-- Modals: grep for `.modal`
-- Admin styles: See `src/app/hr-admin/admin.css` (separated file)
-- Mobile responsive: grep for `@media.*max-width`
-
-# Large Files Section Index
-### QuoteMaker.tsx (51KB, 1235 lines)
-Use `grep` to find sections:
-- Types: grep for `export type`, `type`, `interface`
-- Constants: grep for `const KEY`, `KIND_NAME`, `DEFAULT_NOTES`
-- Helper functions: grep for `^const.*=`, `^function.*\(`
-- Main component: Line 701 `export function QuoteMaker`
-- Drawing functions: grep for `drawQuote`, `songBlock`, `stageBlock`, `totalsBlock`
-
-### admin.css (30KB)
-Use `grep` to find selectors:
-- Layout: grep for `.hr-`, `.hr-admin`
-- Tables: grep for `table`, `th`, `td`
-- Forms: grep for `input`, `select`, `button`
-- Cards: grep for `.hr-card`, `.hr-cta`
-- Spacing: grep for `padding`, `margin`
-
-### (panel)/actions.ts (20KB)
-Use `grep` to find functions:
-- Quote actions: grep for `quote`
-- Artist actions: grep for `artist`
-- General actions: grep for `export async function`
-
-### PortfolioView.tsx (18KB)
-Use `grep` to find:
-- Components: grep for `export function`, `export const`
-- Filters: grep for `filter`, `Filter`
-- Rendering: grep for `return`, `map`
-
-### stats/page.tsx (18KB)
-Use `grep` to find:
-- Data fetching: grep for `const.*= await`, `supabase`
-- Charts: grep for `Chart`, `graph`
-- Statistics: grep for `stat`, `count`
-
-### works/page.tsx (14KB)
-Use `grep` to find:
-- Table: grep for `table`, `WorkTable`
-- Actions: grep for `action`, `handle`
-- Filters: grep for `filter`
-
-### rates/actions.ts (13KB)
-Use `grep` to find:
-- Rate actions: grep for `rate`, `price`
-- Package actions: grep for `package`, `pkg`
-
-### RateBoard.tsx (11KB)
-Use `grep` to find:
-- Display: grep for `Rate`, `price`
-- Calculations: grep for `calc`, `compute`
 
 # Verification
 Before completing tasks: run `npm run typecheck`
