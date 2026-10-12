@@ -186,3 +186,7 @@ grep -r "supabase.from" src/ | grep -o "from('.*')" | sort -u
 
 # Verification
 Before completing tasks: run `npm run typecheck`
+
+# Additional Navigation Aids
+- **FEATURES.md**: Feature → file/function mapping
+- **SEARCH_INDEX.md**: Exported functions by category with grep commands
