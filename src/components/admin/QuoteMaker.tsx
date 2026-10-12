@@ -911,6 +911,30 @@ function drawQuote(
   return y + PAD;
 }
 
+/** PDF는 쪽마다 따로 그려서 길이와 상관없이 같은 해상도를 냅니다. (약 320dpi) */
+const PDF_SCALE = 2.5;
+
+/** 그리지 않고 문서 전체 높이만 잽니다. */
+function measureQuote(d: Doc, logo: HTMLImageElement | null, ff: string): number {
+  const scratch = document.createElement('canvas').getContext('2d');
+  if (!scratch) return 0;
+  return Math.ceil(drawQuote(scratch, d, logo, ff, false));
+}
+
+/** 문서의 y0 위치부터 h 높이만큼을 배율 S로 그린 새 캔버스를 돌려줍니다. (저장용) */
+function renderBand(d: Doc, logo: HTMLImageElement | null, ff: string, S: number, y0: number, h: number): HTMLCanvasElement | null {
+  const cv = document.createElement('canvas');
+  cv.width = Math.round(W * S);
+  cv.height = Math.round(h * S);
+  const ctx = cv.getContext('2d');
+  if (!ctx) return null;
+  ctx.setTransform(S, 0, 0, S, 0, -y0 * S);
+  ctx.fillStyle = PAL[d.theme].bg;
+  ctx.fillRect(0, y0, W, h);
+  drawQuote(ctx, d, logo, ff, true);
+  return cv;
+}
+
 /** 캔버스 크기를 맞추고 그립니다. 너무 긴 이미지는 해상도를 낮춰 브라우저 한도를 넘지 않게 합니다. */
 function paintQuote(cv: HTMLCanvasElement, d: Doc, logo: HTMLImageElement | null, ff: string): number {
   const scratch = document.createElement('canvas').getContext('2d');
@@ -1218,6 +1242,62 @@ export function QuoteMaker({ groups, pkgs, accounts }: { groups: QuoteGroup[]; p
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   };
+
+    /* ── 고화질 PNG · PDF 저장 ── */
+  const [busy, setBusy] = useState(false);
+  const savePngHi = async () => {
+    if (busy) return;
+    setBusy(true);
+    await new Promise((r) => setTimeout(r, 30));
+    try {
+      const ff = getComputedStyle(document.body).fontFamily || 'sans-serif';
+      const logo = await getLogo(doc.theme);
+      const H = measureQuote(doc, logo, ff);
+      if (!H) throw new Error('measure');
+      const S = Math.max(1, Math.min(3, 16000 / H));
+      const cv = renderBand(doc, logo, ff, S, 0, H);
+      if (!cv) throw new Error('canvas');
+      const blob = await new Promise<Blob | null>((r) => cv.toBlob(r, 'image/png'));
+      if (!blob) throw new Error('blob');
+      download(blob, fileName('png').replace(/\.png$/, '_hd.png'));
+      toast(`고화질로 저장했어요 (${cv.width} × ${cv.height}px).${S < 2.05 ? ' 긴 문서는 PDF가 더 선명해요.' : ''}`);
+    } catch {
+      toast('고화질 이미지를 만들지 못했어요.');
+    } finally {
+      setBusy(false);
+    }
+  };
+  const savePdf = async () => {
+    if (busy) return;
+    setBusy(true);
+    await new Promise((r) => setTimeout(r, 30));
+    try {
+      const ff = getComputedStyle(document.body).fontFamily || 'sans-serif';
+      const logo = await getLogo(doc.theme);
+      const H = measureQuote(doc, logo, ff);
+      if (!H) throw new Error('measure');
+      const PH = Math.round((W * 297) / 210); // A4 한 쪽에 들어가는 문서 높이
+      const pages = Math.max(1, Math.ceil(H / PH));
+      const { jsPDF } = await import('jspdf');
+      const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true });
+      for (let i = 0; i < pages; i++) {
+        const cv = renderBand(doc, logo, ff, PDF_SCALE, i * PH, PH);
+        if (!cv) throw new Error('canvas');
+        if (i > 0) pdf.addPage();
+        pdf.addImage(cv.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+        cv.width = 0;
+        cv.height = 0;
+        await new Promise((r) => setTimeout(r, 0));
+      }
+      download(pdf.output('blob'), fileName('png').replace(/\.png$/, '.pdf'));
+      toast(`PDF로 저장했어요 (${pages}쪽).`);
+    } catch {
+      toast('PDF를 만들지 못했어요.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const savePng = () => {
     const cv = cvRef.current;
     if (!cv) return;
@@ -1763,6 +1843,10 @@ export function QuoteMaker({ groups, pkgs, accounts }: { groups: QuoteGroup[]; p
           <button type="button" className="pri" onClick={savePng}>PNG 저장</button>
           <button type="button" onClick={copyPng}>이미지 복사</button>
           <button type="button" onClick={reset}>처음부터</button>
+        </div>
+        <div className="hr-qm-btns">
+          <button type="button" onClick={savePngHi} disabled={busy}>고화질 PNG</button>
+          <button type="button" onClick={savePdf} disabled={busy}>{busy ? '만드는 중…' : 'PDF 저장'}</button>
         </div>
         <div className="hr-qm-btns">
           <button type="button" onClick={exportJson}>작업 파일 저장</button>

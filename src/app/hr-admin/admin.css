@@ -423,3 +423,5 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 .hr-qm-zoom-body.fit { width: min(1080px, 100%); }
 .hr-qm-zoom-body.big { width: 100%; }
 .hr-qm-zoom-body img { display: block; width: 100%; height: auto; }
+
+.hr-qm-btns button:disabled { opacity: .55; cursor: progress; }
