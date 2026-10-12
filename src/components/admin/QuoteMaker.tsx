@@ -1306,6 +1306,7 @@ export function QuoteMaker({ groups, pkgs, accounts }: { groups: QuoteGroup[]; p
         cv.height = 0;
         await new Promise((r) => setTimeout(r, 0));
       }
+      pdf.setProperties({ title: fileName('png').replace(/\.png$/, '') });
       download(pdf.output('blob'), fileName('png').replace(/\.png$/, '.pdf'));
       toast(`PDF로 저장했어요 (${pages}쪽).`);
     } catch {
