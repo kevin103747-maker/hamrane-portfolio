@@ -21,7 +21,7 @@
 - `QuoteMaker` - Quote/statement maker → `src/components/admin/QuoteMaker.tsx`
 - `QuoteItem` - Quote item type → `src/components/admin/QuoteMaker.tsx`
 - `QuoteGroup` - Quote group type → `src/components/admin/QuoteMaker.tsx`
-- `QuoteStore` (브라우저 localStorage 전용, 서버 코드에서 import 금지):
+- QuoteStore (브라우저 localStorage 전용, 서버 코드에서 import 금지):
   - `nextNo()` - Next document number → `src/lib/quote-store.ts`
   - `renumber()` - Convert Q-/S- prefix → `src/lib/quote-store.ts`
   - `validLabel()` - Validity period label → `src/lib/quote-store.ts`
@@ -41,19 +41,19 @@
 - `FeaturedPicker` - Featured selection → `src/components/admin/FeaturedPicker.tsx`
 
 ### QuoteMaker Internal Functions (grep -n "<name>" src/components/admin/QuoteMaker.tsx)
-- `messengerText()` - Generate messenger text (exported) → line 163
-- `normalize()` - Normalize saved draft → line 312
-- `blankDoc()` - Create blank document → line 304
-- `blankLine()` - Create blank line → line 250
-- `whoText()` - Format who/org text → line 282
-- `bankOf()` - Get bank info → line 287
-- `bankText()` - Format bank text → line 296
-- `wipCount()` - Count WIP/wait items → line 256
-- `wipLabel()` - WIP label → line 271
-- `drawQuote()` - Draw quote canvas → line 427
-- `songBlock()` - Draw song block → line 587
-- `stageBlock()` - Draw stage block → line 673
-- `totalsBlock()` - Draw totals block → line 712
+- `messengerText()` - Generate messenger text (exported)
+- `normalize()` - Normalize saved draft
+- `blankDoc()` - Create blank document
+- `blankLine()` - Create blank line
+- `whoText()` - Format who/org text
+- `bankOf()` - Get bank info
+- `bankText()` - Format bank text
+- `wipCount()` - Count WIP/wait items
+- `wipLabel()` - WIP label
+- `drawQuote()` - Draw quote canvas
+- `songBlock()` - Draw song block
+- `stageBlock()` - Draw stage block
+- `totalsBlock()` - Draw totals block
 
 ### Tracking
 - `isOwnerDevice()` - Check owner device → `src/lib/track.ts`

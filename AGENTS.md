@@ -116,7 +116,7 @@ grep "input\|select\|button" src/app/hr-admin/admin.css
 ### QuoteMaker.tsx
 ```bash
 # Types
-grep "export type" src/components/admin/QuoteMaker.tsx
+grep -nE "^(export )?type " src/components/admin/QuoteMaker.tsx
 
 # Helper functions
 grep "normalize\|blankDoc\|blankLine" src/components/admin/QuoteMaker.tsx
@@ -131,10 +131,10 @@ grep "drawQuote\|songBlock\|stageBlock\|totalsBlock" src/components/admin/QuoteM
 grep "KEY\|KIND_NAME\|DEFAULT_NOTES" src/components/admin/QuoteMaker.tsx
 
 # Admin actions
-grep "export async function" src/app/hr-admin/(panel)/actions.ts
+grep "export async function" "src/app/hr-admin/(panel)/actions.ts"
 
 # Stats page
-grep "supabase\|Chart\|stat" src/app/hr-admin/(panel)/stats/page.tsx
+grep "supabase\|Chart\|stat" "src/app/hr-admin/(panel)/stats/page.tsx"
 ```
 
 ## Cross-File Search
@@ -184,7 +184,7 @@ Before completing tasks: run `npm run typecheck`
 
 # Additional Navigation Aids
 - **FEATURES.md**: Feature → file/function mapping
-- **SEARCH_INDEX.md**: Exported functions by category with grep commands
+- **SEARCH_INDEX.md**: Exported functions by category
 
 # Working Rules
 - Every code answer must end with copy-paste git commands (add / commit / push).
