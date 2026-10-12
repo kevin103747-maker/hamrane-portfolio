@@ -1,6 +1,7 @@
 // src/components/admin/QuoteMaker.tsx — 견적서·명세서: 입력 → 캔버스 미리보기 → PNG 저장/복사
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   nextNo, renumber, validLabel, listSlots, saveSlot, removeSlot, readPreset, writePreset,
   type QuoteSlot, type SavedAccount,
@@ -1786,7 +1787,7 @@ export function QuoteMaker({ groups, pkgs, accounts }: { groups: QuoteGroup[]; p
         <div className="hr-qm-cvwrap">
           <canvas ref={cvRef} className="hr-qm-cv" onClick={openZoom} aria-label={`${KIND_NAME[doc.kind]} 미리보기`} />
         </div>
-        {zoom && (
+        {zoom && createPortal(
           <div className="hr-qm-zoom" role="dialog" aria-modal="true" aria-label={`${KIND_NAME[doc.kind]} 크게 보기`} onClick={closeZoom}>
             <div className="hr-qm-zoom-bar" onClick={(e) => e.stopPropagation()}>
               <button type="button" aria-pressed={zoom.mode === 'fit'} onClick={() => setZoom({ ...zoom, mode: 'fit' })}>보통</button>
@@ -1798,7 +1799,8 @@ export function QuoteMaker({ groups, pkgs, accounts }: { groups: QuoteGroup[]; p
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={zoom.url} alt={`${KIND_NAME[doc.kind]} 이미지`} />
             </div>
-          </div>
+          </div>,
+          document.body,
         )}
       </aside>
     </div>
