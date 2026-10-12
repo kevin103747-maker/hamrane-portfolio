@@ -425,6 +425,7 @@ function subText(l: Line): string {
  * paint=false 면 그리지 않고 높이만 계산합니다. 반환값은 이미지 전체 높이.
  * 글자 위치는 모두 "줄 위쪽(top)" 기준으로 잡고, put 이 기준선(baseline)에 맞춰 줍니다.
  */
+let QBREAKS: number[] = []; // 쪽을 나눠도 되는 세로 위치(항목 사이 빈틈)
 function drawQuote(
   ctx: CanvasRenderingContext2D, d: Doc, logo: HTMLImageElement | null, ff: string, paint: boolean,
 ): number {
@@ -866,6 +867,7 @@ function drawQuote(
     card(PAD, y, CW, h);
     songBlock(s, i, PAD, y, CW);
     y += h + 20;
+    QBREAKS.push(y - 10);
   });
 
   // 입금 안내 카드 (단계별 입금을 쓰고, 입금 완료/추후 입금 항목이 있을 때만)
@@ -874,6 +876,7 @@ function drawQuote(
     card(PAD, y, CW, sh);
     stageBlock(PAD, y, CW);
     y += sh + 20;
+    QBREAKS.push(y - 10);
   }
 
   // 총 금액 카드
@@ -918,11 +921,12 @@ const PDF_SCALE = 2.5;
 function measureQuote(d: Doc, logo: HTMLImageElement | null, ff: string): number {
   const scratch = document.createElement('canvas').getContext('2d');
   if (!scratch) return 0;
+  QBREAKS = [];
   return Math.ceil(drawQuote(scratch, d, logo, ff, false));
 }
 
 /** 문서의 y0 위치부터 h 높이만큼을 배율 S로 그린 새 캔버스를 돌려줍니다. (저장용) */
-function renderBand(d: Doc, logo: HTMLImageElement | null, ff: string, S: number, y0: number, h: number): HTMLCanvasElement | null {
+function renderBand(d: Doc, logo: HTMLImageElement | null, ff: string, S: number, y0: number, h: number, visH: number = h): HTMLCanvasElement | null {
   const cv = document.createElement('canvas');
   cv.width = Math.round(W * S);
   cv.height = Math.round(h * S);
@@ -931,6 +935,9 @@ function renderBand(d: Doc, logo: HTMLImageElement | null, ff: string, S: number
   ctx.setTransform(S, 0, 0, S, 0, -y0 * S);
   ctx.fillStyle = PAL[d.theme].bg;
   ctx.fillRect(0, y0, W, h);
+  ctx.beginPath();
+  ctx.rect(0, y0, W, visH);
+  ctx.clip();
   drawQuote(ctx, d, logo, ff, true);
   return cv;
 }
@@ -1276,12 +1283,21 @@ export function QuoteMaker({ groups, pkgs, accounts }: { groups: QuoteGroup[]; p
       const logo = await getLogo(doc.theme);
       const H = measureQuote(doc, logo, ff);
       if (!H) throw new Error('measure');
+      const breaks = QBREAKS.slice(); // measureQuote 직후에 복사
       const PH = Math.round((W * 297) / 210); // A4 한 쪽에 들어가는 문서 높이
-      const pages = Math.max(1, Math.ceil(H / PH));
+      const starts: number[] = [0];
+      while (starts[starts.length - 1] + PH < H) {
+        const y0 = starts[starts.length - 1];
+        const cands = breaks.filter((b) => b > y0 + PH * 0.4 && b <= y0 + PH);
+        starts.push(cands.length ? Math.max(...cands) : y0 + PH);
+      }
+      const pages = starts.length;
       const { jsPDF } = await import('jspdf');
       const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true });
       for (let i = 0; i < pages; i++) {
-        const cv = renderBand(doc, logo, ff, PDF_SCALE, i * PH, PH);
+        const y0 = starts[i];
+        const visH = i < pages - 1 ? starts[i + 1] - y0 : PH;
+        const cv = renderBand(doc, logo, ff, PDF_SCALE, y0, PH, visH);
         if (!cv) throw new Error('canvas');
         if (i > 0) pdf.addPage();
         pdf.addImage(cv.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
