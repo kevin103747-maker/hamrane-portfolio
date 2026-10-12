@@ -429,6 +429,7 @@ let QBREAKS: number[] = []; // 쪽을 나눠도 되는 세로 위치(항목 사�
 function drawQuote(
   ctx: CanvasRenderingContext2D, d: Doc, logo: HTMLImageElement | null, ff: string, paint: boolean,
 ): number {
+  QBREAKS = [];
   const p = PAL[d.theme];
   const CW = W - PAD * 2;
   const isSt = d.kind === 'statement';
