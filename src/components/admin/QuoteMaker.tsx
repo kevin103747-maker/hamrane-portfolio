@@ -1182,6 +1182,34 @@ export function QuoteMaker({ groups, pkgs, accounts }: { groups: QuoteGroup[]; p
     const base = (doc.client || doc.project || 'project').replace(/[\\/:*?"<>|\s]+/g, '_');
     return `${KIND_NAME[doc.kind]}_${base}_${doc.date || today()}.${ext}`;
   };
+
+  /* ── 미리보기 크게 보기(팝업) ── */
+  const [zoom, setZoom] = useState<{ url: string; info: string; mode: 'fit' | 'big' } | null>(null);
+  const openZoom = () => {
+    const cv = cvRef.current;
+    if (!cv) return;
+    cv.toBlob((b) => {
+      if (!b) return toast('이미지를 만들지 못했어요.');
+      setZoom({ url: URL.createObjectURL(b), info: `${cv.width} × ${cv.height}px`, mode: 'fit' });
+    }, 'image/png');
+  };
+  const closeZoom = () => {
+    if (zoom) URL.revokeObjectURL(zoom.url);
+    setZoom(null);
+  };
+  useEffect(() => {
+    if (!zoom) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeZoom(); };
+    window.addEventListener('keydown', onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [zoom]);
+
+
   const download = (blob: Blob, name: string) => {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -1752,9 +1780,26 @@ export function QuoteMaker({ groups, pkgs, accounts }: { groups: QuoteGroup[]; p
         {height > 9000 && (
           <p className="hr-qm-msg">이미지가 매우 깁니다. &lsquo;요약&rsquo; 보기를 쓰면 짧아져요.</p>
         )}
-        <div className="hr-qm-cvwrap">
-          <canvas ref={cvRef} className="hr-qm-cv" aria-label={`${KIND_NAME[doc.kind]} 미리보기`} />
+        <div className="hr-qm-cvhead">
+          <button type="button" onClick={openZoom}>크게 보기</button>
         </div>
+        <div className="hr-qm-cvwrap">
+          <canvas ref={cvRef} className="hr-qm-cv" onClick={openZoom} aria-label={`${KIND_NAME[doc.kind]} 미리보기`} />
+        </div>
+        {zoom && (
+          <div className="hr-qm-zoom" role="dialog" aria-modal="true" aria-label={`${KIND_NAME[doc.kind]} 크게 보기`} onClick={closeZoom}>
+            <div className="hr-qm-zoom-bar" onClick={(e) => e.stopPropagation()}>
+              <button type="button" aria-pressed={zoom.mode === 'fit'} onClick={() => setZoom({ ...zoom, mode: 'fit' })}>보통</button>
+              <button type="button" aria-pressed={zoom.mode === 'big'} onClick={() => setZoom({ ...zoom, mode: 'big' })}>크게</button>
+              <span>{zoom.info}</span>
+              <button type="button" onClick={closeZoom}>닫기 (Esc)</button>
+            </div>
+            <div className={`hr-qm-zoom-body ${zoom.mode}`} onClick={(e) => e.stopPropagation()}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={zoom.url} alt={`${KIND_NAME[doc.kind]} 이미지`} />
+            </div>
+          </div>
+        )}
       </aside>
     </div>
   );

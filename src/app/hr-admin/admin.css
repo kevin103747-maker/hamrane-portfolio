@@ -408,3 +408,18 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 .hr-qm-acc button:hover:not(:disabled) { border-color: var(--mint); color: var(--mint); }
 .hr-qm-acc button:disabled { opacity: .4; cursor: default; }
 @media (max-width: 640px) { .hr-qm-acc { grid-template-columns: minmax(0, 1fr) auto auto; } }
+
+/* 미리보기 크게 보기 */
+.hr-qm-cvhead { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+.hr-qm-cvhead button { height: 32px; padding: 0 12px; border: 1px solid var(--line-2); border-radius: 10px; background: var(--card); color: var(--text-2); font: inherit; font-size: 13px; cursor: pointer; }
+.hr-qm-cvhead button:hover { border-color: var(--mint); color: var(--mint); }
+.hr-qm-cvwrap .hr-qm-cv { cursor: zoom-in; }
+.hr-qm-zoom { position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 16px; background: rgba(4,8,7,.78); backdrop-filter: blur(6px); }
+.hr-qm-zoom-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; }
+.hr-qm-zoom-bar button { height: 36px; padding: 0 14px; border: 1px solid var(--line-2); border-radius: 10px; background: var(--card); color: var(--text); font: inherit; font-size: 13px; cursor: pointer; }
+.hr-qm-zoom-bar button:hover, .hr-qm-zoom-bar button[aria-pressed='true'] { border-color: var(--mint); color: var(--mint); }
+.hr-qm-zoom-bar span { font: 500 12px var(--f-mono); color: var(--text-2); }
+.hr-qm-zoom-body { flex: 1; min-height: 0; max-width: 100%; overflow: auto; overscroll-behavior: contain; border-radius: 12px; background: var(--card); }
+.hr-qm-zoom-body.fit { width: min(1080px, 100%); }
+.hr-qm-zoom-body.big { width: 100%; }
+.hr-qm-zoom-body img { display: block; width: 100%; height: auto; }
