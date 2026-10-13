@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { requireAdmin } from '@/lib/auth/guard';
 import { adminDb } from '@/lib/auth/admin-db';
 import { can } from '@/lib/auth/permissions';
-import { DROP_BUCKET, DROP_LIMITS as L, fmtSize, fromRow, isLive } from '@/lib/drops';
+import { DROP_LIMITS as L, fmtSize, fromRow, isLive } from '@/lib/drops';
 import { CountedField } from '@/components/admin/CountedField';
 import { DropUploader } from '@/components/admin/DropUploader';
 import { DropActions } from '@/components/admin/DropActions';
@@ -80,8 +80,8 @@ export default async function DropsPage({
             파일은 이 화면에서 바로 저장소로 올라가므로 위의 저장 버튼과는 따로 반영됩니다.
           </p>
           <div className="hr-drop-ups">
-            <DropUploader id={cur.id} kind="mp3" bucket={DROP_BUCKET} hasFile={!!cur.mp3Path} sizeLabel={fmtSize(cur.mp3Size)} />
-            <DropUploader id={cur.id} kind="wav" bucket={DROP_BUCKET} hasFile={!!cur.wavPath} sizeLabel={fmtSize(cur.wavSize)} />
+            <DropUploader id={cur.id} kind="mp3" hasFile={!!cur.mp3Path} sizeLabel={fmtSize(cur.mp3Size)} />
+            <DropUploader id={cur.id} kind="wav" hasFile={!!cur.wavPath} sizeLabel={fmtSize(cur.wavSize)} />
           </div>
         </div>
       )}

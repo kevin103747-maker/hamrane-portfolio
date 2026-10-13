@@ -89,7 +89,7 @@ export async function saveDrop(fd: FormData) {
 /** 브라우저가 Supabase로 직접 올릴 수 있는 일회용 주소를 만듭니다. 파일 자체는 이 함수를 지나지 않습니다. */
 export async function prepareUpload(input: {
   id: string; kind: Kind; size: number; fileName: string;
-}): Promise<{ ok: true; path: string; token: string } | { ok: false; msg: string }> {
+}): Promise<{ ok: true; path: string; url: string } | { ok: false; msg: string }> {
   await guard();
   const { id, kind, size, fileName } = input;
   if (!UUID_RE.test(id) || !isKind(kind)) return { ok: false, msg: '잘못된 요청입니다.' };
@@ -105,13 +105,13 @@ export async function prepareUpload(input: {
   const path = `${id}/${kind}-${Date.now().toString(36)}.${kind}`;
   const { data, error } = await db.storage.from(DROP_BUCKET).createSignedUploadUrl(path);
   if (error || !data) return { ok: false, msg: `업로드 준비 실패: ${error?.message ?? '알 수 없는 오류'}` };
-  return { ok: true, path, token: data.token };
+  return { ok: true, path, url: data.signedUrl };
 }
 
 /** 파일 앞부분 16바이트만 읽어 옵니다. */
 async function head(url: string): Promise<Uint8Array | null> {
   try {
-    const res = await fetch(url, { headers: { Range: 'bytes=0-15' }, cache: 'no-store' });
+    const res = await fetch(url, { headers: { Range: 'bytes=0-15' }, cache: 'no-store', signal: AbortSignal.timeout(15000) });
     if (!res.ok || !res.body) return null;
     const reader = res.body.getReader();
     const got: number[] = [];
