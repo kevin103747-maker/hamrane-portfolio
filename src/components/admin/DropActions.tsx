@@ -20,7 +20,7 @@ export function DropActions({ id, slug, title }: { id: string; slug: string; tit
       <form
         action={removeDrop}
         onSubmit={(e) => {
-          if (!window.confirm(`"${title}"을(를) 지울까요? 올린 MP3·WAV 파일도 함께 삭제되고, 이미 뿌린 링크는 열리지 않습니다.`)) e.preventDefault();
+          if (!window.confirm(`"${title}"을(를) 지울까요? 이미 뿌린 링크는 열리지 않습니다. (R2에 올린 음원 파일은 지워지지 않아요. 필요하면 Cloudflare에서 직접 지우세요.)`)) e.preventDefault();
         }}
       >
         <input type="hidden" name="id" value={id} />

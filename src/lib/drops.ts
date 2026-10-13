@@ -47,10 +47,11 @@ export const getDrop = cache(async (slug: string): Promise<Drop | null> => {
   return data ? fromRow(data as Row) : null;
 });
 
-/** 저장소 파일의 다운로드 주소. ?download= 를 붙여야 다른 주소의 파일도 재생이 아니라 저장으로 열립니다. */
-export function fileUrl(path: string, saveAs: string) {
-  const base = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
-  return `${base}/storage/v1/object/public/${DROP_BUCKET}/${path}?download=${encodeURIComponent(saveAs)}`;
+/** 음원 파일의 받기 주소(Cloudflare Worker 주소 + R2 파일 이름). 서버에서만 쓰세요. 설정이 없으면 ''. */
+export function fileUrl(path: string) {
+  const base = (process.env.DROP_FILES_BASE ?? '').replace(/\/+$/, '');
+  if (!base || !path) return '';
+  return `${base}/${path.split('/').map(encodeURIComponent).join('/')}`;
 }
 
 /** 저장될 파일 이름(확장자 제외). 제목에서 파일 이름에 못 쓰는 문자를 뺍니다. */

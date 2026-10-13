@@ -1,11 +1,10 @@
 // src/components/drop/DropPage.tsx — 무료 배포 페이지 본문. 공개 주소(/dl/...)와 어드민 미리보기가 같이 씁니다.
 import Link from 'next/link';
-import { fileUrl, fmtSize, saveName, type Drop } from '@/lib/drops';
+import { fileUrl, fmtSize, type Drop } from '@/lib/drops';
 import { DropTheme } from './DropTheme';
 import { DropTracker } from './DropTracker';
 
-export function DropPage({ drop, notice, tracked }: { drop: Drop; notice?: string; tracked?: boolean }) {
-  const name = saveName(drop);
+export function DropPage({ drop, notice, tracked }: { drop: Drop; notice?: string; tracked?: boolean }) {  
   const files = [
     { ext: 'mp3', label: 'MP3', note: '가볍고 어디서나 재생돼요', path: drop.mp3Path, size: drop.mp3Size },
     { ext: 'wav', label: 'WAV', note: '무손실 원본 음질 · 편집용', path: drop.wavPath, size: drop.wavSize },
@@ -61,7 +60,7 @@ export function DropPage({ drop, notice, tracked }: { drop: Drop; notice?: strin
             <div className="dl-files">
               {files.map((f) =>
                 f.path ? (
-                  <a key={f.ext} className="dl-file" data-dl={f.ext} href={fileUrl(f.path, `${name}.${f.ext}`)} download>
+                    <a key={f.ext} className="dl-file" data-dl={f.ext} href={tracked ? `/dl/${drop.slug}/get/${f.ext}` : fileUrl(f.path)}>
                     <span><b>{f.label}</b><small>{f.note}{f.size ? ` · ${fmtSize(f.size)}` : ''}</small></span>
                     <span className="go">받기 ↓</span>
                   </a>

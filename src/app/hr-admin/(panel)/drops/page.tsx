@@ -6,7 +6,6 @@ import { adminDb } from '@/lib/auth/admin-db';
 import { can } from '@/lib/auth/permissions';
 import { DROP_LIMITS as L, fmtSize, fromRow, isLive } from '@/lib/drops';
 import { CountedField } from '@/components/admin/CountedField';
-import { DropUploader } from '@/components/admin/DropUploader';
 import { DropActions } from '@/components/admin/DropActions';
 import { saveDrop } from './actions';
 
@@ -78,6 +77,15 @@ export default async function DropsPage({
           종료일 (선택, 이 날까지 열려 있고 다음 날부터 404)
           <input type="date" name="endsOn" defaultValue={cur?.endsOn ?? ''} />
         </label>
+        <label>
+          MP3 파일 이름 (Cloudflare R2에 올린 이름 그대로)
+          <input name="mp3" defaultValue={cur?.mp3Path ?? ''} placeholder="예) Summer-Theme.mp3" />
+        </label>
+        <label>
+          WAV 파일 이름 (Cloudflare R2에 올린 이름 그대로)
+          <input name="wav" defaultValue={cur?.wavPath ?? ''} placeholder="예) Summer-Theme.wav" />
+          <small>비워 두면 &quot;준비 중&quot;으로 보입니다. 저장할 때 R2에 실제로 있는지 확인하고 용량도 자동으로 읽어요.</small>
+        </label>
         <label className="hr-chk">
           <input type="checkbox" name="published" defaultChecked={cur?.published ?? false} />
           공개 (끄면 주소를 알아도 방문자에게는 404)
@@ -88,20 +96,6 @@ export default async function DropsPage({
           {cur && <Link href="/hr-admin/drops" className="hr-link">새로 만들기로 돌아가기</Link>}
         </div>
       </form>
-
-      {cur && (
-        <div className="hr-card">
-          <h2>음원 파일</h2>
-          <p className="hr-adm-sub">
-            MP3와 WAV를 각각 올립니다. 한 파일은 50MB 이하여야 하고, 올린 직후 서버가 진짜 MP3/WAV인지 검사합니다.
-            파일은 이 화면에서 바로 저장소로 올라가므로 위의 저장 버튼과는 따로 반영됩니다.
-          </p>
-          <div className="hr-drop-ups">
-            <DropUploader id={cur.id} kind="mp3" hasFile={!!cur.mp3Path} sizeLabel={fmtSize(cur.mp3Size)} />
-            <DropUploader id={cur.id} kind="wav" hasFile={!!cur.wavPath} sizeLabel={fmtSize(cur.wavSize)} />
-          </div>
-        </div>
-      )}
 
       <div className="hr-card">
         <h2>만든 배포 ({drops.length})</h2>
