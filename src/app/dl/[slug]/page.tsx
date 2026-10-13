@@ -32,5 +32,5 @@ export default async function DropRoute({ params }: Props) {
   const { slug } = await params;
   const d = await getDrop(slug);
   if (!d || !isLive(d)) notFound();
-  return <DropPage drop={d} />;
+  return <DropPage drop={d} tracked />;
 }

@@ -66,7 +66,7 @@ export function track(kind: TrackKind, value: string) {
     owner: isOwnerDevice(),
     dev: window.innerWidth < 768 ? 'm' : 'd',
   };
-  if (kind === 'view') {
+  if (kind === 'view' || value.startsWith('dl:view-')) {
     const ref = firstReferrer();
     if (ref) body.ref = ref;
   }

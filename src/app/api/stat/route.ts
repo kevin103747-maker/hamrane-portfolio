@@ -5,7 +5,7 @@ const BOT = /bot|crawl|spider|slurp|headless|lighthouse|facebookexternalhit|prev
 const PATH_OK = /^\/[a-z0-9/_-]{0,60}$/i;
 const GROUP_OK = /^[\w-]{1,64}$/;
 const VID_OK = /^[0-9a-f-]{20,40}$/i;
-const CLICK_OK = /^(contact|ch|rate|ask|work):[\w.%-]{1,64}$/; // 정해진 종류만 받습니다.
+const CLICK_OK = /^(contact|ch|rate|ask|work|dl):[\w.%-]{1,64}$/; // 정해진 종류만 받습니다.
 const REF_OK = /^[a-z0-9._()-]{1,60}$/i;
 const done = () => new Response(null, { status: 204 });
 
@@ -37,7 +37,8 @@ export async function POST(req: Request) {
     row = { kind: 'group', group_id: value, vid, is_owner, device };
   } else if (kind === 'click') {
     if (!CLICK_OK.test(value)) return done();
-    row = { kind: 'click', label: value, vid, is_owner, device };
+    const ref = value.startsWith('dl:view-') && typeof b.ref === 'string' && REF_OK.test(b.ref) ? b.ref.toLowerCase() : null;
+    row = { kind: 'click', label: value, vid, is_owner, device, ref };
   } else {
     return done();
   }

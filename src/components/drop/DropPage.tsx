@@ -2,8 +2,9 @@
 import Link from 'next/link';
 import { fileUrl, fmtSize, saveName, type Drop } from '@/lib/drops';
 import { DropTheme } from './DropTheme';
+import { DropTracker } from './DropTracker';
 
-export function DropPage({ drop, notice }: { drop: Drop; notice?: string }) {
+export function DropPage({ drop, notice, tracked }: { drop: Drop; notice?: string; tracked?: boolean }) {
   const name = saveName(drop);
   const files = [
     { ext: 'mp3', label: 'MP3', note: '가볍고 어디서나 재생돼요', path: drop.mp3Path, size: drop.mp3Size },
@@ -26,7 +27,7 @@ export function DropPage({ drop, notice }: { drop: Drop; notice?: string }) {
           </div>
         </div>
       </header>
-
+      {tracked && <DropTracker slug={drop.slug} />}
       {notice && <div className="dl-preview" role="status">{notice}</div>}
 
       <main className="wrap">
@@ -60,7 +61,7 @@ export function DropPage({ drop, notice }: { drop: Drop; notice?: string }) {
             <div className="dl-files">
               {files.map((f) =>
                 f.path ? (
-                  <a key={f.ext} className="dl-file" href={fileUrl(f.path, `${name}.${f.ext}`)} download>
+                  <a key={f.ext} className="dl-file" data-dl={f.ext} href={fileUrl(f.path, `${name}.${f.ext}`)} download>
                     <span><b>{f.label}</b><small>{f.note}{f.size ? ` · ${fmtSize(f.size)}` : ''}</small></span>
                     <span className="go">받기 ↓</span>
                   </a>

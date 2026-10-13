@@ -20,6 +20,21 @@ export default async function DropsPage({
   const { data, error } = await adminDb().from('drops').select('*').order('created_at', { ascending: false });
   const drops = ((data ?? []) as Record<string, unknown>[]).map(fromRow);
   const cur = edit ? drops.find((d) => d.id === edit) : undefined;
+  const st = await adminDb().rpc('stat_drops', { p_owner: false });
+  type DropStat = { slug: string; views: number; visitors: number; mp3: number; wav: number; home: number };
+  type DropRef = { slug: string; ref: string; n: number };
+  const sd = st.error ? null : (st.data as { drops?: DropStat[]; refs?: DropRef[] } | null);
+  const statBy = new Map((sd?.drops ?? []).map((x) => [x.slug, x]));
+  const statText = (slug: string) => {
+    const s = statBy.get(slug);
+    if (!s) return '아직 방문 기록이 없어요';
+    const refs = (sd?.refs ?? [])
+      .filter((r) => r.slug === slug)
+      .slice(0, 4)
+      .map((r) => `${r.ref === '(direct)' ? '직접·앱' : r.ref} ${r.n}`)
+      .join(', ');
+    return `조회 ${s.views} · 방문자 ${s.visitors}명 · MP3 ${s.mp3} · WAV ${s.wav} · 사이트 이동 ${s.home}${refs ? ` · 유입 ${refs}` : ''}`;
+  };
 
   const state = (d: (typeof drops)[number]) =>
     !d.published ? '비공개' : isLive(d) ? '공개 중' : '종료됨';
@@ -34,6 +49,8 @@ export default async function DropsPage({
       {ok && <p className="hr-ok">저장했습니다.</p>}
       {err && <p className="hr-adm-err">{err}</p>}
       {error && <p className="hr-adm-err">목록을 불러오지 못했습니다: {error.message}</p>}
+      {st.error && <p className="hr-adm-err">통계를 불러오지 못했습니다: {st.error.message}. Supabase에서 stat_drops 함수를 만들었는지 확인하세요.</p>}
+
 
       <form id="form" key={cur?.id ?? 'new'} action={saveDrop} className="hr-card hr-f">
         <h2>{cur ? `수정 · ${cur.title}` : '새 배포 만들기'}</h2>
@@ -98,6 +115,7 @@ export default async function DropsPage({
                 /dl/{d.slug} · MP3 {d.mp3Path ? '있음' : '없음'} · WAV {d.wavPath ? '있음' : '없음'}
                 {d.endsOn ? ` · ~${d.endsOn}` : ''}
               </small>
+              <small>{statText(d.slug)}</small>
             </div>
             <div className="hr-row">
               <Link href={`/hr-admin/drops?edit=${d.id}#form`} className="hr-link">수정</Link>
