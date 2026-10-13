@@ -49,7 +49,7 @@ export const getDrop = cache(async (slug: string): Promise<Drop | null> => {
 
 /** 음원 파일의 받기 주소(Cloudflare Worker 주소 + R2 파일 이름). 서버에서만 쓰세요. 설정이 없으면 ''. */
 export function fileUrl(path: string) {
-  const base = (process.env.DROP_FILES_BASE ?? '').replace(/\/+$/, '');
+  const base = (process.env.DROP_FILES_BASE ?? '').trim().replace(/\/+$/, '');
   if (!base || !path) return '';
   return `${base}/${path.split('/').map(encodeURIComponent).join('/')}`;
 }
