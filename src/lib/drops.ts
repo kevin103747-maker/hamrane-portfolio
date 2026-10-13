@@ -4,6 +4,7 @@ import { supabase } from './supabase';
 
 export const DROP_BUCKET = 'drops';
 export const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,40}$/;
+export const DROP_LIMITS = { title: 60, subtitle: 80, description: 600, terms: 600 };
 const YT_RE = /^[\w-]{11}$/;
 
 export type Drop = {

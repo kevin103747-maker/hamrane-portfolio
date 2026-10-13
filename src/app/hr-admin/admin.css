@@ -425,3 +425,16 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 .hr-qm-zoom-body img { display: block; width: 100%; height: auto; }
 
 .hr-qm-btns button:disabled { opacity: .55; cursor: progress; }
+
+/* ===== 무료 배포 (어드민) ===== */
+.hr-drop-ups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 12px; }
+.hr-drop-up { padding: 16px; border-radius: 12px; border: 1px solid var(--line-2); }
+.hr-drop-up h3 { font-size: 16px; font-weight: 700; }
+.hr-drop-up input[type='file'] { display: block; max-width: 100%; margin: 10px 0; }
+.hr-drop-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 14px 0; border-top: 1px solid var(--line); }
+.hr-drop-row small { display: block; margin-top: 4px; color: var(--text-3); }
+.hr-drop-state { margin-left: 8px; padding: 2px 8px; border-radius: 99px; font-size: 11px; background: var(--card-2); color: var(--text-3); }
+.hr-drop-state.on { background: var(--mint-soft); color: var(--mint); }
+@media (max-width: 720px) {
+  .hr-drop-ups { grid-template-columns: 1fr; }
+}
