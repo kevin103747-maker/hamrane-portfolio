@@ -30,6 +30,7 @@ export function DropUploader({
         .storage.from(bucket)
         .uploadToSignedUrl(p.path, p.token, f, { contentType: kind === 'mp3' ? 'audio/mpeg' : 'audio/wav' });
       if (error) { setMsg(`업로드 실패: ${error.message}`); return; }
+      setMsg('올린 파일을 확인하는 중…');
       const r = await attachFile({ id, kind, path: p.path });
       if (!r.ok) { setMsg(r.msg); return; }
       setMsg('올렸어요.');
