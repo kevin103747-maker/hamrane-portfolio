@@ -178,7 +178,7 @@ export default async function WorksPage({
         <details className="hr-fold" open={tracks.length > 0}>
           <summary>트랙 분리 듣기 (선택 · 믹서 플레이어용)</summary>
           <p className="hr-adm-sub">
-            곡을 삭제해도 R2의 파일은 지워지지 않습니다. 안 쓰는 파일은 Cloudflare R2에서 직접 지우세요. 같은 이름으로 다시 올리면 방문자 브라우저가 하루 동안 옛 파일을 쓸 수 있으니, 파일을 고칠 때는 harmony-soprano-v2.mp3처럼 이름을 바꿔 올리세요.
+            화음 가이드·INST처럼 여러 트랙이 한 곡에 들어 있을 때 씁니다. 여기서는 트랙만 넣고, 사이트에 보이게 하려면 단가표 예시 작업물 화면에서 분야별로 곡을 골라야 합니다. 곡 팝업과 포트폴리오에는 나오지 않습니다.
           </p>
           {Array.from({ length: TRACKS_MAX }, (_, i) => (
             <div key={i} className="hr-row">
