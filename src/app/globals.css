@@ -690,8 +690,8 @@ footer a:hover { color: var(--mint); }
 .hr-rt-top em { padding: 2px 8px; font: 600 11px var(--f-mono); font-style: normal; color: var(--mint); background: var(--mint-soft); border-radius: 99px; }
 .hr-rt-card > p { flex: 1; margin-top: 8px; font-size: 13px; line-height: 1.55; color: var(--text-2); }
 .hr-rt-price { display: flex; flex-direction: column; gap: 3px; margin-top: 18px; }
-.hr-rt-lab { font: 500 11px var(--f-mono); letter-spacing: .08em; color: var(--text-3); }
-.hr-rt-price strong { font: 700 28px var(--f-sp); letter-spacing: -.02em; line-height: 1.15; }
+.hr-rt-lab { font: 500 12px var(--f-mono); letter-spacing: .08em; color: var(--text-2); }
+.hr-rt-price strong { font: 800 32px var(--f-sp); letter-spacing: -.02em; line-height: 1.15; color: var(--mint); }
 .hr-rt-price strong small { margin-left: 2px; font-size: 14px; font-weight: 500; color: var(--text-2); }
 .hr-rt-price i { font-size: 12px; font-style: normal; color: var(--text-3); }
 
@@ -1292,7 +1292,7 @@ section.hr-faq-sec { padding-top: 56px; padding-bottom: 72px; }
   .hr-rt-grid { gap: 10px; }
   .hr-rt-card { padding: 16px; }
   .hr-rt-price { margin-top: 12px; }
-  .hr-rt-price strong { font-size: 24px; }
+  .hr-rt-price strong { font-size: 28px; }
 
   /* 패키지 카드와 팝업: 아래에서 올라오는 시트 */
   .hr-pv-grid { gap: 10px; }
