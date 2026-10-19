@@ -18,7 +18,7 @@ type BoardItem = {
   id: string; name: string; desc: string; price: string; unit: string; tag?: string; discount?: Discount;
   turn?: GroupTurn; noDisc?: boolean; bonus?: string; noBonus?: string;
 };
-export type BoardGroup = { id: string; no: string; name: string; en: string; desc: string; items: BoardItem[]; disc?: GroupDiscView };
+export type BoardGroup = { id: string; no: string; name: string; en: string; desc: string; items: BoardItem[]; disc?: GroupDiscView; pick?: string[] };
 
 /** "50,000" 같은 글자에서 숫자만 뽑습니다. 숫자가 아니면 null (예: "문의") */
 const toNum = (s: string) => {
@@ -277,7 +277,7 @@ export function RateBoard({ groups, bonus }: { groups: BoardGroup[]; bonus?: Bon
               <RateCard key={i.id} groupName={g.name} i={i} showDisc={!!g.disc} />
             ))}
           </ul>
-          {g.id === cur && <GroupWorks groupId={g.id} groupName={g.name} />}
+          {g.id === cur && <GroupWorks groupId={g.id} groupName={g.name} pick={g.pick} />}
         </section>
       ))}
     </div>

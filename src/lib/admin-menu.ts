@@ -30,6 +30,7 @@ export const MENU: MenuSection[] = [
     sub: '단가표와 그 아래에 붙는 모든 규칙',
     items: [
       { href: '/hr-admin/rates', label: '단가표', desc: '파트별 단가와 이벤트 할인', perm: 'rates' },
+      { href: '/hr-admin/pricing-works', label: '단가표 예시 작업물', desc: '단가표 분야별로 가격 아래에 보여줄 작업물 선택', perm: 'rates' },
       { href: '/hr-admin/rates/packages', label: '패키지', desc: '단가표 아래의 구성 예시(질문형 카드와 팝업)', perm: 'rates' },
       { href: '/hr-admin/quote', label: '견적서·명세서', desc: '의뢰인에게 보낼 견적서와 작업 후 명세서를 곡별로 정리해 PNG로 저장', perm: 'rates' },
       { href: '/hr-admin/turnaround', label: '소요·마감', desc: '분야·작업별 평균 소요기간과 빠른·당일 마감 표시', perm: 'rates' },

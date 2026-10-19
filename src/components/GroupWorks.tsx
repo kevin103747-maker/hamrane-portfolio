@@ -1,4 +1,4 @@
-// src/components/GroupWorks.tsx — 가격표 분야 아래의 "이 분야 작업물" 줄
+// src/components/GroupWorks.tsx — 가격표 분야 아래의 "이 분야 작업물"
 'use client';
 import Link from 'next/link';
 import { matches } from '@/lib/filters';
@@ -6,17 +6,18 @@ import { useSite } from './SiteProvider';
 import { WorkCard } from './WorkCard';
 
 const MAX_AUTO = 4; // 직접 고른 곡이 없을 때 최신순으로 보여줄 개수
-const MAX_PICK = 8; // 직접 고른 곡을 보여줄 최대 개수
 
-export function GroupWorks({ groupId, groupName }: { groupId: string; groupName: string }) {
+export function GroupWorks({ groupId, groupName, pick }: { groupId: string; groupName: string; pick?: string[] }) {
   const s = useSite();
-  const all = s.works.filter((w) =>
-    matches(w, s, { q: '', groupId, partId: null, usage: [], aType: [] }),
-  );
-  if (!all.length) return null;
-  // 어드민 "분야별 대표곡"에서 고른 곡이 있으면 그 곡만, 없으면 최신 곡을 보여줍니다.
-  const picked = all.filter((w) => w.feat?.groups?.includes(groupId));
-  const list = picked.length ? picked.slice(0, MAX_PICK) : all.slice(0, MAX_AUTO);
+  const chosen = new Set(pick ?? []);
+  // 어드민 "단가표 예시 작업물"에서 고른 곡(공개 중인 곡만). 하나도 없으면 이 분야의 최신 곡을 보여줍니다.
+  const picked = s.works.filter((w) => chosen.has(w.id));
+  const list = picked.length
+    ? picked
+    : s.works
+        .filter((w) => matches(w, s, { q: '', groupId, partId: null, usage: [], aType: [] }))
+        .slice(0, MAX_AUTO);
+  if (!list.length) return null;
   return (
     <div className="hr-gw">
       <div className="hr-gw-head">

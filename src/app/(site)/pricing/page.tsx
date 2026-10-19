@@ -11,6 +11,7 @@ import { getDiscounts } from '@/lib/discounts-settings';
 import { groupView } from '@/lib/discounts';
 import { BundleBox } from '@/components/BundleBox';
 import { getBonus } from '@/lib/bonus-settings';
+import { getPricingWorks } from '@/lib/pricing-works';
 import type { BonusView } from '@/lib/bonus';
 
 export const metadata = { title: 'Pricing' };
@@ -28,8 +29,8 @@ const nounOf = (u: string) => {
 };
 
 export default async function Pricing() {
-  const [d, turnaround, discounts, bn] = await Promise.all([
-    getSiteData(), getTurnaround(), getDiscounts(), getBonus(),
+  const [d, turnaround, discounts, bn, pw] = await Promise.all([
+    getSiteData(), getTurnaround(), getDiscounts(), getBonus(), getPricingWorks(),
   ]);
   const item = (id: string) => d.rateItems.find((i) => i.id === id);
   // 단가 항목이 하나라도 있는 분야만 표시합니다. (리믹스처럼 포트폴리오 전용 분야는 단가 항목을 넣지 않으면 숨겨집니다.)
@@ -51,6 +52,7 @@ export default async function Pricing() {
     en: g.en,
     desc: tx(g.desc),
     disc: groupView(discounts, g.id),
+    pick: pw[g.id],
     items: d.rateItems
       .filter((i) => i.groupId === g.id)
       .map((i) => ({
