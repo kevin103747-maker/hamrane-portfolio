@@ -1648,3 +1648,10 @@ a.dl-file:hover { border-color: var(--mint); background: var(--mint-soft); }
   .dl-bar .dl-btn.ghost { display: none; }
   .dl-about { padding: 24px 20px; }
 }
+
+/* 가격표 분야 아래 "이 분야 작업물" */
+.hr-gw { margin-top: 40px; padding-top: 28px; border-top: 1px solid var(--line); }
+.hr-gw-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 18px; }
+.hr-gw-head b { font-size: 16px; font-weight: 700; }
+.hr-gw-head a { font-size: 13px; color: var(--text-2); }
+.hr-gw-head a:hover { color: var(--mint); }

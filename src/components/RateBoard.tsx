@@ -12,7 +12,7 @@ import { badgeClass } from '@/lib/rate-badge';
 import { BonusNote } from './BonusNote';
 import { track } from '@/lib/track';
 import type { BonusView } from '@/lib/bonus';
-
+import { GroupWorks } from './GroupWorks';
 
 type BoardItem = {
   id: string; name: string; desc: string; price: string; unit: string; tag?: string; discount?: Discount;
@@ -272,11 +272,12 @@ export function RateBoard({ groups, bonus }: { groups: BoardGroup[]; bonus?: Bon
           </div>
 
           {g.disc && <DiscBox v={g.disc} />}
-          <ul className="hr-rt-grid">
+               <ul className="hr-rt-grid">
             {g.items.map((i) => (
               <RateCard key={i.id} groupName={g.name} i={i} showDisc={!!g.disc} />
             ))}
           </ul>
+          {g.id === cur && <GroupWorks groupId={g.id} groupName={g.name} />}
         </section>
       ))}
     </div>
