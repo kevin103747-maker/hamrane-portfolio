@@ -3,6 +3,7 @@ import { cache } from 'react';
 import { SAMPLE } from './sample-data';
 import { supabase } from './supabase';
 import type { SiteData } from './types';
+import { parseTracks } from './tracks';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Row = Record<string, any>;
@@ -44,7 +45,7 @@ async function load(): Promise<SiteData | null> {
     works: visibleWorks.map((x) => ({
       id: x.id, title: x.title, youtubeId: x.youtube_id, clipUrl: x.clip_url ?? undefined, date: x.work_date, duration: x.duration,
       thumbUrl: x.thumb_url ?? undefined, artistIds: x.artist_ids, usageIds: x.usage_ids,
-      partIds: x.part_ids, mainPartId: x.main_part_id ?? undefined, hidden: x.hidden, feat: x.feat ?? undefined,
+      partIds: x.part_ids, mainPartId: x.main_part_id ?? undefined, hidden: x.hidden, feat: x.feat ?? undefined, tracks: x.tracks?.length ? parseTracks(x.tracks) : undefined,
     })),
     rateItems: rows(r).map((x) => ({
       id: x.id, groupId: x.group_id, name: x.name, desc: x.descr, price: x.price, unit: x.unit,

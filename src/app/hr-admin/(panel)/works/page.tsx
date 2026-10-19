@@ -9,12 +9,14 @@ import { ConfirmButton } from '@/components/admin/ConfirmButton';
 import { ArtistPicker } from '@/components/admin/ArtistPicker';
 import { WorkBasics } from '@/components/admin/WorkBasics';
 import { saveWork, removeWork } from '../actions';
+import { parseTracks, TRACKS_MAX, TRACK_LABEL_MAX } from '@/lib/tracks';
+
 
 type FeatValue = { default?: string; groups?: string[]; parts?: string[] };
 type WorkRow = {
   id: string; title: string; youtube_id: string | null; thumb_url: string | null; work_date: string | null;
   artist_ids: string[] | null; usage_ids: string[] | null; part_ids: string[] | null;
-  main_part_id: string | null; clip_url: string | null; feat: FeatValue | null; hidden: boolean | null;
+  main_part_id: string | null; clip_url: string | null; feat: FeatValue | null; hidden: boolean | null; tracks: unknown;
 };
 
 /** 저장된 "2026.09.15" → 달력 입력값 "2026-09-15". 예전 월 단위 값("2026.09")은 1일로 채웁니다. */
@@ -62,6 +64,7 @@ export default async function WorksPage({
   const isCopy = !cur && !!base;
   const artistName = (id: string) => artists.find((x: { id: string; name: string }) => x.id === id)?.name ?? '';
   const feat = (cur?.feat ?? {}) as FeatValue;
+  const tracks = parseTracks(cur?.tracks);
   const today = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10); // 한국 시간 오늘
 
   // 검색·필터 (제목, 아티스트 이름)
@@ -170,6 +173,20 @@ export default async function WorksPage({
           <summary>썸네일 직접 지정 (선택 · 비우면 유튜브 썸네일을 씁니다)</summary>
           <label>썸네일 파일 올리기(JPG·PNG·WebP, 4MB 이하. 올리면 아래 주소보다 우선합니다)<input type="file" name="thumbFile" accept="image/jpeg,image/png,image/webp" /></label>
           <label>썸네일 주소<input name="thumb" placeholder="https://..." defaultValue={cur?.thumb_url ?? ''} /></label>
+        </details>
+
+        <details className="hr-fold" open={tracks.length > 0}>
+          <summary>트랙 분리 듣기 (선택 · 믹서 플레이어용)</summary>
+          <p className="hr-adm-sub">
+            화음 가이드·INST처럼 여러 트랙이 한 곡에 들어 있을 때, 방문자가 트랙을 끄고 켜며 들을 수 있게 합니다. 2~6개를 넣거나, 쓰지 않으면 모두 비워 두세요.
+            파일은 Cloudflare R2의 hamrane-mixer 버킷에 먼저 올리고, 여기에는 파일 이름만 정확히 적습니다(모노, 30~90초, 소문자 .mp3).
+          </p>
+          {Array.from({ length: TRACKS_MAX }, (_, i) => (
+            <div key={i} className="hr-row">
+              <input name="trackLabel" placeholder="트랙 이름 (예: 소프라노)" maxLength={TRACK_LABEL_MAX} defaultValue={tracks[i]?.label ?? ''} />
+              <input name="trackFile" placeholder="파일 이름 (예: harmony-soprano.mp3)" maxLength={81} defaultValue={tracks[i]?.file ?? ''} />
+            </div>
+          ))}
         </details>
 
         <details className="hr-fold" open={hasFeat(cur?.feat ?? null)}>

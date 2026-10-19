@@ -9,6 +9,7 @@ import { uploadImage } from '@/lib/auth/upload';
 import { ARTIST_PAGE_SIZE } from '@/lib/artist-admin';
 import { normalizeClipUrl } from '@/lib/clip';
 import { HOME_FEATURED_MAX } from '@/lib/featured';
+import { TRACKS_MAX, TRACK_LABEL_MAX, TRACK_FILE_RE } from '@/lib/tracks';
 
 async function guard(key: string) {
   const me = await requireAdmin();
@@ -117,8 +118,28 @@ export async function saveWork(fd: FormData) {
   const clipRaw = str(fd, 'clipUrl');
   const clipUrl = clipRaw ? normalizeClipUrl(clipRaw) : '';
   if (clipRaw && !clipUrl) fail(back, '클립 링크는 https:// 로 시작하는 주소를 넣어 주세요.');
+  // 트랙 분리 듣기: 이름 + R2(hamrane-mixer) 파일 이름. 비우면 기능 없음.
+  const trLabels = fd.getAll('trackLabel').map(String);
+  const trFiles = fd.getAll('trackFile').map(String);
+  const tracks: { label: string; file: string }[] = [];
+  for (let i = 0; i < trFiles.length; i++) {
+    const file = (trFiles[i] ?? '').trim();
+    const label = (trLabels[i] ?? '').trim();
+    if (!file && !label) continue;
+    if (!label) fail(back, `${i + 1}번째 트랙: 이름을 입력하세요.`);
+    if (label.length > TRACK_LABEL_MAX) fail(back, `${i + 1}번째 트랙: 이름은 ${TRACK_LABEL_MAX}자 이하로 입력하세요.`);
+    if (!TRACK_FILE_RE.test(file)) {
+      fail(back, `${i + 1}번째 트랙: 파일 이름은 영문·숫자·. _ - 만 쓰고 소문자 .mp3로 끝나야 합니다. 예: harmony-soprano.mp3`);
+    }
+    if (tracks.some((t) => t.file === file)) fail(back, `${i + 1}번째 트랙: 같은 파일이 이미 있습니다.`);
+    tracks.push({ label, file });
+  }
+  if (tracks.length === 1) fail(back, '트랙은 2개 이상 넣어야 섞어서 들을 수 있습니다. 쓰지 않으려면 모두 비워 두세요.');
+  if (tracks.length > TRACKS_MAX) fail(back, `트랙은 최대 ${TRACKS_MAX}개까지 넣을 수 있습니다.`);
+
   const row = {
     clip_url: clipUrl || null,
+    tracks: tracks.length ? tracks : null,
     title, youtube_id: youtube, work_date: date.replace(/-/g, '.'),
     thumb_url: thumbUp.url || thumb || null, artist_ids: artistIds, usage_ids: list(fd, 'usageIds'),
     part_ids: partIds, main_part_id: mainPartId || null, feat, hidden: flag(fd, 'hidden'),
