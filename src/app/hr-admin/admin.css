@@ -438,3 +438,12 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 @media (max-width: 720px) {
   .hr-drop-ups { grid-template-columns: 1fr; }
 }
+
+/* 무료 배포 화면의 업로드 순서 도움말 (기본 도움말 틀 위에 목록 모양만 추가) */
+.hr-drop-help > div h3 { margin: 6px 0 0; font-size: 13px; font-weight: 700; color: var(--text); }
+.hr-drop-help > div h3:first-child { margin-top: 0; }
+.hr-drop-help > div ul, .hr-drop-help > div ol { margin: 0; padding-left: 20px; }
+.hr-drop-help > div ul { list-style: disc; }
+.hr-drop-help > div ol { list-style: decimal; }
+.hr-drop-help > div li + li { margin-top: 6px; }
+
