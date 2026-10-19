@@ -157,18 +157,22 @@ grep -r "supabase.from" src/ | grep -o "from('.*')" | sort -u
 ## File Structure Quick Reference
 
 ### Components (src/components/)
-- **UI**: Header, BottomNav, WorkCard, Thumb, Modals, Icons, Contact, Tracker, RecentMarquee, SocialLinks
-- **Admin**: AdminNav, ArtistPicker, ArtistTable, WorkPicker, FeaturedPicker, DiscountFields, ExtrasEditor, PublishButton, ConfirmButton, OwnerMark, QuoteMaker
+- **UI**: Header, BottomNav, WorkCard, Thumb, Modals, Icons, Contact, Tracker, RecentMarquee, SocialLinks, GroupWorks
+- **Admin**: AdminNav, ArtistPicker, ArtistTable, WorkPicker, FeaturedPicker, ScopeFeatured, DiscountFields, ExtrasEditor, PublishButton, ConfirmButton, OwnerMark, QuoteMaker
+- **Drop** (src/components/drop/): DropPage, DropTheme, DropTracker
+
 
 ### Library (src/lib/)
 - **Auth**: supabase.ts, auth/ (server, browser, guard, permissions, admin-db, upload)
 - **Data**: site-data.ts, artist-admin.ts, admin-menu.ts, sample-data.ts, track.ts
-- **Domain**: guide, bonus, discounts, turnaround, status, featured, social, rate-badge
+- **Domain**: guide, bonus, discounts, turnaround, status, featured, social, rate-badge, drops, pricing-works
 - **Quote**: quote-store.ts, quote-accounts.ts
 - **Utils**: filters, copy, stats, i18n, types
 
 ### Pages (src/app/)
 - **Public**: (site)/ (page, portfolio, pricing, guide)
+- **Public (outside (site))**: dl/[slug] (page.tsx, get/[kind]/route.ts)
+- **Admin outside (panel)**: hr-admin/drop-preview/[id]
 - **Admin**: hr-admin/ (login, mfa, (panel) sub-pages, admin.css)
 - **API**: api/stat/route.ts
 
@@ -180,6 +184,25 @@ grep -r "supabase.from" src/ | grep -o "from('.*')" | sort -u
 - Server Actions: 5MB body limit configured
 
 # Verification
+# Drops (무료 배포 · /dl/[slug])
+- Event BGM download page. Public URL `/dl/<slug>` lives OUTSIDE `(site)`: no site header/footer/Tracker.
+  Never linked from the public site, `noindex`, `/dl` itself is 404. `revalidate = 60`.
+- Audio is NOT in Supabase. MP3/WAV live in Cloudflare R2, served by a Worker (R2 binding variable `BUCKET`).
+  The `drops` table stores only file names.
+- Env `DROP_FILES_BASE` = Worker URL (no trailing `/`). Set in Vercel (Production + Preview) and `.env.local`.
+  Env changes apply only after a redeploy.
+- Download flow: button -> `/dl/<slug>/get/<mp3|wav>` (route.ts) -> 302 to `DROP_FILES_BASE/<file name>`.
+  404 when closed/unpublished/missing env. Deleting a drop does NOT delete R2 files (delete them in R2).
+- Admin: `/hr-admin/drops` (perm `settings`), preview `/hr-admin/drop-preview/<id>`.
+- Stats: `stat_events` values `dl:view-<slug>`, `dl:mp3-<slug>`, `dl:wav-<slug>`, `dl:home-<slug>`;
+  admin list reads RPC `stat_drops`. Recorded only when VERCEL_ENV=production.
+
+# Pricing example works (단가표 예시 작업물)
+- Stored in `site_settings` key `pricing_works` = `{ [groupId]: workId[] }`, max `PRICING_WORKS_MAX` (8) per group.
+  Separate from portfolio featured (`works.feat`).
+- Admin `/hr-admin/pricing-works` (perm `rates`) reuses `ScopeFeatured`. Public: `GroupWorks` under the active
+  rate tab only (`RateBoard`). Nothing picked -> latest `MAX_AUTO` (4) works of that group.
+- Groups, parts and usage types are editable in admin: NEVER hard-code their names or ids in code.
 Before completing tasks: run `npm run typecheck`
 
 # Additional Navigation Aids
@@ -201,6 +224,9 @@ Before completing tasks: run `npm run typecheck`
   or saved drafts get truncated on reload.
 - New Doc/Line fields need a default in `blankDoc`/`blankLine` AND a safe read
   in `normalize`, so old saved drafts keep loading.
+- `git commit` alone does not deploy. After `git push origin main`, `git log origin/main..HEAD --oneline` must print nothing.
+- Groups/parts/usage types change in admin at any time. Attach new data to works (or store ids with delete guards), never to fixed names.
+
 
 # CSS Rules
 - globals.css = public site only; admin.css = /hr-admin only.

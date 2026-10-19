@@ -22,6 +22,8 @@
 - **Bonus**: `src/lib/bonus.ts`, `src/lib/bonus-settings.ts`
 - **Turnaround**: `src/lib/turnaround.ts`, `src/lib/turnaround-settings.ts`
 - **Packages**: `src/components/PackageList.tsx`, `src/components/BundleBox.tsx`
+- **Pricing Example Works**: `src/components/GroupWorks.tsx`, `src/lib/pricing-works.ts`, `src/app/hr-admin/(panel)/pricing-works/` (page.tsx, actions.ts)
+
 
 ## Quote/Statement
 - **Quote Maker**: `src/components/admin/QuoteMaker.tsx`
@@ -32,9 +34,17 @@
 ## Admin Panel
 - **Admin Nav**: `src/components/admin/AdminNav.tsx`
 - **Artist Management**: `src/components/admin/ArtistPicker.tsx`, `src/components/admin/ArtistTable.tsx`, `src/lib/artist-admin.ts`
-- **Work Management**: `src/components/admin/WorkPicker.tsx`, `src/components/admin/WorkBasics.tsx`
+- **Work Management**: `src/components/admin/WorkPicker.tsx`, `src/components/admin/WorkBasics.tsx`,     'ScopeFeatured.tsx'
 - **Admin Actions**: `src/app/hr-admin/(panel)/actions.ts`
 - **Admin Menu**: `src/lib/admin-menu.ts`
+
+## Drops (Free Download Pages)
+- **Public Page**: `src/app/dl/[slug]/page.tsx`
+- **Download Redirect**: `src/app/dl/[slug]/get/[kind]/route.ts`
+- **Page Body (public + admin preview)**: `src/components/drop/DropPage.tsx`, `DropTheme.tsx`, `DropTracker.tsx`
+- **Helpers**: `src/lib/drops.ts`
+- **Admin**: `src/app/hr-admin/(panel)/drops/` (page.tsx, actions.ts), `src/components/admin/DropActions.tsx`
+- **Admin Preview**: `src/app/hr-admin/drop-preview/[id]`
 
 ## Statistics/Tracking
 - **Tracker**: `src/components/Tracker.tsx`

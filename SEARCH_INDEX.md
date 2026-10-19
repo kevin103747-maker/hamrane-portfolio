@@ -17,6 +17,17 @@
 - `PackageList` - Package list → `src/components/PackageList.tsx`
 - `BundleBox` - Bundle display → `src/components/BundleBox.tsx`
 
+### Pricing example works
+- `GroupWorks` - Works under each rate tab → `src/components/GroupWorks.tsx`
+- `getPricingWorks()`, `parsePricingWorks()`, `PRICING_WORKS_MAX` → `src/lib/pricing-works.ts`
+- `savePricingWorks()` (server action) → `src/app/hr-admin/(panel)/pricing-works/actions.ts`
+
+### Drops
+- `getDrop()`, `isLive()`, `fileUrl()`, `fmtSize()`, `fromRow()` → `src/lib/drops.ts`
+- `saveDrop()`, `removeDrop()` (server actions) → `src/app/hr-admin/(panel)/drops/actions.ts`
+- `DropPage`, `DropTheme`, `DropTracker` → `src/components/drop/`
+- `DropActions` - copy address / delete buttons → `src/components/admin/DropActions.tsx`
+
 ### Quote
 - `QuoteMaker` - Quote/statement maker → `src/components/admin/QuoteMaker.tsx`
 - `QuoteItem` - Quote item type → `src/components/admin/QuoteMaker.tsx`
@@ -90,5 +101,7 @@
 - Portfolio: `src/app/(site)/portfolio/page.tsx`
 - Pricing: `src/app/(site)/pricing/page.tsx`
 - Guide: `src/app/(site)/guide/page.tsx`
+- Drop (free download): `src/app/dl/[slug]/page.tsx`
+
 
 
