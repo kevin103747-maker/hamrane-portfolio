@@ -10,11 +10,16 @@ import { WorkCard } from './WorkCard';
 import { orderParts } from '@/lib/work-parts';
 import { parseClip } from '@/lib/clip';
 import { COPY } from '@/lib/copy';
+import dynamic from 'next/dynamic';
+
 
 type Open = { kind: 'work' | 'artist'; id: string } | null;
+const TrackMixer = dynamic(() => import('./TrackMixer').then((m) => m.TrackMixer), { ssr: false });
+
 
 function WorkModal({ id, onClose, onNav }: { id: string; onClose: () => void; onNav: (d: number) => void }) {
   const s = useSite();
+  const [mix, setMix] = useState(false);
   const w = s.works.find((x) => x.id === id);
   if (!w) return null;
   const clip = parseClip(w.clipUrl);
@@ -27,6 +32,9 @@ function WorkModal({ id, onClose, onNav }: { id: string; onClose: () => void; on
         </div>
         <button className="hr-x" onClick={onClose} aria-label="닫기" autoFocus><Icon name="close" /></button>
       </div>
+      {mix && w.tracks && w.tracks.length > 1 ? (
+        <TrackMixer tracks={w.tracks} onBack={() => setMix(false)} />
+      ) : (
       <div className="hr-video">
         {w.youtubeId ? (
           <iframe
@@ -46,6 +54,7 @@ function WorkModal({ id, onClose, onNav }: { id: string; onClose: () => void; on
           <Thumb work={w} />
         )}
       </div>
+      )}
       <div className="hr-vinfo">
         <p>{s.artistNames(w)} · {w.date}</p>
         <div className="pts">
@@ -60,6 +69,11 @@ function WorkModal({ id, onClose, onNav }: { id: string; onClose: () => void; on
           <a className="hr-yt" href={clip.watchUrl} target="_blank" rel="noopener noreferrer">
             {clip.platform === 'other' ? '원본 영상 보기' : `${clip.label}에서 보기`} <Icon name="external" />
           </a>
+        )}
+        {w.tracks && w.tracks.length > 1 && !mix && (
+          <button type="button" className="hr-mx-btn hr-mx-open" onClick={() => setMix(true)}>
+            트랙 분리 듣기
+          </button>
         )}
       </div>
       {s.works.length > 1 && (

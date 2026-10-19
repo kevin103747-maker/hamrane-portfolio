@@ -1656,3 +1656,16 @@ a.dl-file:hover { border-color: var(--mint); background: var(--mint-soft); }
 .hr-gw-head b { font-size: 16px; font-weight: 700; }
 .hr-gw-head a { font-size: 13px; color: var(--text-2); }
 .hr-gw-head a:hover { color: var(--mint); }
+
+.hr-mx { display: grid; gap: 12px; padding: 16px; border-bottom: 1px solid var(--line); }
+.hr-mx-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.hr-mx-top b { font-size: 14px; font-weight: 700; }
+.hr-mx-btn { padding: 8px 14px; border: 1px solid var(--line-2); border-radius: 99px; font-size: 13px; color: var(--text-2); cursor: pointer; }
+.hr-mx-btn:hover { color: var(--text); }
+.hr-mx-play { color: #0b1411; background: var(--mint); border-color: var(--mint); font-weight: 600; }
+.hr-mx-open { margin-top: 10px; }
+.hr-mx-list { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+.hr-mx-trk { padding: 12px; border: 1px solid var(--line-2); border-radius: 10px; font-size: 14px; text-align: left; color: var(--text-3); cursor: pointer; }
+.hr-mx-trk[aria-pressed='true'] { color: var(--text); border-color: var(--mint); background: var(--mint-soft); }
+.hr-mx-note { font-size: 12px; line-height: 1.5; color: var(--text-3); }
+.hr-mx-err { font-size: 13px; line-height: 1.5; color: var(--text-2); }
