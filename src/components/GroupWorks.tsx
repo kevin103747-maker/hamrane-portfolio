@@ -5,7 +5,8 @@ import { matches } from '@/lib/filters';
 import { useSite } from './SiteProvider';
 import { WorkCard } from './WorkCard';
 
-const MAX = 4; // 한 분야에서 보여줄 최대 곡 수
+const MAX_AUTO = 4; // 직접 고른 곡이 없을 때 최신순으로 보여줄 개수
+const MAX_PICK = 8; // 직접 고른 곡을 보여줄 최대 개수
 
 export function GroupWorks({ groupId, groupName }: { groupId: string; groupName: string }) {
   const s = useSite();
@@ -13,10 +14,9 @@ export function GroupWorks({ groupId, groupName }: { groupId: string; groupName:
     matches(w, s, { q: '', groupId, partId: null, usage: [], aType: [] }),
   );
   if (!all.length) return null;
-  // 이 분야 대표작으로 지정한 곡을 먼저, 나머지는 최신순(s.works는 이미 최신순입니다)
-  const feat = all.filter((w) => w.feat?.groups?.includes(groupId));
-  const rest = all.filter((w) => !w.feat?.groups?.includes(groupId));
-  const list = [...feat, ...rest].slice(0, MAX);
+  // 어드민 "분야별 대표곡"에서 고른 곡이 있으면 그 곡만, 없으면 최신 곡을 보여줍니다.
+  const picked = all.filter((w) => w.feat?.groups?.includes(groupId));
+  const list = picked.length ? picked.slice(0, MAX_PICK) : all.slice(0, MAX_AUTO);
   return (
     <div className="hr-gw">
       <div className="hr-gw-head">

@@ -691,7 +691,8 @@ footer a:hover { color: var(--mint); }
 .hr-rt-card > p { flex: 1; margin-top: 8px; font-size: 13px; line-height: 1.55; color: var(--text-2); }
 .hr-rt-price { display: flex; flex-direction: column; gap: 3px; margin-top: 18px; }
 .hr-rt-lab { font: 500 12px var(--f-mono); letter-spacing: .08em; color: var(--text-2); }
-.hr-rt-price strong { font: 800 32px var(--f-sp); letter-spacing: -.02em; line-height: 1.15; color: var(--mint); }
+.hr-rt-price strong { font: 800 32px var(--f-sp); letter-spacing: -.02em; line-height: 1.15; }
+[data-theme='light'] .hr-rt-price strong { color: var(--mint); }
 .hr-rt-price strong small { margin-left: 2px; font-size: 14px; font-weight: 500; color: var(--text-2); }
 .hr-rt-price i { font-size: 12px; font-style: normal; color: var(--text-3); }
 
