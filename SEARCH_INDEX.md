@@ -22,6 +22,12 @@
 - `getPricingWorks()`, `parsePricingWorks()`, `PRICING_WORKS_MAX` → `src/lib/pricing-works.ts`
 - `savePricingWorks()` (server action) → `src/app/hr-admin/(panel)/pricing-works/actions.ts`
 
+### Track mixer
+- `TrackMixer` - Split-track Web Audio player → `src/components/TrackMixer.tsx`
+- `parseTracks()`, `TRACK_FILE_RE`, `TRACKS_MAX`, `TRACK_LABEL_MAX` → `src/lib/tracks.ts`
+- `Track` type → `src/lib/tracks.ts`
+
+
 ### Drops
 - `getDrop()`, `isLive()`, `fileUrl()`, `fmtSize()`, `fromRow()` → `src/lib/drops.ts`
 - `saveDrop()`, `removeDrop()` (server actions) → `src/app/hr-admin/(panel)/drops/actions.ts`

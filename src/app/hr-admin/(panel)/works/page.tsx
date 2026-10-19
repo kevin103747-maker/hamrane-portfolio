@@ -178,8 +178,7 @@ export default async function WorksPage({
         <details className="hr-fold" open={tracks.length > 0}>
           <summary>트랙 분리 듣기 (선택 · 믹서 플레이어용)</summary>
           <p className="hr-adm-sub">
-            화음 가이드·INST처럼 여러 트랙이 한 곡에 들어 있을 때, 방문자가 트랙을 끄고 켜며 들을 수 있게 합니다. 2~6개를 넣거나, 쓰지 않으면 모두 비워 두세요.
-            파일은 Cloudflare R2의 hamrane-mixer 버킷에 먼저 올리고, 여기에는 파일 이름만 정확히 적습니다(모노, 30~90초, 소문자 .mp3).
+            곡을 삭제해도 R2의 파일은 지워지지 않습니다. 안 쓰는 파일은 Cloudflare R2에서 직접 지우세요. 같은 이름으로 다시 올리면 방문자 브라우저가 하루 동안 옛 파일을 쓸 수 있으니, 파일을 고칠 때는 harmony-soprano-v2.mp3처럼 이름을 바꿔 올리세요.
           </p>
           {Array.from({ length: TRACKS_MAX }, (_, i) => (
             <div key={i} className="hr-row">

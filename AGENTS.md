@@ -183,6 +183,15 @@ grep -r "supabase.from" src/ | grep -o "from('.*')" | sort -u
 - Auth: Supabase Auth with MFA support
 - Server Actions: 5MB body limit configured
 
+# Track mixer (트랙 분리 듣기)
+- 곡(`works`)의 `tracks`(jsonb) 칸에 `[{ label, file }]`로 저장. 곡당 0개 또는 2~6개. 형식 검사는 `src/lib/tracks.ts`(`parseTracks`, `TRACK_FILE_RE`).
+- 음원은 Cloudflare R2 `hamrane-mixer` 버킷, Worker `mixer-files`가 제공(GET/HEAD만, 소문자 `.mp3`만, CORS는 www.hamrane.com·hamrane.com·localhost:3000만 허용). Vercel/Supabase는 음원을 처리하지 않음.
+- 플레이어: `src/components/TrackMixer.tsx`(Web Audio). `Modals.tsx`의 WorkModal에서 버튼을 눌렀을 때만 `dynamic`으로 불러옴. 믹서 모드에서는 유튜브 영상을 치워 소리 겹침을 막음.
+- 환경변수 `NEXT_PUBLIC_MIXER_BASE`(Vercel + `.env.local`, 끝에 `/` 없이). 빌드 때 코드에 들어가므로 바꾸면 재배포 필요.
+- 음원 규칙: 모노, 30~90초, 128kbps 이하, 트랙 6개 이하. 브라우저가 소리를 풀어 메모리에 올리므로 용량이 아니라 길이가 문제(약 120MB 초과 시 중단).
+- 곡을 삭제해도 R2 파일은 남음. 수동으로 R2에서 삭제.
+
+
 # Drops (무료 배포 · /dl/[slug])
 - Event BGM download page. Public URL `/dl/<slug>` lives OUTSIDE `(site)`: no site header/footer/Tracker.
   Never linked from the public site, `noindex`, `/dl` itself is 404. `revalidate = 60`.
@@ -227,6 +236,9 @@ Before completing tasks: run `npm run typecheck`
   in `normalize`, so old saved drafts keep loading.
 - `git commit` alone does not deploy. After `git push origin main`, `git log origin/main..HEAD --oneline` must print nothing.
 - Groups/parts/usage types change in admin at any time. Attach new data to works (or store ids with delete guards), never to fixed names.
+- **Admin** 컴포넌트 줄은 그대로 두고, UI 줄 끝에 `TrackMixer`를 추가
+- Domain 줄 끝에 `tracks`를 추가
+- Working Rules 맨 아래: `- src/lib/tracks.ts의 TRACK_FILE_RE와 Cloudflare Worker mixer-files의 KEY_RE는 항상 같아야 함. 한쪽을 고치면 다른 쪽도 고칠 것.`
 
 
 # CSS Rules
