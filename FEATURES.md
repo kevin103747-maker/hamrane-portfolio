@@ -34,7 +34,7 @@
 ## Admin Panel
 - **Admin Nav**: `src/components/admin/AdminNav.tsx`
 - **Artist Management**: `src/components/admin/ArtistPicker.tsx`, `src/components/admin/ArtistTable.tsx`, `src/lib/artist-admin.ts`
-- **Work Management**: `src/components/admin/WorkPicker.tsx`, `src/components/admin/WorkBasics.tsx`,     'ScopeFeatured.tsx'
+- **Work Management**: `src/components/admin/WorkPicker.tsx`, `src/components/admin/WorkBasics.tsx`, `src/components/admin/ScopeFeatured.tsx`
 - **Admin Actions**: `src/app/hr-admin/(panel)/actions.ts`
 - **Admin Menu**: `src/lib/admin-menu.ts`
 

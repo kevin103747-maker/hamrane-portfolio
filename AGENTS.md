@@ -157,8 +157,8 @@ grep -r "supabase.from" src/ | grep -o "from('.*')" | sort -u
 ## File Structure Quick Reference
 
 ### Components (src/components/)
-- **UI**: Header, BottomNav, WorkCard, Thumb, Modals, Icons, Contact, Tracker, RecentMarquee, SocialLinks, GroupWorks
-- **Admin**: AdminNav, ArtistPicker, ArtistTable, WorkPicker, FeaturedPicker, ScopeFeatured, DiscountFields, ExtrasEditor, PublishButton, ConfirmButton, OwnerMark, QuoteMaker
+- **UI**: Header, BottomNav, WorkCard, Thumb, Modals, Icons, Contact, Tracker, RecentMarquee, SocialLinks , GroupWorks
+- **Admin**: AdminNav, ArtistPicker, ArtistTable, WorkPicker, FeaturedPicker, DiscountFields, ExtrasEditor, PublishButton, ConfirmButton, OwnerMark, QuoteMaker, ScopeFeatured, DropActions
 - **Drop** (src/components/drop/): DropPage, DropTheme, DropTracker
 
 
@@ -183,7 +183,6 @@ grep -r "supabase.from" src/ | grep -o "from('.*')" | sort -u
 - Auth: Supabase Auth with MFA support
 - Server Actions: 5MB body limit configured
 
-# Verification
 # Drops (무료 배포 · /dl/[slug])
 - Event BGM download page. Public URL `/dl/<slug>` lives OUTSIDE `(site)`: no site header/footer/Tracker.
   Never linked from the public site, `noindex`, `/dl` itself is 404. `revalidate = 60`.
@@ -203,6 +202,8 @@ grep -r "supabase.from" src/ | grep -o "from('.*')" | sort -u
 - Admin `/hr-admin/pricing-works` (perm `rates`) reuses `ScopeFeatured`. Public: `GroupWorks` under the active
   rate tab only (`RateBoard`). Nothing picked -> latest `MAX_AUTO` (4) works of that group.
 - Groups, parts and usage types are editable in admin: NEVER hard-code their names or ids in code.
+
+# Verification
 Before completing tasks: run `npm run typecheck`
 
 # Additional Navigation Aids
