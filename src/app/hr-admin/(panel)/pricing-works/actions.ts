@@ -5,7 +5,7 @@ import { requireAdmin } from '@/lib/auth/guard';
 import { adminDb } from '@/lib/auth/admin-db';
 import { can, logEdit } from '@/lib/auth/permissions';
 import { PRICING_WORKS_MAX, parsePricingWorks, type PricingWorks } from '@/lib/pricing-works';
-import { PRICING_MIXER_MAX, parsePricingMixer, type PricingMixer } from '@/lib/pricing-mixer';
+import { PRICING_MIXER_MAX, parsePricingMixer, type PricingMixer, type MixItem } from '@/lib/pricing-mixer';
 import { parseTracks } from '@/lib/tracks';
 
 const BACK = '/hr-admin/pricing-works';
@@ -64,18 +64,33 @@ export async function savePricingMixer(fd: FormData) {
     fail(gid, `한 분야에 최대 ${PRICING_MIXER_MAX}곡까지 고를 수 있습니다. (현재 ${ids.length}곡)`);
   }
 
-  // 실제로 있고 트랙이 2개 이상 들어 있는 곡만 저장합니다.
-  let valid: string[] = [];
+  // 실제로 있고 트랙이 2개 이상 들어 있는 곡만 저장합니다. 곡 정보는 숨긴 곡도 쓸 수 있게 복사해 둡니다.
+  const valid: string[] = [];
+  const items: MixItem[] = [];
   if (ids.length) {
-    const ws = await db.from('works').select('id, tracks').in('id', ids);
-    const n = new Map((ws.data ?? []).map((x) => [x.id as string, parseTracks(x.tracks).length]));
-    valid = ids.filter((id) => (n.get(id) ?? 0) > 1);
+    const ws = await db.from('works').select('id, title, youtube_id, artist_ids, tracks').in('id', ids);
+    const as = await db.from('artists').select('id, name');
+    const nameOf = new Map((as.data ?? []).map((x) => [x.id as string, String(x.name ?? '')]));
+    const byId = new Map((ws.data ?? []).map((x) => [x.id as string, x]));
+    for (const id of ids) {
+      const x = byId.get(id);
+      const tracks = parseTracks(x?.tracks);
+      if (!x || tracks.length < 2) continue;
+      valid.push(id);
+      items.push({
+        id,
+        title: String(x.title ?? ''),
+        sub: ((x.artist_ids ?? []) as string[]).map((a) => nameOf.get(a)).filter(Boolean).join(', '),
+        youtubeId: String(x.youtube_id ?? ''),
+        tracks,
+      });
+    }
   }
   if (on && !valid.length) fail(gid, '켜려면 트랙이 2개 이상 들어 있는 곡을 하나 이상 고르세요.');
 
   const { data: old } = await db.from('site_settings').select('value').eq('key', 'pricing_mixer').maybeSingle();
   const value: PricingMixer = { ...parsePricingMixer(old?.value) };
-  if (on || valid.length) value[gid] = { on, mode, ids: valid };
+  if (on || valid.length) value[gid] = { on, mode, ids: valid, items };
   else delete value[gid];
 
   const saved = await db.from('site_settings').upsert({ key: 'pricing_mixer', value }, { onConflict: 'key' });

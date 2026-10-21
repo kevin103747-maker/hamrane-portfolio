@@ -72,7 +72,7 @@ export default async function PricingWorksPage({
   const mx = parsePricingMixer(m.data?.value)[cur.id];
   const mixSet = new Set(mx?.ids ?? []);
   const mixCands = rows.filter(
-    (x) => !x.hidden && (x.part_ids ?? []).some((id) => curPartIds.has(id)) && parseTracks(x.tracks).length > 1,
+    (x) => (x.part_ids ?? []).some((id) => curPartIds.has(id)) && parseTracks(x.tracks).length > 1,
   );
 
 
@@ -108,7 +108,8 @@ export default async function PricingWorksPage({
       <form key={`mx-${cur.id}`} action={savePricingMixer} className="hr-card hr-f">
         <h2>{cur.name} 트랙 분리 듣기</h2>
         <p className="hr-adm-sub">
-          곡 입력 화면에서 트랙(2~6개)을 넣어 둔 곡 중에서 고릅니다. 이 분야에 참여한 공개 곡만 보입니다. 한 분야에 최대 {PRICING_MIXER_MAX}곡까지 고를 수 있고, 저장한 뒤 사이트에 게시해야 반영됩니다.
+          곡 입력 화면에서 트랙(2~6개)을 넣어 둔 곡 중에서 고릅니다. 이 분야의 파트가 하나라도 들어 있고 트랙이 있는 곡이 보입니다. 포트폴리오에서 숨긴 곡도 쓸 수 있습니다. 숨긴 곡은 저장할 때 정보를 복사해 두므로, 그 곡의 트랙이나 제목을 고친 뒤에는 여기서 다시 저장해야 사이트에 반영됩니다.
+ 한 분야에 최대 {PRICING_MIXER_MAX}곡까지 고를 수 있고, 저장한 뒤 사이트에 게시해야 반영됩니다.
         </p>
         <input type="hidden" name="group" value={cur.id} />
         <label className="hr-chk">
@@ -128,7 +129,7 @@ export default async function PricingWorksPage({
           mixCands.map((x) => (
             <label key={x.id} className="hr-chk">
               <input type="checkbox" name="mixWork" value={x.id} defaultChecked={mixSet.has(x.id)} />
-              {x.title} <small>트랙 {parseTracks(x.tracks).length}개</small>
+              {x.title} <small>트랙 {parseTracks(x.tracks).length}개{x.hidden ? ' · 포트폴리오에서 숨김' : ''}</small>
             </label>
           ))
         )}

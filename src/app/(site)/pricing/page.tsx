@@ -12,7 +12,7 @@ import { groupView } from '@/lib/discounts';
 import { BundleBox } from '@/components/BundleBox';
 import { getBonus } from '@/lib/bonus-settings';
 import { getPricingWorks } from '@/lib/pricing-works';
-import { getPricingMixer } from '@/lib/pricing-mixer';
+import { getPricingMixer, type MixItem } from '@/lib/pricing-mixer';
 import type { BonusView } from '@/lib/bonus';
 
 
@@ -35,6 +35,18 @@ export default async function Pricing() {
     getSiteData(), getTurnaround(), getDiscounts(), getBonus(), getPricingWorks(), getPricingMixer(),
   ]);
   const item = (id: string) => d.rateItems.find((i) => i.id === id);
+  const mixItems = (gid: string): MixItem[] => {
+    const cfg = pm[gid];
+    if (!cfg?.on) return [];
+    return cfg.ids.flatMap((id) => {
+      const w = d.works.find((x) => x.id === id);
+      if (w && (w.tracks?.length ?? 0) > 1) {
+        const sub = w.artistIds.map((a) => d.artists.find((x) => x.id === a)?.name).filter(Boolean).join(', ');
+        return [{ id, title: w.title, sub, youtubeId: w.youtubeId, tracks: w.tracks ?? [] }];
+      }
+      return cfg.items?.filter((x) => x.id === id) ?? [];
+    });
+  };
   // 단가 항목이 하나라도 있는 분야만 표시합니다. (리믹스처럼 포트폴리오 전용 분야는 단가 항목을 넣지 않으면 숨겨집니다.)
   const groups = d.groups.filter((g) => d.rateItems.some((i) => i.groupId === g.id));
   // 화면의 분야 번호는 보이는 분야 기준으로 01부터 다시 매깁니다.
@@ -55,7 +67,7 @@ export default async function Pricing() {
     desc: tx(g.desc),
     disc: groupView(discounts, g.id),
     pick: pw[g.id],
-    mixer: pm[g.id]?.on && pm[g.id].ids.length ? { mode: pm[g.id].mode, ids: pm[g.id].ids } : undefined,
+    mixer: pm[g.id]?.on && mixItems(g.id).length ? { mode: pm[g.id].mode, items: mixItems(g.id) } : undefined,
     items: d.rateItems
       .filter((i) => i.groupId === g.id)
       .map((i) => ({

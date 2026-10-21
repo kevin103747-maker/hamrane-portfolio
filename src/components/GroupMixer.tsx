@@ -2,20 +2,15 @@
 'use client';
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
-import type { Work } from '@/lib/types';
-import { useSite } from './SiteProvider';
+import type { MixItem } from '@/lib/pricing-mixer';
 
 // 믹서 코드는 곡을 열었을 때만 내려받습니다.
 const TrackMixer = dynamic(() => import('./TrackMixer').then((m) => m.TrackMixer), { ssr: false });
 
-export function GroupMixer({ groupName, mode, ids }: { groupName: string; mode: 'mix' | 'ab'; ids: string[] }) {
-  const s = useSite();
+export function GroupMixer({ groupName, mode, items }: { groupName: string; mode: 'mix' | 'ab'; items: MixItem[] }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [view, setView] = useState<'orig' | 'mix'>('mix');
-  const list = ids
-    .map((id) => s.works.find((w) => w.id === id))
-    .filter((w): w is Work => !!w && (w.tracks?.length ?? 0) > 1);
-  if (!list.length) return null;
+  if (!items.length) return null;
   const ab = mode === 'ab';
   const label = ab ? '비교해서 듣기' : '트랙 분리 듣기';
 
@@ -30,14 +25,14 @@ export function GroupMixer({ groupName, mode, ids }: { groupName: string; mode: 
         </p>
       </div>
       <div className="hr-gm-list">
-        {list.map((w) => {
+        {items.map((w) => {
           const open = openId === w.id;
           return (
             <div key={w.id} className="hr-gm-item">
               <div className="hr-gm-bar">
                 <div>
                   <b>{w.title}</b>
-                  <small>{s.artistNames(w)}</small>
+                  {w.sub && <small>{w.sub}</small>}
                 </div>
                 <button
                   type="button"
@@ -66,7 +61,7 @@ export function GroupMixer({ groupName, mode, ids }: { groupName: string; mode: 
                       />
                     </div>
                   ) : (
-                    <TrackMixer key={w.id} tracks={w.tracks ?? []} mode={mode} />
+                    <TrackMixer key={w.id} tracks={w.tracks} mode={mode} />
                   )}
                 </div>
               )}
