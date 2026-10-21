@@ -2,9 +2,11 @@ import type { NextConfig } from 'next';
 import path from 'node:path';
 
 const nextConfig: NextConfig = {
-  // 이미지 업로드(최대 4MB)가 서버 액션 기본 제한(1MB)에 걸리지 않게 합니다.
   experimental: {
+    // 이미지 업로드(최대 4MB)가 서버 액션 기본 제한(1MB)에 걸리지 않게 합니다.
     serverActions: { bodySizeLimit: '5mb' },
+    // 루트 레이아웃이 여럿(한국어·영어·어드민)이라 전체 404 화면을 따로 지정합니다.
+    globalNotFound: true,
   },
   // 홈 폴더의 다른 package-lock.json과 헷갈리지 않도록 이 프로젝트 폴더를 루트로 고정합니다.
   turbopack: { root: path.resolve(__dirname) },

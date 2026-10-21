@@ -1,14 +1,12 @@
-// src/app/hr-admin/layout.tsx
-import './admin.css';
-import { OwnerMark } from '@/components/admin/OwnerMark';
+// src/app/(ko)/layout.tsx — 한국어 사이트(주소에 언어 표시 없음)의 루트 레이아웃
+import '../globals.css';
+import { RootShell } from '@/components/RootShell';
+import { buildSiteMetadata } from '@/lib/site-metadata';
 
-export const metadata = { title: 'Admin', robots: { index: false, follow: false } };
+export async function generateMetadata() {
+  return buildSiteMetadata();
+}
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <main className="hr-adm">
-      <OwnerMark />
-      {children}
-    </main>
-  );
+export default function KoRootLayout({ children }: { children: React.ReactNode }) {
+  return <RootShell lang="ko">{children}</RootShell>;
 }
