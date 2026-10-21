@@ -85,6 +85,6 @@ export const DEFAULT_GUIDE: GuideSettings = {
   },
 };
 
-/** "문의 양식 복사" 버튼으로 복사되는 글 */
-export const inquiryTemplate = (fields: string[]) =>
-  ['[문의 양식] 모르는 항목은 비워두셔도 됩니다.', '', ...fields.map((f) => `- ${f}:`)].join('\n');
+/** "문의 양식 복사" 버튼으로 복사되는 글. 머리말은 언어별로 바꿀 수 있습니다. */
+export const inquiryTemplate = (fields: string[], head = '[문의 양식] 모르는 항목은 비워두셔도 됩니다.') =>
+  [head, '', ...fields.map((f) => `- ${f}:`)].join('\n');
