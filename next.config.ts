@@ -15,7 +15,13 @@ const nextConfig: NextConfig = {
   turbopack: { root: path.resolve(__dirname) },
   // 영어 공개 전에는 /en 주소로 들어와도 같은 한국어 페이지로 보냅니다. (임시 이동)
   async redirects() {
-    return EN_LIVE ? [] : [{ source: '/en/:path*', destination: '/:path*', permanent: false }];
+    return EN_LIVE
+      ? []
+      : [
+          // `/en/:path*`는 `/en` 자체도 맞아서 목적지가 빈 글자가 됩니다. 그래서 둘로 나눕니다.
+          { source: '/en', destination: '/', permanent: false },
+          { source: '/en/:path+', destination: '/:path+', permanent: false },
+        ];
   },
 };
 
