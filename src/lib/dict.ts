@@ -24,6 +24,29 @@ const ko = {
   },
   social: { aria: '채널 바로가기' },
   ago: { today: '오늘', yesterday: '어제', days: '{n}일 전', thisMonth: '이번 달', months: '{n}개월 전', years: '{n}년 전' },
+  work: { moreArtists: ' 외 {n}명' },
+  reel: {
+    featured: '대표작',
+    moreParts: ' 외 {n}개 파트',
+    play: '{title} 재생',
+    count: '대표작 {i}번째, 전체 {n}개',
+    prev: '이전 대표작 보기',
+    next: '다음 대표작 보기',
+    all: '전체 작업물 보기',
+  },
+  modal: {
+    close: '닫기',
+    watchYt: 'YouTube에서 보기',
+    watchOrig: '원본 영상 보기',
+    watchOn: '{label}에서 보기',
+    prevWork: '‹ 이전 곡',
+    nextWork: '다음 곡 ›',
+    prevKey: '← 키',
+    nextKey: '→ 키',
+    artistGo: '채널·방송국으로 이동',
+    cnt: '{n}곡',
+    emptyArtist: COPY.emptyArtist,
+  },
   notFound: { title: COPY.notFound.title, body: COPY.notFound.body, home: '홈으로', portfolio: '포트폴리오', pricing: '단가 안내' },
   error: { title: COPY.error.title, body: COPY.error.body, retry: COPY.error.retry, home: '홈으로' },
 };
@@ -54,6 +77,29 @@ const en: Dict = {
   },
   social: { aria: 'Channels' },
   ago: { today: 'today', yesterday: 'yesterday', days: '{n}d ago', thisMonth: 'this month', months: '{n}mo ago', years: '{n}y ago' },
+  work: { moreArtists: ' +{n} more' },
+  reel: {
+    featured: 'Featured',
+    moreParts: ' +{n} more roles',
+    play: 'Play {title}',
+    count: 'Featured {i} of {n}',
+    prev: 'Previous featured work',
+    next: 'Next featured work',
+    all: 'View all works',
+  },
+  modal: {
+    close: 'Close',
+    watchYt: 'Watch on YouTube',
+    watchOrig: 'Watch original video',
+    watchOn: 'Watch on {label}',
+    prevWork: '‹ Previous',
+    nextWork: 'Next ›',
+    prevKey: 'Left arrow key',
+    nextKey: 'Right arrow key',
+    artistGo: 'Go to channel',
+    cnt: '{n} works',
+    emptyArtist: 'No public works yet.',
+  },
   notFound: {
     title: 'Page not found',
     body: 'The address may have changed, or the page may have been removed.',
@@ -73,3 +119,6 @@ const ALL: Record<string, Dict> = { ko, en };
 
 /** 언어 코드에 맞는 문구 묶음. 모르는 언어는 한국어. */
 export const dict = (lang: string): Dict => ALL[lang] ?? ko;
+
+/** "{n}일 전" 같은 문구의 {n} 자리에 값을 넣습니다. */
+export const fill = (t: string, v: Record<string, string | number>) => t.replace(/\{(\w+)\}/g, (_, k: string) => String(v[k] ?? ''));
