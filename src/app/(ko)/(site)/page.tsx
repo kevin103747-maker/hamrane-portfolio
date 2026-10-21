@@ -1,5 +1,5 @@
 // src/app/(site)/page.tsx
-import Link from 'next/link';
+import Link from '@/components/LocaleLink';
 import { getSiteData } from '@/lib/site-data';
 import { getPageSettings } from '@/lib/page-settings';
 import { getStatusSettings } from '@/lib/status-settings';

@@ -1,5 +1,5 @@
 // src/app/(site)/guide/page.tsx — 의뢰 가이드: 처음 의뢰하는 분을 위한 진행 방식·가격 조율·안심 안내·자주 묻는 질문
-import Link from 'next/link';
+import Link from '@/components/LocaleLink';
 import { getGuideSettings } from '@/lib/guide-settings';
 import { PageHead, SectionHead } from '@/components/Heads';
 import { AssureGrid, QaList, StepList } from '@/components/GuideBlocks';

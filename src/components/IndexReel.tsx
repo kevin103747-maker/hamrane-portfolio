@@ -1,7 +1,7 @@
 // src/components/IndexReel.tsx
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import Link from 'next/link';
+import Link from './LocaleLink';
 import type { QueueItem, Work } from '@/lib/types';
 import { useSite } from './SiteProvider';
 import { useModal } from './ModalContext';

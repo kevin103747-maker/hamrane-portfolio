@@ -1,5 +1,5 @@
 // src/app/(site)/pricing/page.tsx
-import Link from 'next/link';
+import Link from '@/components/LocaleLink';
 import { getSiteData } from '@/lib/site-data';
 import { tx } from '@/lib/i18n';
 import { PageHead, SectionHead } from '@/components/Heads';

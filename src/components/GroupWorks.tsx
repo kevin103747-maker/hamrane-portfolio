@@ -1,6 +1,6 @@
 // src/components/GroupWorks.tsx — 가격표 분야 아래의 "이 분야 작업물"
 'use client';
-import Link from 'next/link';
+import Link from './LocaleLink';
 import { matches } from '@/lib/filters';
 import { useSite } from './SiteProvider';
 import { WorkCard } from './WorkCard';

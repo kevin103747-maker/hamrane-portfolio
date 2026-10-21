@@ -1,6 +1,6 @@
 // src/components/Contact.tsx
 'use client';
-import Link from 'next/link';
+import Link from './LocaleLink';
 import { useState } from 'react';
 import { ChannelIcon, Icon } from './Icons';
 import { useSite } from './SiteProvider';

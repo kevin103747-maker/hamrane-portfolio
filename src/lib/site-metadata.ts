@@ -9,10 +9,21 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://hamrane-portfolio.
 const GOOGLE_VERIFY = 'uD8vLeezImxB1LzUUiOkGVZKOP8z-HL6h_UTFcLss6s';
 const NAVER_VERIFY = '86468c6a04190f1ca171b61f26262bce56fa6d61';
 
-export async function buildSiteMetadata(): Promise<Metadata> {
+// 영어 사이트의 제목·설명. 임시 문구이니 직접 고쳐 주세요.
+const EN_SEO = {
+  title: 'HamRanè — Music production portfolio',
+  description: 'Portfolio and commission rates of HamRanè, a music producer. Browse works by role and check pricing.',
+  shareTitle: 'HamRanè — Music production portfolio',
+  shareDescription: 'Portfolio and commission rates of HamRanè, a music producer.',
+};
+
+export async function buildSiteMetadata(lang = 'ko'): Promise<Metadata> {
+  const en = lang === 'en';
   const { seo } = await getPageSettings();
-  const shareTitle = seo.shareTitle || seo.title;
-  const shareDesc = seo.shareDescription || seo.description;
+  const title = en ? EN_SEO.title : seo.title;
+  const description = en ? EN_SEO.description : seo.description;
+  const shareTitle = en ? EN_SEO.shareTitle : seo.shareTitle || seo.title;
+  const shareDesc = en ? EN_SEO.shareDescription : seo.shareDescription || seo.description;
 
   const verification = {
     ...(GOOGLE_VERIFY ? { google: GOOGLE_VERIFY } : {}),
@@ -21,14 +32,14 @@ export async function buildSiteMetadata(): Promise<Metadata> {
 
   return {
     metadataBase: new URL(SITE_URL),
-    title: { default: seo.title, template: '%s — HamRanè' },
-    description: seo.description,
+    title: { default: title, template: '%s — HamRanè' },
+    description,
     alternates: { canonical: './' },
     ...(Object.keys(verification).length ? { verification } : {}),
     openGraph: {
       type: 'website',
       siteName: 'HamRanè',
-      locale: 'ko_KR',
+      locale: en ? 'en_US' : 'ko_KR',
       title: shareTitle,
       description: shareDesc,
     },
