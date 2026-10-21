@@ -36,7 +36,7 @@ type Extra = {
 type Row = { key: string; name: string; value: number; sub: string };
 
 const RANGES = [7, 30, 90] as const;
-const PAGE_NAME: Record<string, string> = { '/': '홈', '/portfolio': '포트폴리오', '/pricing': '외주 단가', '/guide': '의뢰 가이드' };
+const PAGE_NAME: Record<string, string> = { '/': '홈', '/portfolio': '포트폴리오', '/pricing': '외주 단가', '/guide': '의뢰 가이드', '/en': '홈 (영어)', '/en/portfolio': '포트폴리오 (영어)', '/en/pricing': '외주 단가 (영어)', '/en/guide': '의뢰 가이드 (영어)' };
 const WEEK = ['일', '월', '화', '수', '목', '금', '토'];
 const DAY_OK = /^\d{4}-\d{2}-\d{2}$/;
 
