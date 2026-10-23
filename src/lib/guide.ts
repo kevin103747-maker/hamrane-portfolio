@@ -1,14 +1,14 @@
 // src/lib/guide.ts — 의뢰 가이드 문구의 형식과 기본값. 실제 문구는 어드민 "의뢰 가이드 문구"에서 고치며, 저장 전에는 이 기본값이 쓰입니다.
 // 서버·브라우저 양쪽에서 쓰므로 DB 조회 코드는 넣지 않습니다(조회는 guide-settings.ts).
 
-export type GuideStep = { title: string; desc: string; note: string };
-export type GuideFaq = { q: string; a: string };
-export type GuideAssure = { title: string; desc: string };
+export type GuideStep = { title: string; desc: string; note: string; titleEn?: string; descEn?: string; noteEn?: string };
+export type GuideFaq = { q: string; a: string; qEn?: string; aEn?: string };
+export type GuideAssure = { title: string; desc: string; titleEn?: string; descEn?: string };
 export type ContactGuide = { lead: string; reply: string; ask: string; fields: string[] };
 export type GuideSettings = {
-  firstTime: { title: string; body: string };
+  firstTime: { title: string; body: string; titleEn?: string; bodyEn?: string };
   steps: GuideStep[];
-  priceTalk: { title: string; body: string };
+  priceTalk: { title: string; body: string; titleEn?: string; bodyEn?: string };
   assure: GuideAssure[];
   faq: GuideFaq[];
   contact: ContactGuide;
@@ -88,3 +88,16 @@ export const DEFAULT_GUIDE: GuideSettings = {
 /** "문의 양식 복사" 버튼으로 복사되는 글. 머리말은 언어별로 바꿀 수 있습니다. */
 export const inquiryTemplate = (fields: string[], head = '[문의 양식] 모르는 항목은 비워두셔도 됩니다.') =>
   [head, '', ...fields.map((f) => `- ${f}:`)].join('\n');
+
+/** 화면에 넘길 값. 영어 화면은 영어 문구가 있는 곳만 영어로, 비었으면 한국어로 대신합니다. */
+export function guideFor(g: GuideSettings, lang = 'ko'): GuideSettings {
+  if (lang === 'ko') return g;
+  return {
+    ...g,
+    firstTime: { title: g.firstTime.titleEn || g.firstTime.title, body: g.firstTime.bodyEn || g.firstTime.body },
+    steps: g.steps.map((s) => ({ title: s.titleEn || s.title, desc: s.descEn || s.desc, note: s.noteEn || s.note })),
+    priceTalk: { title: g.priceTalk.titleEn || g.priceTalk.title, body: g.priceTalk.bodyEn || g.priceTalk.body },
+    assure: g.assure.map((a) => ({ title: a.titleEn || a.title, desc: a.descEn || a.desc })),
+    faq: g.faq.map((f) => ({ q: f.qEn || f.q, a: f.aEn || f.a })),
+  };
+}

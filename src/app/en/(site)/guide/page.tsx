@@ -1,2 +1,8 @@
-// 임시: 한국어 본문을 그대로 씁니다. 다음 단계에서 영어 본문으로 교체합니다.
-export { default, metadata } from '@/app/(ko)/(site)/guide/page';
+// src/app/en/(site)/guide/page.tsx — 영어 의뢰 가이드. 본문은 GuideView에 있습니다.
+import { GuideView } from '@/components/GuideView';
+
+export const metadata = { title: 'Guide' };
+
+export default function EnGuide() {
+  return <GuideView lang="en" />;
+}

@@ -200,6 +200,17 @@ const ko = {
   totop: {
     label: '맨 위로',
   },
+  guide: {
+    title: '의뢰 가이드',
+    desc: '진행 방식과 금액 조율, 자주 묻는 질문을 한곳에 정리했습니다.',
+    cta: '문의하기 →',
+    stepsTitle: '의뢰는 이렇게 진행됩니다',
+    priceTitle: '가격과 조율',
+    priceLink: '외주 단가 보기 →',
+    assureTitle: '안심하고 문의하세요',
+    faqTitle: '자주 묻는 질문',
+    note: '더 궁금한 점이 있다면 편하게 물어보세요.',
+  },
 
   notFound: { title: COPY.notFound.title, body: COPY.notFound.body, home: '홈으로', portfolio: '포트폴리오', pricing: '단가 안내' },
   bonus: {
@@ -415,6 +426,17 @@ const en: Dict = {
   },
   totop: {
     label: 'Back to top',
+  },
+  guide: {
+    title: 'Commission guide',
+    desc: 'How commissions work, how pricing is discussed, and answers to common questions, all in one place.',
+    cta: 'Contact me →',
+    stepsTitle: 'How a commission works',
+    priceTitle: 'Pricing and adjustments',
+    priceLink: 'See commission rates →',
+    assureTitle: 'Ask without worry',
+    faqTitle: 'Frequently asked questions',
+    note: 'If you have any other questions, feel free to ask.',
   },
 
   notFound: {
