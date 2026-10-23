@@ -60,9 +60,16 @@ export function Header() {
           {/* 휴대폰(560px 이하) 전용 문의 버튼. 위의 .cta는 이 폭에서 숨겨지므로 따로 둡니다. */}
           <a className="cta-m" href="#contact">{c.askMe}</a>
           {showLang && (
-            <select className="lang" aria-label={c.language} value={lang} onChange={(e) => router.push(localePath(e.target.value, path))}>
-              {LOCALES.map((l) => <option key={l.code} value={l.code}>{l.label}</option>)}
-            </select>
+            <label className="lang-wrap" title="Language / 언어">
+              <svg className="lang-ic" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M3 12h18" />
+                <path d="M12 3c2.6 2.7 3.9 5.7 3.9 9s-1.3 6.3-3.9 9c-2.6-2.7-3.9-5.7-3.9-9S9.4 5.7 12 3z" />
+              </svg>
+              <select className="lang" aria-label={c.language} value={lang} onChange={(e) => router.push(localePath(e.target.value, path))}>
+                {LOCALES.map((l) => <option key={l.code} value={l.code}>{l.label}</option>)}
+              </select>
+            </label>
           )}
           <button className="theme-switch" onClick={toggleTheme} aria-label={c.theme}><Icon name="sun" className="sun" /><Icon name="moon" className="moon" /></button>
           <button className="burger" aria-label={c.menu} aria-expanded={open} onClick={() => setOpen(!open)}><Icon name="menu" /></button>
