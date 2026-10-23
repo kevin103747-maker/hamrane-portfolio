@@ -2,6 +2,8 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import type { Track } from '@/lib/tracks';
+import { useLocale } from './LocaleLink';
+import { dict, fill } from '@/lib/dict';
 
 const BASE = (process.env.NEXT_PUBLIC_MIXER_BASE ?? '').replace(/\/+$/, '');
 const MEM_LIMIT = 120 * 1024 * 1024; // 풀어 둔 소리 전체의 최대 크기(바이트). 넘으면 중단
@@ -16,6 +18,8 @@ function audioCtor(): typeof AudioContext | undefined {
 const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
 export function TrackMixer({ tracks, mode = 'mix' }: { tracks: Track[]; mode?: 'mix' | 'ab' }) {
+  const lang = useLocale();
+  const L = dict(lang).mixer;
   const ab = mode === 'ab';
   const [phase, setPhase] = useState<'loading' | 'ready' | 'error'>('loading');
   const [msg, setMsg] = useState('');
@@ -38,16 +42,13 @@ export function TrackMixer({ tracks, mode = 'mix' }: { tracks: Track[]; mode?: '
 
   const anySolo = solo.some(Boolean);
 
-  const fatal = !BASE
-    ? '믹서 주소(NEXT_PUBLIC_MIXER_BASE)가 설정되지 않았어요.'
-    : !audioCtor()
-      ? '이 브라우저에서는 트랙 분리 듣기를 쓸 수 없어요.'
-      : '';
+  const fatal = !BASE ? L.noBase : !audioCtor() ? L.noAudio : '';
 
   useEffect(() => {
     if (fatal) return;
     const Ctor = audioCtor();
     if (!Ctor) return;
+    const M = dict(lang).mixer;
     let dead = false;
     const ctx = new Ctor();
     ctxRef.current = ctx;
@@ -58,10 +59,10 @@ export function TrackMixer({ tracks, mode = 'mix' }: { tracks: Track[]; mode?: '
         const out: AudioBuffer[] = [];
         for (const t of tracks) {
           const res = await fetch(`${BASE}/${encodeURIComponent(t.file)}`, { signal: AbortSignal.timeout(FETCH_MS) });
-          if (!res.ok) throw new MixErr(`'${t.label}' 파일을 받지 못했어요 (${res.status}).`);
+          if (!res.ok) throw new MixErr(fill(M.fetchFail, { label: t.label, status: String(res.status) }));
           const buf = await ctx.decodeAudioData(await res.arrayBuffer());
           bytes += buf.length * buf.numberOfChannels * 4;
-          if (bytes > MEM_LIMIT) throw new MixErr('트랙 용량이 너무 커서 재생할 수 없어요.');
+          if (bytes > MEM_LIMIT) throw new MixErr(M.tooBig);
           if (dead) return;
           out.push(buf);
           setDone(out.length);
@@ -72,7 +73,7 @@ export function TrackMixer({ tracks, mode = 'mix' }: { tracks: Track[]; mode?: '
         setPhase('ready');
       } catch (e) {
         if (dead) return;
-        setMsg(e instanceof MixErr ? e.message : '트랙을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
+        setMsg(e instanceof MixErr ? e.message : M.loadFail);
         setPhase('error');
       }
     })();
@@ -82,7 +83,7 @@ export function TrackMixer({ tracks, mode = 'mix' }: { tracks: Track[]; mode?: '
       ctxRef.current = null;
       void ctx.close().catch(() => {});
     };
-  }, [tracks, fatal]);
+  }, [tracks, fatal, lang]);
 
   // 켜짐/솔로/선택이 바뀔 때마다 트랙별 소리 크기를 맞춥니다.
   useEffect(() => {
@@ -180,7 +181,7 @@ export function TrackMixer({ tracks, mode = 'mix' }: { tracks: Track[]; mode?: '
       {error ? (
         <p className="hr-mx-err">{error}</p>
       ) : phase === 'loading' ? (
-        <p className="hr-mx-note">{`트랙을 불러오는 중… ${done}/${tracks.length}`}</p>
+        <p className="hr-mx-note">{fill(L.loading, { done: String(done), total: String(tracks.length) })}</p>
       ) : (
         <>
           <div className="hr-mx-seekrow">
@@ -188,7 +189,7 @@ export function TrackMixer({ tracks, mode = 'mix' }: { tracks: Track[]; mode?: '
             <input
               type="range"
               className="hr-mx-seek"
-              aria-label="재생 위치"
+              aria-label={L.seek}
               min={0}
               max={dur}
               step={0.1}
@@ -214,24 +215,19 @@ export function TrackMixer({ tracks, mode = 'mix' }: { tracks: Track[]; mode?: '
                     <button type="button" className="hr-mx-trk" aria-pressed={on[i]} data-dim={anySolo && !solo[i]} onClick={() => flip(i)}>
                       {t.label}
                     </button>
-                    <button type="button" className="hr-mx-solo" aria-pressed={solo[i]} aria-label={`${t.label} 솔로`} onClick={() => flipSolo(i)}>
+                    <button type="button" className="hr-mx-solo" aria-pressed={solo[i]} aria-label={fill(L.solo, { label: t.label })} onClick={() => flipSolo(i)}>
                       S
                     </button>
                   </div>
                 ))}
           </div>
           <div className="hr-mx-top">
-            <button type="button" className="hr-mx-btn hr-mx-play" onClick={toggle}>{playing ? '일시정지' : '재생'}</button>
-            {!ab && <button type="button" className="hr-mx-btn" onClick={reset}>전체 켜기</button>}
+            <button type="button" className="hr-mx-btn hr-mx-play" onClick={toggle}>{playing ? L.pause : L.play}</button>
+            {!ab && <button type="button" className="hr-mx-btn" onClick={reset}>{L.allOn}</button>}
           </div>
         </>
       )}
-      <p className="hr-mx-note">
-        {ab
-          ? '트랙 이름을 누르면 그 소리로 바뀌고, 재생 위치는 그대로 이어져요. '
-          : '트랙 이름은 켜고 끄기, S는 솔로예요. S를 켠 트랙만 들려요. '}
-        소리가 안 나면 휴대폰 무음 모드를 확인해 보세요.
-      </p>
+      <p className="hr-mx-note">{(ab ? L.noteAb : L.noteMix) + L.noteMute}</p>
     </div>
   );
 }
