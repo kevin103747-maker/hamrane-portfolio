@@ -52,7 +52,7 @@ export function Contact({ guide: G, status }: { guide: ContactGuide; status: Sta
         <Link className="lk" href="/pricing">{d.pricing} <Icon name="arrow" /></Link>
       </div>
 
-      <StatusBadge status={status} />
+<StatusBadge status={status} lang={lang} />
 
       {hasGuide && (
         <div className="hr-ct-guide">

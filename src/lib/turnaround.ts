@@ -1,4 +1,5 @@
 // src/lib/turnaround.ts — 분야별 소요 기간·빠른 마감·당일 마감의 형식과 표시 규칙
+import { dict, fill } from './dict';
 type FeeType = 'pct' | 'won';
 export type Fee = { type: FeeType; value: number } | null;
 
@@ -17,8 +18,11 @@ export const emptyTurn = (): GroupTurn => ({
   same: { on: false, fee: null },
 });
 
-export const feeLabel = (f: Fee) =>
-  !f ? '추가요금 별도' : f.type === 'pct' ? `+${f.value}%` : `+${f.value.toLocaleString('ko-KR')}원`;
+export const feeLabel = (f: Fee, lang = 'ko') => {
+  const L = dict(lang).pricing;
+  return !f ? L.feeNone : f.type === 'pct' ? `+${f.value}%` : fill(L.feeWon, { v: f.value.toLocaleString(L.numLocale) });
+};
+
 
 /** 화면에 보여줄 정보가 하나라도 있는 분야만 표시합니다. */
 
