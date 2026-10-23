@@ -1,6 +1,7 @@
 // src/lib/site-metadata.ts — 사이트 공통 메타데이터(제목·설명·공유 미리보기). 루트 레이아웃이 호출합니다.
 import type { Metadata } from 'next';
 import { getPageSettings } from '@/lib/page-settings';
+import { EN_LIVE } from '@/lib/i18n';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://hamrane-portfolio.vercel.app';
 
@@ -35,6 +36,8 @@ export async function buildSiteMetadata(lang = 'ko'): Promise<Metadata> {
     title: { default: title, template: '%s — HamRanè' },
     description,
     alternates: { canonical: './' },
+    // 영어 사이트를 공개하기 전에는 검색에 잡히지 않게 합니다. (robots.txt로 막으면 이 표시를 읽지 못해 쓰지 않습니다)
+    ...(en && !EN_LIVE ? { robots: { index: false, follow: false } } : {}),
     ...(Object.keys(verification).length ? { verification } : {}),
     openGraph: {
       type: 'website',
