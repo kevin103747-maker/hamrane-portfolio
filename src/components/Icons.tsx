@@ -56,7 +56,7 @@ export function Icon({ name, className }: { name: string; className?: string }) 
 }
 
 const CHANNEL_LABEL: Record<string, string> = {
-  yt: 'YouTube', yt2: 'YouTube 서브 채널', soop: 'SOOP', chzzk: '치지직', x: 'X', ig: 'Instagram', tt: 'TikTok', dc: 'Discord',
+  yt: 'YouTube', yt2: 'YouTube (sub)', soop: 'SOOP', chzzk: 'CHZZK', x: 'X', ig: 'Instagram', tt: 'TikTok', dc: 'Discord',
 };
 
 const BRAND: Record<string, string> = {

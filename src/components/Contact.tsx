@@ -1,18 +1,21 @@
 // src/components/Contact.tsx
 'use client';
-import Link from 'next/link';
+import Link, { useLocale } from './LocaleLink';
 import { useState } from 'react';
 import { ChannelIcon, Icon } from './Icons';
 import { useSite } from './SiteProvider';
 import { StatusBadge } from './Trust';
 import { inquiryTemplate, type ContactGuide } from '@/lib/guide';
 import type { StatusSettings } from '@/lib/status';
-import { COPY } from '@/lib/copy';
+import { dict } from '@/lib/dict';
 
 type Key = 'dc' | 'em' | 'tp';
 
 export function Contact({ guide: G, status }: { guide: ContactGuide; status: StatusSettings }) {
   const { links } = useSite();
+  const lang = useLocale();
+  const isKo = lang === 'ko';
+  const d = dict(lang).contact;
   const [done, setDone] = useState<{ k: Key; ok: boolean } | null>(null);
 
   // 복사에 실패하면(권한·보안 문맥 문제 등) "복사됨"이 아니라 실패했다고 알립니다.
@@ -27,7 +30,14 @@ export function Contact({ guide: G, status }: { guide: ContactGuide; status: Sta
     setDone({ k, ok });
     setTimeout(() => setDone(null), 4000);
   };
-  const label = (k: Key, idle: string) => (done?.k === k ? (done.ok ? COPY.copied : COPY.copyFail) : idle);
+  const label = (k: Key, idle: string) => (done?.k === k ? (done.ok ? d.copied : d.copyFail) : idle);
+
+  // 한국어는 어드민 값 그대로. 영어는 lead·reply를 숨기고, ask·fields는 어드민에 값이 있을 때만 영어 기본 문구로 보여 줍니다.
+  const lead = isKo ? G.lead : '';
+  const reply = isKo ? G.reply : '';
+  const ask = G.ask ? (isKo ? G.ask : d.ask) : '';
+  const fields = G.fields.length ? (isKo ? G.fields : d.fields) : [];
+  const hasGuide = !!(lead || reply || ask || fields.length);
 
   const dcBody = (
     <>
@@ -35,28 +45,27 @@ export function Contact({ guide: G, status }: { guide: ContactGuide; status: Sta
       <div><small>DISCORD</small><strong>{links.discordId}</strong></div>
     </>
   );
-  const hasGuide = !!(G.lead || G.reply || G.ask || G.fields.length);
   return (
     <section className="contact-sec" id="contact"><div className="wrap">
       <div className="sh">
-        <div><span className="n">CONTACT</span><h2>문의<span>1:1 Direct</span></h2></div>
-        <Link className="lk" href="/pricing">단가 안내 보기 <Icon name="arrow" /></Link>
+        <div><span className="n">CONTACT</span><h2>{d.title}<span>1:1 Direct</span></h2></div>
+        <Link className="lk" href="/pricing">{d.pricing} <Icon name="arrow" /></Link>
       </div>
 
-      <StatusBadge status={status} />
+<StatusBadge status={status} lang={lang} />
 
       {hasGuide && (
         <div className="hr-ct-guide">
           <div>
-            {(G.lead || G.reply) && <p>{G.lead && <b>{G.lead}</b>} {G.reply}</p>}
-            {G.ask && <p className="ask-line">{G.ask}</p>}
-            {G.fields.length > 0 && <div className="hr-ct-fields">{G.fields.map((f) => <span key={f}>{f}</span>)}</div>}
-            <p className="hr-ct-response">평균 응답 시간: 24시간 이내</p>
+            {(lead || reply) && <p>{lead && <b>{lead}</b>} {reply}</p>}
+            {ask && <p className="ask-line">{ask}</p>}
+            {fields.length > 0 && <div className="hr-ct-fields">{fields.map((f) => <span key={f}>{f}</span>)}</div>}
+            <p className="hr-ct-response">{d.response}</p>
           </div>
-          {G.fields.length > 0 && (
-            <button type="button" className="hr-ct-copy" onClick={() => copy('tp', inquiryTemplate(G.fields))}>
+          {fields.length > 0 && (
+            <button type="button" className="hr-ct-copy" onClick={() => copy('tp', isKo ? inquiryTemplate(fields) : inquiryTemplate(fields, d.formHead))}>
               <Icon name="copy" className="" />
-              {label('tp', '문의 양식 복사')}
+              {label('tp', d.copyForm)}
             </button>
           )}
         </div>
@@ -65,17 +74,17 @@ export function Contact({ guide: G, status }: { guide: ContactGuide; status: Sta
       <div className="contact">
         {links.discordUrl ? (
           <a className="cb dc" href={links.discordUrl} target="_blank" rel="noopener noreferrer">
-            {dcBody}<span className="go">DM 보내기 <Icon name="arrow" /></span>
+            {dcBody}<span className="go">{d.dm} <Icon name="arrow" /></span>
           </a>
         ) : (
           <button className="cb dc" onClick={() => copy('dc', links.discordId)}>
-            {dcBody}<span className="go">{label('dc', '복사')}</span>
+            {dcBody}<span className="go">{label('dc', d.copy)}</span>
           </button>
         )}
         <button className="cb em" onClick={() => copy('em', links.email)}>
           <span className="ic"><Icon name="copy" className="" /></span>
           <div><small>E-MAIL</small><strong>{links.email}</strong></div>
-          <span className="go">{label('em', '복사')}</span>
+          <span className="go">{label('em', d.copy)}</span>
         </button>
       </div>
     </div></section>

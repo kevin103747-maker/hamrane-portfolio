@@ -1,8 +1,9 @@
 // src/components/BottomNav.tsx
 'use client';
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import Link from './LocaleLink';
 import { Icon } from './Icons';
+import { stripLocale } from '@/lib/i18n';
 
 const MENU = [
   ['/', 'Home', 'home'],
@@ -12,7 +13,7 @@ const MENU = [
 ] as const;
 
 export function BottomNav() {
-  const path = usePathname();
+  const path = stripLocale(usePathname());
   const on = (h: string) => (h === '/' ? path === '/' : h.startsWith('/') && path.startsWith(h));
 
   return (

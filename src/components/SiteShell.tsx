@@ -1,5 +1,5 @@
-// src/app/(site)/layout.tsx — 공개 사이트 전용 껍데기(헤더/문의/푸터)
-import Link from 'next/link';
+// src/components/SiteShell.tsx — 공개 사이트 껍데기(헤더/문의/푸터). 한국어·영어 레이아웃이 함께 씁니다.
+import Link from '@/components/LocaleLink';
 import { getSiteData } from '@/lib/site-data';
 import { getGuideSettings } from '@/lib/guide-settings';
 import { getStatusSettings } from '@/lib/status-settings';
@@ -13,7 +13,7 @@ import { ScrollHint } from '@/components/ScrollHint';
 import { Tracker } from '@/components/Tracker';
 import { BottomNav } from '@/components/BottomNav';
 
-export default async function SiteLayout({ children }: { children: React.ReactNode }) {
+export async function SiteShell({ children }: { children: React.ReactNode }) {
   const [data, guide, status] = await Promise.all([getSiteData(), getGuideSettings(), getStatusSettings()]);
   return (
     <SiteProvider data={data}>

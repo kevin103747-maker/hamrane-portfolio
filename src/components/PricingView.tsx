@@ -1,11 +1,12 @@
-// src/app/(site)/pricing/page.tsx
-import Link from 'next/link';
+// src/components/PricingView.tsx — 단가 페이지 본문. 한국어(/pricing)와 영어(/en/pricing)가 함께 씁니다.
+import Link from '@/components/LocaleLink';
 import { getSiteData } from '@/lib/site-data';
-import { tx } from '@/lib/i18n';
+import { tx, type Text } from '@/lib/i18n';
+import { dict } from '@/lib/dict';
 import { PageHead, SectionHead } from '@/components/Heads';
 import { RateBoard, type BoardGroup } from '@/components/RateBoard';
 import { PackageList, type PackageView, type PkgLine } from '@/components/PackageList';
-import { turnFor } from '@/lib/turnaround';
+import { turnFor, type GroupTurn } from '@/lib/turnaround';
 import { getTurnaround } from '@/lib/turnaround-settings';
 import { getDiscounts } from '@/lib/discounts-settings';
 import { groupView } from '@/lib/discounts';
@@ -14,9 +15,7 @@ import { getBonus } from '@/lib/bonus-settings';
 import { getPricingWorks } from '@/lib/pricing-works';
 import { getPricingMixer, type MixItem } from '@/lib/pricing-mixer';
 import type { BonusView } from '@/lib/bonus';
-
-
-export const metadata = { title: 'Pricing' };
+import { bonusFor } from '@/lib/bonus';
 
 /** "150,000" 같은 글자에서 금액을 읽습니다. 비었거나 숫자가 아니면 null, "0"은 0(무료)입니다. */
 const amt = (s?: string): number | null => {
@@ -30,10 +29,17 @@ const nounOf = (u: string) => {
   return m ? m[1] : '';
 };
 
-export default async function Pricing() {
+export async function PricingView({ lang = 'ko' }: { lang?: string }) {
+  const L = dict(lang).pricing;
+  const tr = (v: Text) => tx(v, lang);
+  // 영어 화면: 영어 기간 문구가 있으면 그것을, 없으면 한국어 값을 씁니다.
+  const turnOf = (t?: GroupTurn): GroupTurn | undefined =>
+    !t || lang === 'ko' ? t : { ...t, avg: t.avgEn || t.avg, rush: { ...t.rush, days: t.rush.daysEn || t.rush.days } };
   const [d, turnaround, discounts, bn, pw, pm] = await Promise.all([
     getSiteData(), getTurnaround(), getDiscounts(), getBonus(), getPricingWorks(), getPricingMixer(),
   ]);
+  // 분야 이름: 한국어는 그대로, 영어는 어드민 영어 이름 → 기존 영어 라벨 → 한국어 순으로 씁니다.
+  const gName = (g: (typeof d.groups)[number]) => (lang === 'ko' ? tr(g.name) : g.name[lang] || g.en || g.name.ko);
   const item = (id: string) => d.rateItems.find((i) => i.id === id);
   const mixItems = (gid: string): MixItem[] => {
     const cfg = pm[gid];
@@ -51,31 +57,28 @@ export default async function Pricing() {
   const groups = d.groups.filter((g) => d.rateItems.some((i) => i.groupId === g.id));
   // 화면의 분야 번호는 보이는 분야 기준으로 01부터 다시 매깁니다.
   const no = (n: number) => String(n + 1).padStart(2, '0');
-    // 서비스 혜택: 켜져 있고 이름이 있을 때만 보입니다. 모든 작업에 기본 적용, 제외 목록만 뺍니다.
+  // 서비스 혜택: 켜져 있고 이름이 있을 때만 보입니다. 모든 작업에 기본 적용, 제외 목록만 뺍니다.
   const bonusOn = bn.on && bn.title !== '';
-  const bonusView: BonusView | undefined = bonusOn
-    ? { title: bn.title, line: bn.line, detail: bn.detail, conditions: bn.conditions, videos: bn.videos }
-    : undefined;
-
-
+  // 영어 화면은 영어 문구가 있는 곳만 영어로, 비었으면 한국어로 대신합니다.
+  const bonusView: BonusView | undefined = bonusOn ? bonusFor(bn, lang) : undefined;
   // 클라이언트 컴포넌트에는 글자만 담은 단순한 데이터로 넘깁니다.
   const board: BoardGroup[] = groups.map((g, n) => ({
     id: g.id,
     no: no(n),
-    name: tx(g.name),
-    en: g.en,
-    desc: tx(g.desc),
+    name: gName(g),
+    en: lang === 'ko' ? g.en : '',
+    desc: tr(g.desc),
     disc: groupView(discounts, g.id),
     pick: pw[g.id],
     mixer: pm[g.id]?.on && mixItems(g.id).length ? { mode: pm[g.id].mode, items: mixItems(g.id) } : undefined,
     items: d.rateItems
       .filter((i) => i.groupId === g.id)
       .map((i) => ({
-        id: i.id, name: tx(i.name), desc: tx(i.desc), price: i.price, unit: tx(i.unit), tag: i.tag, discount: i.discount,
-        turn: turnFor(turnaround, g.id, i.id),
+        id: i.id, name: tr(i.name), desc: tr(i.desc), price: i.price, unit: tr(i.unit), tag: i.tag, discount: i.discount,
+        turn: turnOf(turnFor(turnaround, g.id, i.id)),
         noDisc: discounts.excluded.includes(i.id),
-        bonus: bonusOn && !bn.excluded.includes(i.id) ? bn.title : undefined,
-        noBonus: bonusOn && bn.excluded.includes(i.id) ? bn.title : undefined,
+        bonus: bonusOn && !bn.excluded.includes(i.id) ? bonusView?.title : undefined,
+        noBonus: bonusOn && bn.excluded.includes(i.id) ? bonusView?.title : undefined,
       })),
   }));
 
@@ -89,23 +92,23 @@ export default async function Pricing() {
       for (const id of p.itemIds) {
         const it = item(id);
         if (it && it.groupId === g.id) {
-          push(tx(g.name), {
-            name: tx(it.name),
+          push(gName(g), {
+            name: tr(it.name),
             qty: p.qty?.[id] ?? 1,
             unit: amt(p.prices?.[id] ?? it.price),
             list: amt(it.price),
             est: (p.est ?? []).includes(id),
-            noun: nounOf(tx(it.unit)),
+            noun: lang === 'ko' ? nounOf(tr(it.unit)) : '',
           });
         }
       }
     }
     for (const e of p.extras ?? []) {
-      push(e.group?.trim() || '추가 구성', { name: e.name, qty: 1, unit: amt(e.price), collab: true, who: e.who });
+      push(e.group?.trim() || L.extraGroup, { name: e.name, qty: 1, unit: amt(e.price), collab: true, who: e.who });
     }
 
     return {
-      id: p.id, no: p.no, tag: p.tag, name: tx(p.name), desc: tx(p.desc),
+      id: p.id, no: p.no, tag: p.tag, name: tr(p.name), desc: tr(p.desc),
       total: p.total, discount: p.discount,
       rows: Array.from(rows, ([label, lines]) => ({ label, lines })),
     };
@@ -113,38 +116,34 @@ export default async function Pricing() {
 
   return (
     <>
-      <PageHead
-        crumb="PRICING"
-        title="외주 단가"
-        en="Pricing"
-        desc="파트별 기본 단가입니다. 곡의 난이도와 작업량에 따라 달라지므로, 곡을 보내주시면 확인 후 정확한 견적을 드립니다."
-      />
+      <PageHead crumb="PRICING" title={L.pageTitle} en={L.pageSub} desc={L.pageDesc} />
 
       <section><div className="wrap">
         <RateBoard groups={board} bonus={bonusView} />
 
-     <p className="hr-pt-note sm">
-          찾는 작업이 없거나 조합이 궁금하시면 편하게 물어보세요. <a className="hr-pt-link" href="#contact">문의하기 →</a>
+        <p className="hr-pt-note sm">
+          {L.askNote}{' '}<a className="hr-pt-link" href="#contact">{L.askLink}</a>
         </p>
-        
+
         <BundleBox
           tiers={discounts.bundle}
-          yes={groups.filter((g) => discounts.groups[g.id]?.bundle).map((g) => tx(g.name))}
-          no={groups.filter((g) => !discounts.groups[g.id]?.bundle).map((g) => tx(g.name))}
+          lang={lang}
+          yes={groups.filter((g) => discounts.groups[g.id]?.bundle).map((g) => gName(g))}
+          no={groups.filter((g) => !discounts.groups[g.id]?.bundle).map((g) => gName(g))}
         />
-        <p className="note"><i>NOTE</i>{tx(d.notice)}</p>
+        <p className="note"><i>NOTE</i>{tr(d.notice)}</p>
       </div></section>
 
       <section className="blk"><div className="wrap">
-        <SectionHead n="EXAMPLES" title="패키지 예시" sub="Packages" />
-        <p className="hr-rt-cap">예시 구성이며, 실제 금액은 곡의 난이도와 작업량에 따라 달라집니다.</p>
+        <SectionHead n="EXAMPLES" title={L.exTitle} sub={L.exSub} />
+        <p className="hr-rt-cap">{L.exCap}</p>
         <PackageList items={packages} />
       </div></section>
 
       <section className="hr-faq-sec"><div className="wrap">
         <Link className="hr-gp-banner" href="/guide">
-          <span><b>처음 의뢰하시나요?</b> 진행 방식, 가격 조율, 자주 묻는 질문을 정리해 두었어요.</span>
-          <span className="go">의뢰 가이드 보기 →</span>
+          <span><b>{L.firstQ}</b> {L.firstDesc}</span>
+          <span className="go">{L.firstGo}</span>
         </Link>
       </div></section>
     </>

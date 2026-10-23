@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Price, Until } from './Price';
 import { Icon } from './Icons';
+import { useLocale } from './LocaleLink';
+import { dict, fill } from '@/lib/dict';
 import type { Discount } from '@/lib/types';
 
 /**
@@ -21,7 +23,6 @@ export type PackageView = {
   id: string; no: string; tag: string; name: string; desc: string; total: string; discount?: Discount; rows: PkgRow[];
 };
 
-const won = (n: number) => n.toLocaleString('ko-KR');
 const toNum = (s: string) => {
   const n = Number(s.replace(/[^\d]/g, ''));
   return Number.isFinite(n) && n > 0 ? n : null;
@@ -32,6 +33,10 @@ const qtyText = (l: PkgLine) => (l.noun ? `${l.qty}${l.noun}` : `×${l.qty}`);
 const mulText = (l: PkgLine) => (l.noun ? `${l.qty}${l.noun}` : `${l.qty}`);
 
 function Modal({ p, onClose }: { p: PackageView; onClose: () => void }) {
+  const lang = useLocale();
+  const L = dict(lang).pricing;
+  const P = dict(lang).pkg;
+  const won = (n: number) => n.toLocaleString(L.numLocale);
   const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -63,7 +68,7 @@ function Modal({ p, onClose }: { p: PackageView; onClose: () => void }) {
         aria-label={p.name}
         onClick={(e) => e.stopPropagation()}
       >
-        <button ref={closeRef} type="button" className="hr-pm-x" aria-label="닫기" onClick={onClose}>
+        <button ref={closeRef} type="button" className="hr-pm-x" aria-label={L.close} onClick={onClose}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
@@ -75,9 +80,9 @@ function Modal({ p, onClose }: { p: PackageView; onClose: () => void }) {
           {p.desc && <p className="hr-pm-desc">{p.desc}</p>}
 
           <div className="hr-pm-est">
-            <small>예상 금액</small>
+            <small>{P.est}</small>
             <strong><Price price={p.total} discount={p.discount} /></strong>
-            <i>VAT 포함<Until discount={p.discount} /></i>
+            <i>{L.vat}<Until discount={p.discount} /></i>
           </div>
 
           <div className="hr-pb">
@@ -90,28 +95,28 @@ function Modal({ p, onClose }: { p: PackageView; onClose: () => void }) {
                       <span className="hr-pb-n">
                         {l.name}
                         {l.est
-                          ? <small className="hr-pb-e">예시 {qtyText(l)}</small>
+                          ? <small className="hr-pb-e">{fill(P.exQty, { q: qtyText(l) })}</small>
                           : l.qty > 1 && <small className="hr-pb-q">×{l.qty}</small>}
-                        {l.collab && <small className="hr-pb-c">협업{l.who ? ` · ${l.who}` : ''}</small>}
+                        {l.collab && <small className="hr-pb-c">{P.collab}{l.who ? ` · ${l.who}` : ''}</small>}
                       </span>
                       <span className="hr-pb-a">
                         {l.unit == null ? (
-                          <em>별도 협의</em>
+                          <em>{P.askLater}</em>
                         ) : l.unit === 0 ? (
                           <>
                             {l.list != null && l.list > 0 && (
                               <i className="was">
-                                <span className="sr-only">단가표 정가 </span>
-                                <s>{won(l.list * l.qty)}원</s>
-                                {l.qty > 1 && ` (${won(l.list)}원 × ${mulText(l)})`}
+                                <span className="sr-only">{P.listPrice}</span>
+                                <s>{won(l.list * l.qty)}{L.cur}</s>
+                                {l.qty > 1 && ` (${won(l.list)}${L.cur} × ${mulText(l)})`}
                               </i>
                             )}
-                            <b className="free">무료</b>
+                            <b className="free">{P.free}</b>
                           </>
                         ) : (
                           <>
-                            {l.qty > 1 && <i>{won(l.unit)}원 × {mulText(l)}</i>}
-                            <b>{won(l.unit * l.qty)}원</b>
+                            {l.qty > 1 && <i>{won(l.unit)}{L.cur} × {mulText(l)}</i>}
+                            <b>{won(l.unit * l.qty)}{L.cur}</b>
                           </>
                         )}
                       </span>
@@ -123,32 +128,28 @@ function Modal({ p, onClose }: { p: PackageView; onClose: () => void }) {
 
             {complete && diff != null ? (
               <div className="hr-pb-sum">
-                <div className="hr-pb-r"><span>구성 합계</span><b>{won(sub)}원</b></div>
+                <div className="hr-pb-r"><span>{P.sub}</span><b>{won(sub)}{L.cur}</b></div>
                 {diff !== 0 && (
                   <div className="hr-pb-r adj">
-                    <span>{diff < 0 ? '패키지 할인' : '추가 조정'}</span>
-                    <b>{diff < 0 ? '-' : '+'}{won(Math.abs(diff))}원</b>
+                    <span>{diff < 0 ? P.discount : P.adjust}</span>
+                    <b>{diff < 0 ? '-' : '+'}{won(Math.abs(diff))}{L.cur}</b>
                   </div>
                 )}
-                <div className="hr-pb-r tot"><span>패키지 정가</span><b>{won(total as number)}원</b></div>
+                <div className="hr-pb-r tot"><span>{P.total}</span><b>{won(total as number)}{L.cur}</b></div>
               </div>
             ) : (
-              <p className="hr-pb-miss">금액이 적히지 않은 항목은 협업 작업자와 별도로 조율됩니다.</p>
+              <p className="hr-pb-miss">{P.missing}</p>
             )}
 
-            {hasEst && (
-              <p className="hr-pb-miss">
-                &lsquo;예시&rsquo; 표시 항목은 곡마다 수량이 달라질 수 있어요. 수량이 달라지면 금액도 함께 달라집니다.
-              </p>
-            )}
+            {hasEst && <p className="hr-pb-miss">{P.estNote}</p>}
           </div>
 
-          <p className="hr-pm-note">예시 구성이며, 실제 금액은 곡의 난이도와 작업량에 따라 달라집니다.</p>
+          <p className="hr-pm-note">{L.exCap}</p>
         </div>
 
         <div className="hr-pm-foot">
           <a className="hr-pm-ask" href="#contact" onClick={onClose}>
-            이 구성으로 문의 <Icon name="arrow" />
+            {P.ask} <Icon name="arrow" />
           </a>
         </div>
       </div>
@@ -158,6 +159,7 @@ function Modal({ p, onClose }: { p: PackageView; onClose: () => void }) {
 }
 
 function Preview({ p }: { p: PackageView }) {
+  const P = dict(useLocale()).pkg;
   const [open, setOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement>(null);
 
@@ -178,7 +180,7 @@ function Preview({ p }: { p: PackageView }) {
         {p.tag && <span className="hr-pv-tag">{p.tag}</span>}
         <strong className="hr-pv-q">{p.name}</strong>
         <span className="hr-pv-go">
-          구성 보기
+          {P.view}
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>

@@ -64,6 +64,15 @@ export async function saveDrop(fd: FormData) {
   if (subtitle.length > L.subtitle) fail(`한 줄 소개는 ${L.subtitle}자 이내로 입력해 주세요.`);
   if (description.length > L.description) fail(`소개 글은 ${L.description}자 이내로 입력해 주세요.`);
   if (terms.length > L.terms) fail(`이용 안내는 ${L.terms}자 이내로 입력해 주세요.`);
+  // 영어 문구: 비워 두면 영어 화면에서 한국어로 대신 나옵니다. 길이는 한국어 제한의 2배까지.
+  const titleEn = oneLine(fd.get('titleEn'));
+  const subtitleEn = oneLine(fd.get('subtitleEn'));
+  const descriptionEn = multiLine(fd.get('descriptionEn'));
+  const termsEn = multiLine(fd.get('termsEn'));
+  if (titleEn.length > L.title * 2) fail(`영어 제목은 ${L.title * 2}자 이내로 입력해 주세요.`);
+  if (subtitleEn.length > L.subtitle * 2) fail(`영어 한 줄 소개는 ${L.subtitle * 2}자 이내로 입력해 주세요.`);
+  if (descriptionEn.length > L.description * 2) fail(`영어 소개 글은 ${L.description * 2}자 이내로 입력해 주세요.`);
+  if (termsEn.length > L.terms * 2) fail(`영어 이용 안내는 ${L.terms * 2}자 이내로 입력해 주세요.`);
 
   const yt = ytId(String(fd.get('youtube') ?? ''));
   if (yt === null) fail('유튜브 주소 또는 영상 ID(11자리) 형식이 아닙니다.');
@@ -100,6 +109,7 @@ export async function saveDrop(fd: FormData) {
 
   const values = {
     title, subtitle, description, terms,
+    title_en: titleEn, subtitle_en: subtitleEn, description_en: descriptionEn, terms_en: termsEn,
     youtube_id: yt ?? '',
     mp3_path: file.mp3.path, mp3_size: file.mp3.size,
     wav_path: file.wav.path, wav_size: file.wav.size,
@@ -113,6 +123,7 @@ export async function saveDrop(fd: FormData) {
     if (error) fail(`저장 실패: ${error.message}`);
     await logEdit(me, 'update', 'drops', id, old, values);
     revalidatePath(`/dl/${String(old?.slug ?? '')}`);
+    revalidatePath(`/en/dl/${String(old?.slug ?? '')}`);
     redirect(`${BACK}?edit=${id}&ok=1#form`);
   }
 
@@ -137,5 +148,6 @@ export async function removeDrop(fd: FormData) {
   if (error) redirect(`${BACK}?err=${encodeURIComponent(`삭제 실패: ${error.message}`)}`);
   await logEdit(me, 'delete', 'drops', id, old, null);
   revalidatePath(`/dl/${String(old?.slug ?? '')}`);
+  revalidatePath(`/en/dl/${String(old?.slug ?? '')}`);
   redirect(`${BACK}?ok=1`);
 }

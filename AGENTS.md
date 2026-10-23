@@ -157,24 +157,35 @@ grep -r "supabase.from" src/ | grep -o "from('.*')" | sort -u
 ## File Structure Quick Reference
 
 ### Components (src/components/)
-- **UI**: Header, BottomNav, WorkCard, Thumb, Modals, Icons, Contact, Tracker, RecentMarquee, SocialLinks , GroupWorks
+- **Layout/Shell**: RootShell, SiteShell, SiteProvider
+- **Navigation**: Header, BottomNav, LocaleLink
+- **Pages**: HomeView, PortfolioView, PortfolioPage, PricingView, GuideView
+- **UI Components**: WorkCard, Thumb, Modals, Icons, Contact, Tracker, RateBoard, PackageList, BundleBox, Ago, Avatar, BackToTop, BonusNote, GuideBlocks, Heads, IndexReel, PointerFx, RecentMarquee, Scramble, ScrollHint, SocialLinks, Trust
 - **Admin**: AdminNav, ArtistPicker, ArtistTable, WorkPicker, FeaturedPicker, DiscountFields, ExtrasEditor, PublishButton, ConfirmButton, OwnerMark, QuoteMaker, ScopeFeatured, DropActions
 - **Drop** (src/components/drop/): DropPage, DropTheme, DropTracker
+- **Mixers**: GroupMixer, TrackMixer, GroupWorks
 
 
 ### Library (src/lib/)
 - **Auth**: supabase.ts, auth/ (server, browser, guard, permissions, admin-db, upload)
-- **Data**: site-data.ts, artist-admin.ts, admin-menu.ts, sample-data.ts, track.ts
-- **Domain**: guide, bonus, discounts, turnaround, status, featured, social, rate-badge, drops, pricing-works
-- **Quote**: quote-store.ts, quote-accounts.ts
-- **Utils**: filters, copy, stats, i18n, types
+- **Data**: site-data.ts, site-metadata.ts, artist-admin.ts, admin-menu.ts, sample-data.ts, track.ts
+- **Domain**:
+  - Guide: guide.ts, guide-settings.ts
+  - Pricing: bonus.ts, bonus-settings.ts, discounts.ts, discounts-settings.ts, turnaround.ts, turnaround-settings.ts, pricing-mixer.ts, pricing-works.ts
+  - Quote: quote-store.ts, quote-accounts.ts
+  - Status: status.ts, status-settings.ts
+  - Featured: featured.ts
+  - Social: social.ts, social-settings.ts
+  - Rate: rate-badge.ts
+  - Drop: drops.ts, tracks.ts
+- **Utils**: filters.ts, copy.ts, stats.ts, i18n.ts, types.ts, dict.ts, clip.ts, work-parts.ts
 
 ### Pages (src/app/)
+- **Multilingual**: (ko)/, (en)/ - Korean and English versions
 - **Public**: (site)/ (page, portfolio, pricing, guide)
-- **Public (outside (site))**: dl/[slug] (page.tsx, get/[kind]/route.ts)
-- **Admin outside (panel)**: hr-admin/drop-preview/[id]
-- **Admin**: hr-admin/ (login, mfa, (panel) sub-pages, admin.css)
-- **API**: api/stat/route.ts
+- **Downloads**: dl/[slug]/ (page.tsx, get/[kind]/route.ts)
+- **Admin**: hr-admin/ (login, mfa, (panel) sub-pages including drops, pricing-works, stats/csv, admin.css, api/stat, drop-preview)
+- **API**: api/stat/route.ts, auth/callback/route.ts
 
 # Key Patterns
 - Server components by default, add 'use client' only when needed
@@ -239,6 +250,8 @@ Before completing tasks: run `npm run typecheck`
 - **Admin** 컴포넌트 줄은 그대로 두고, UI 줄 끝에 `TrackMixer`를 추가
 - Domain 줄 끝에 `tracks`를 추가
 - Working Rules 맨 아래: `- src/lib/tracks.ts의 TRACK_FILE_RE와 Cloudflare Worker mixer-files의 KEY_RE는 항상 같아야 함. 한쪽을 고치면 다른 쪽도 고칠 것.`
+- Public links: `import Link from '@/components/LocaleLink'` (default export, adds the `/en` prefix) or `localePath(lang, path)`. Never write `/en/...` by hand. `components/drop/DropPage.tsx` takes `lang` as a prop and uses `next/link` + `localePath()` explicitly.
+
 
 
 # CSS Rules

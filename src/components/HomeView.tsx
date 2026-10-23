@@ -1,10 +1,11 @@
-// src/app/(site)/page.tsx
-import Link from 'next/link';
+// src/components/HomeView.tsx — 홈 본문. 한국어(/)와 영어(/en)가 함께 씁니다.
+import Link from '@/components/LocaleLink';
 import { getSiteData } from '@/lib/site-data';
 import { getPageSettings } from '@/lib/page-settings';
 import { getStatusSettings } from '@/lib/status-settings';
 import { getSocialOrder } from '@/lib/social-settings';
 import { computeStats } from '@/lib/stats';
+import { dict } from '@/lib/dict';
 import { IndexReel } from '@/components/IndexReel';
 import { RecentMarquee } from '@/components/RecentMarquee';
 import { SectionHead } from '@/components/Heads';
@@ -28,7 +29,8 @@ function personJsonLd(links: Record<string, unknown>, jobTitle: string) {
   };
 }
 
-export default async function Home() {
+export async function HomeView({ lang = 'ko' }: { lang?: string }) {
+  const h = dict(lang).home;
   const [{ links, works }, { intro }, status, socialOrder] = await Promise.all([
     getSiteData(),
     getPageSettings(),
@@ -36,6 +38,8 @@ export default async function Home() {
     getSocialOrder(),
   ]);
   const stats = status.showStats ? computeStats(works) : null;
+  // 직업 줄은 한국어에서는 어드민 값, 영어에서는 고정 문구를 씁니다. (영어 입력칸은 다음 단계에서 만듭니다.)
+  const roles = lang === 'ko' ? intro.roles : h.roles;
   return (
     <>
       <script
@@ -53,28 +57,28 @@ export default async function Home() {
             </div>
             <div className="hx-id-text">
               <small className="hr-eyebrow">{intro.eyebrow}</small>
-              <h1>햄버거라네 <span>HamRanè</span></h1>
+              <h1>{h.name}{h.nameSub && <>{' '}<span>{h.nameSub}</span></>}</h1>
               <p className="hx-roles">
-                {intro.roles}<i>/</i>
+                {roles}<i>/</i>
               </p>
 
               <div className="hr-cta-links">
                 <Link className="hr-hero-cta" href="/guide">
-                  의뢰가 처음이신가요? <b>의뢰 가이드 보기</b> →
+                  {h.firstQ} <b>{h.firstGo}</b> →
                 </Link>
-                <Link className="hr-cta-mini first" href="/pricing">단가 보기</Link>
-                <a className="hr-cta-mini" href="#contact">문의하기</a>
+                <Link className="hr-cta-mini first" href="/pricing">{h.pricing}</Link>
+                <a className="hr-cta-mini" href="#contact">{dict(lang).common.askMe}</a>
               </div>
 
               {(status.state || stats) && (
                 <div className="hr-trust">
-                  <StatusBadge status={status} />
-                  <StatsLine stats={stats} />
+                  <StatusBadge status={status} lang={lang} />
+                  <StatsLine stats={stats} lang={lang} />
                 </div>
               )}
             </div>
           </div>
-          <SocialLinks links={links} order={socialOrder} />
+          <SocialLinks links={links} order={socialOrder} lang={lang} />
         </div>
       </section>
 
@@ -86,7 +90,7 @@ export default async function Home() {
 
       <section className="hx-recent" id="recent" data-scroll-next>
         <div className="wrap">
-          <SectionHead n="01" title="Recent" sub="최근 작업물" href="/portfolio" link="포트폴리오 전체" />
+          <SectionHead n="01" title="Recent" sub={h.recentSub} href="/portfolio" link={h.recentLink} />
         </div>
         <RecentMarquee />
       </section>

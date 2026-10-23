@@ -1,4 +1,5 @@
 // src/lib/discounts.ts — 수량 할인·묶음 할인 규칙의 형식과 표시 규칙
+import { dict, fill } from './dict';
 export type VolTier = { min: number; type: 'pct' | 'won'; value: number }; // min곡 이상: % 할인 또는 곡당 원 할인
 export type GroupRule = { volume: VolTier[]; bundle: boolean }; // bundle: 묶음 할인 대상 분야 여부
 export type BundleTier = { min: number; pct: number }; // min개 분야 이상: pct% 할인
@@ -11,8 +12,12 @@ export type DiscountSettings = {
 export const DISC_LIMITS = { volRows: 3, bundleRows: 3 };
 export const EMPTY_DISCOUNTS: DiscountSettings = { groups: {}, excluded: [], bundle: [] };
 
-export const volLabel = (t: VolTier) =>
-  `${t.min}곡 이상 ${t.type === 'pct' ? `-${t.value}%` : `곡당 -${t.value.toLocaleString('ko-KR')}원`}`;
+export const volLabel = (t: VolTier, lang = 'ko') => {
+  const L = dict(lang).pricing;
+  return t.type === 'pct'
+    ? fill(L.volPct, { min: t.min, v: t.value })
+    : fill(L.volWon, { min: t.min, v: t.value.toLocaleString(L.numLocale) });
+};
 export const bundleLabel = (t: BundleTier) => `${t.min}개 분야 이상 -${t.pct}%`;
 
 /** 분야 탭에 보여줄 할인 안내. 보여줄 것이 없으면 undefined */

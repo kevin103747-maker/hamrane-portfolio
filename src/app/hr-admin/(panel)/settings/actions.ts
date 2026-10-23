@@ -50,6 +50,7 @@ export async function saveSettings(fd: FormData) {
   const email = str(fd, 'email');
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) fail('이메일 형식이 올바르지 않습니다.');
   const notice = str(fd, 'notice');
+  const noticeEn = str(fd, 'noticeEn');
 
   // 제목·설명·홈 문구: 한 줄로 정리하고 글자 수를 확인합니다. 비우면 기본 문구가 쓰입니다.
   const t: Record<string, string> = {};
@@ -84,7 +85,9 @@ export async function saveSettings(fd: FormData) {
   const links = { ...oldLinks, ...v, discordId, email, ...(profileUp.url ? { profileUrl: profileUp.url } : {}) };
   if (profileReset && !profileUp.url) delete links.profileUrl;
   const base = oldNotice && typeof oldNotice === 'object' ? oldNotice : {};
-  const noticeValue = { ...base, ko: notice };
+  const noticeValue: Record<string, unknown> = { ...base, ko: notice };
+  if (noticeEn) noticeValue.en = noticeEn;
+  else delete noticeValue.en;
 
   // 한 번에 저장해서, 일부만 저장되는 일을 막습니다.
   const saved = await db.from('site_settings').upsert(

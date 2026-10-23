@@ -14,7 +14,7 @@ import { SocialEditor } from '@/components/admin/SocialEditor';
 // 문자열 또는 { ko: "..." } 형태 모두 글자로 바꿉니다.
 const txt = (v: unknown): string =>
   typeof v === 'string' ? v : ((v as { ko?: string } | null)?.ko ?? '');
-
+const en = (v: unknown): string => (v as { en?: string } | null)?.en ?? '';
 export default async function SettingsPage({
   searchParams,
 }: {
@@ -133,6 +133,10 @@ export default async function SettingsPage({
           <label>
             공지
             <textarea name="notice" rows={4} defaultValue={txt(notice)} />
+          </label>
+          <label>
+            공지 (영어, 선택 · 비우면 영어 화면에도 한국어 공지가 나옵니다)
+            <textarea name="noticeEn" rows={4} defaultValue={en(notice)} />
           </label>
         </fieldset>
 

@@ -42,14 +42,17 @@ export async function saveTurnaround(fd: FormData) {
   /** 한 묶음(분야 또는 작업)의 입력칸을 읽고 검사합니다. */
   const read = (key: string, who: string): GroupTurn => {
     const avg = field('avg', key);
+    const avgEn = field('avgEn', key);
     const rushDays = field('rushDays', key);
+    const rushDaysEn = field('rushDaysEn', key);
     if (avg.length > TURN_LIMITS.avg) fail(`${who}: 평균 소요 기간은 ${TURN_LIMITS.avg}자 이내로 입력하세요.`);
     if (rushDays.length > TURN_LIMITS.days) fail(`${who}: 빠른 마감 기간은 ${TURN_LIMITS.days}자 이내로 입력하세요.`);
+    if (avgEn.length > TURN_LIMITS.avg || rushDaysEn.length > TURN_LIMITS.days) fail(`${who}: 영어 기간 문구가 너무 깁니다. (${TURN_LIMITS.avg}자 이내)`);
     const rushOn = flag('rushOn', key);
     if (rushOn && !rushDays) fail(`${who}: 빠른 마감을 켰다면 기간을 입력하세요. (예: 2~3일)`);
     return {
-      avg,
-      rush: { on: rushOn, days: rushDays, fee: fee('rush', key, who) },
+      avg, avgEn,
+      rush: { on: rushOn, days: rushDays, daysEn: rushDaysEn, fee: fee('rush', key, who) },
       same: { on: flag('sameOn', key), fee: fee('same', key, who) },
     };
   };

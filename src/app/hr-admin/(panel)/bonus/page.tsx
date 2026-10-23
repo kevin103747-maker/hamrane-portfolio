@@ -63,11 +63,27 @@ export default async function BonusPage({
             <input name="line" maxLength={BONUS_LIMITS.line} defaultValue={cur.line} />
           </label>
         </div>
+        <div className="hr-row">
+          <label>
+            혜택 이름 (영어, 선택 · 비우면 한국어가 나옵니다)
+            <input name="titleEn" maxLength={BONUS_LIMITS.title * 2} defaultValue={cur.titleEn} placeholder="e.g. Lyric video included" />
+          </label>
+          <label>
+            한 줄 문구 (영어, 선택)
+            <input name="lineEn" maxLength={BONUS_LIMITS.line * 2} defaultValue={cur.lineEn} />
+          </label>
+        </div>
+
 
         <label>
           팝업 설명 (선택, 최대 {BONUS_LIMITS.detail}자)
           <textarea name="detail" rows={3} maxLength={BONUS_LIMITS.detail} defaultValue={cur.detail} />
         </label>
+        <label>
+          팝업 설명 (영어, 선택)
+          <textarea name="detailEn" rows={3} maxLength={BONUS_LIMITS.detail * 2} defaultValue={cur.detailEn} />
+        </label>
+
 
         <label>
           조건 (선택, 한 줄에 하나, 최대 {BONUS_LIMITS.conditions}줄)
@@ -78,6 +94,11 @@ export default async function BonusPage({
             defaultValue={cur.conditions.join('\n')}
           />
         </label>
+        <label>
+          조건 (영어, 선택 · 위 한국어 조건과 같은 줄 순서로 쓰세요. 빈 줄은 그 줄만 한국어로 나옵니다)
+          <textarea name="conditionsEn" rows={4} defaultValue={cur.conditionsEn.join('\n')} />
+        </label>
+
 
         <label>
           예시 영상 (선택, 한 줄에 하나, 최대 {BONUS_LIMITS.videos}개. 유튜브 주소 또는 영상 ID)

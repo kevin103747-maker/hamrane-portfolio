@@ -3,18 +3,21 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ModalCtx } from './ModalContext';
 import { useSite } from './SiteProvider';
+import { useLocale } from './LocaleLink';
 import { Avatar } from './Avatar';
 import { Icon } from './Icons';
 import { Thumb } from './Thumb';
 import { WorkCard } from './WorkCard';
 import { orderParts } from '@/lib/work-parts';
 import { parseClip } from '@/lib/clip';
-import { COPY } from '@/lib/copy';
+import { dict, fill } from '@/lib/dict';
 
 type Open = { kind: 'work' | 'artist'; id: string } | null;
 
 function WorkModal({ id, onClose, onNav }: { id: string; onClose: () => void; onNav: (d: number) => void }) {
   const s = useSite();
+  const lang = useLocale();
+  const m = dict(lang).modal;
   const w = s.works.find((x) => x.id === id);
   if (!w) return null;
   const clip = parseClip(w.clipUrl);
@@ -25,7 +28,7 @@ function WorkModal({ id, onClose, onNav }: { id: string; onClose: () => void; on
           <small>{s.usageNames(w) || 'WORK'}</small>
           <h3>{w.title}</h3>
         </div>
-        <button className="hr-x" onClick={onClose} aria-label="닫기" autoFocus><Icon name="close" /></button>
+        <button className="hr-x" onClick={onClose} aria-label={m.close} autoFocus><Icon name="close" /></button>
       </div>
       <div className="hr-video">
         {w.youtubeId ? (
@@ -53,19 +56,19 @@ function WorkModal({ id, onClose, onNav }: { id: string; onClose: () => void; on
         </div>
         {w.youtubeId && (
           <a className="hr-yt" href={`https://www.youtube.com/watch?v=${w.youtubeId}`} target="_blank" rel="noopener noreferrer">
-            YouTube에서 보기 <Icon name="external" />
+            {m.watchYt} <Icon name="external" />
           </a>
         )}
         {clip && (
           <a className="hr-yt" href={clip.watchUrl} target="_blank" rel="noopener noreferrer">
-            {clip.platform === 'other' ? '원본 영상 보기' : `${clip.label}에서 보기`} <Icon name="external" />
+            {clip.platform === 'other' ? m.watchOrig : fill(m.watchOn, { label: lang === 'en' && clip.platform === 'chzzk' ? 'CHZZK' : clip.label })} <Icon name="external" />
           </a>
         )}
       </div>
       {s.works.length > 1 && (
         <div className="hr-nav">
-          <button onClick={() => onNav(-1)} title="← 키">‹ 이전 곡</button>
-          <button onClick={() => onNav(1)} title="→ 키">다음 곡 ›</button>
+          <button onClick={() => onNav(-1)} title={m.prevKey}>{m.prevWork}</button>
+          <button onClick={() => onNav(1)} title={m.nextKey}>{m.nextWork}</button>
         </div>
       )}
     </div>
@@ -75,6 +78,7 @@ function WorkModal({ id, onClose, onNav }: { id: string; onClose: () => void; on
 
 function ArtistModal({ id, onClose }: { id: string; onClose: () => void }) {
   const s = useSite();
+  const m = dict(useLocale()).modal;
   const a = s.artistById.get(id);
   if (!a) return null;
   const list = s.artistWorks(id);
@@ -87,20 +91,20 @@ function ArtistModal({ id, onClose }: { id: string; onClose: () => void }) {
           <small>ARTIST</small>
           <h3>
             {href ? (
-              <a className="hr-alink" href={href} target="_blank" rel="noopener noreferrer" title="채널·방송국으로 이동">
+              <a className="hr-alink" href={href} target="_blank" rel="noopener noreferrer" title={m.artistGo}>
                 {a.name} <Icon name="external" />
               </a>
             ) : a.name}
-            <span className="cnt">{list.length}곡</span>
+            <span className="cnt">{fill(m.cnt, { n: list.length })}</span>
           </h3>
         </div>
-        <button className="hr-x" onClick={onClose} aria-label="닫기" autoFocus><Icon name="close" /></button>
+        <button className="hr-x" onClick={onClose} aria-label={m.close} autoFocus><Icon name="close" /></button>
       </div>
       <div className="mb">
         {list.length ? (
           <div className="grid">{list.map((w) => <WorkCard key={w.id} work={w} parts={false} />)}</div>
         ) : (
-          <p className="hr-empty">{COPY.emptyArtist}</p>
+          <p className="hr-empty">{m.emptyArtist}</p>
         )}
       </div>
     </div>

@@ -28,11 +28,13 @@ async function guard() {
   return me;
 }
 
-/** 기존 값(다른 언어 키)을 보존하고 ko만 덮어씁니다. */
-const merge = (old: unknown, ko: string) => ({
-  ...(old && typeof old === 'object' ? (old as object) : {}),
-  ko,
-});
+/** 기존 값(다른 언어 키)을 보존하고 ko·en을 덮어씁니다. en이 비면 en 키를 지웁니다. (빈 글자를 저장하면 영어 화면에 빈칸이 나옵니다.) */
+const mergeBoth = (old: unknown, ko: string, en: string) => {
+  const o: Record<string, unknown> = { ...(old && typeof old === 'object' ? (old as object) : {}), ko };
+  if (en) o.en = en;
+  else delete o.en;
+  return o;
+};
 
 async function loadGroups(): Promise<Row[]> {
   const { data, error } = await adminDb()
@@ -62,16 +64,20 @@ export async function saveGroup(fd: FormData) {
   const name = oneLine(fd, 'name');
   const en = oneLine(fd, 'en');
   const descr = oneLine(fd, 'descr');
+  const nameEn = oneLine(fd, 'nameEn');
+  const descrEn = oneLine(fd, 'descrEn');
   if (!name) fail('분야 이름을 입력하세요.');
   if (name.length > 30) fail(`분야 이름은 30자 이내로 입력해 주세요. (현재 ${name.length}자)`);
   if (en.length > 40) fail('영문 부제는 40자 이내로 입력해 주세요.');
   if (descr.length > 120) fail('설명은 120자 이내로 입력해 주세요.');
+  if (nameEn.length > 60) fail('영어 분야 이름은 60자 이내로 입력해 주세요.');
+  if (descrEn.length > 240) fail('영어 설명은 240자 이내로 입력해 주세요.');
 
   const db = adminDb();
   if (id) {
     const { data: before } = await db.from('part_groups').select('*').eq('id', id).maybeSingle();
     if (!before) fail('수정할 분야를 찾을 수 없습니다.');
-    const row = { name: merge(before.name, name), en, descr: merge(before.descr, descr) };
+    const row = { name: mergeBoth(before.name, name, nameEn), en, descr: mergeBoth(before.descr, descr, descrEn) };
     const { error } = await db.from('part_groups').update(row).eq('id', id);
     if (error) fail(`저장 실패: ${error.message}`);
     await logEdit(me, 'update', 'part_groups', id, before, row);
@@ -80,7 +86,7 @@ export async function saveGroup(fd: FormData) {
 
   // 새 분야: 맨 끝에 넣고 번호를 정리합니다.
   const nid = newId('g');
-  const row = { id: nid, num: '99', sort: 9999, name: { ko: name }, en, descr: { ko: descr } };
+  const row = { id: nid, num: '99', sort: 9999, name: mergeBoth(null, name, nameEn), en, descr: mergeBoth(null, descr, descrEn) };
   const ins = await db.from('part_groups').insert(row);
   if (ins.error) fail(`저장 실패: ${ins.error.message}`);
   await saveGroupOrder(await loadGroups());
@@ -140,15 +146,17 @@ export async function savePart(fd: FormData) {
   const me = await guard();
   const id = str(fd, 'id');
   const groupId = str(fd, 'groupId');
+  const nameEn = oneLine(fd, 'nameEn');
   const name = oneLine(fd, 'name');
   if (!name) fail('파트 이름을 입력하세요.');
   if (name.length > 30) fail(`파트 이름은 30자 이내로 입력해 주세요. (현재 ${name.length}자)`);
+  if (nameEn.length > 60) fail('영어 파트 이름은 60자 이내로 입력해 주세요.');
 
   const db = adminDb();
   if (id) {
     const { data: before } = await db.from('parts').select('*').eq('id', id).maybeSingle();
     if (!before) fail('수정할 파트를 찾을 수 없습니다.');
-    const row = { name: merge(before.name, name) };
+    const row = { name: mergeBoth(before.name, name, nameEn) };
     const { error } = await db.from('parts').update(row).eq('id', id);
     if (error) fail(`저장 실패: ${error.message}`);
     await logEdit(me, 'update', 'parts', id, before, row);
@@ -159,7 +167,7 @@ export async function savePart(fd: FormData) {
   if (!g) fail('파트를 넣을 분야를 찾을 수 없습니다.');
   const parts = await loadParts();
   const max = parts.reduce((m, p) => Math.max(m, Number(p.sort) || 0), -1);
-  const row = { id: newId('p'), name: { ko: name }, sort: max + 1, group_id: groupId };
+  const row = { id: newId('p'), name: mergeBoth(null, name, nameEn), sort: max + 1, group_id: groupId };
   const { error } = await db.from('parts').insert(row);
   if (error) fail(`저장 실패: ${error.message}`);
   await logEdit(me, 'create', 'parts', row.id, null, row);

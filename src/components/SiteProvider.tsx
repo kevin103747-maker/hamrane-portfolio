@@ -3,12 +3,13 @@
 import { createContext, useContext, useMemo } from 'react';
 import type { Artist, SiteData, Tag, Work } from '@/lib/types';
 import { tx, type Text } from '@/lib/i18n';
+import { useLocale } from './LocaleLink';
 
-function build(data: SiteData) {
+function build(data: SiteData, lang: string) {
   const works = data.works.filter((w) => !w.hidden).sort((a, b) => b.date.localeCompare(a.date)); // 최신순(동월은 입력순)
   const map = <X extends { id: string }>(l: X[]) => new Map(l.map((x) => [x.id, x]));
   const parts = map(data.parts), groups = map(data.groups), usage = map<Tag>(data.usageTypes), artists = map<Artist>(data.artists);
-  const t = (v: Text) => tx(v);
+  const t = (v: Text) => tx(v, lang); // 영어 값이 없으면 한국어로 대신 나옵니다.
   const nm = (m: Map<string, { name: Text }>, id: string) => { const v = m.get(id); return v ? t(v.name) : ''; };
   const artistWorks = (id: string) => works.filter((w) => w.artistIds.includes(id));
   return {
@@ -28,7 +29,8 @@ type Site = ReturnType<typeof build>;
 const Ctx = createContext<Site | null>(null);
 
 export function SiteProvider({ data, children }: { data: SiteData; children: React.ReactNode }) {
-  const value = useMemo(() => build(data), [data]);
+  const lang = useLocale();
+  const value = useMemo(() => build(data, lang), [data, lang]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 export const useSite = () => { const c = useContext(Ctx); if (!c) throw new Error('SiteProvider missing'); return c; };

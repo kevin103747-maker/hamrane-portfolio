@@ -1,8 +1,9 @@
 // src/components/IndexReel.tsx
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import Link from 'next/link';
+import Link, { useLocale } from './LocaleLink';
 import type { QueueItem, Work } from '@/lib/types';
+import { dict, fill } from '@/lib/dict';
 import { useSite } from './SiteProvider';
 import { useModal } from './ModalContext';
 import { Thumb } from './Thumb';
@@ -14,6 +15,7 @@ type Entry = { work: Work; item: QueueItem };
 export function IndexReel() {
   const s = useSite();
   const { openWork } = useModal();
+  const d = dict(useLocale()).reel;
   const [idx, setIdx] = useState(0);
   const listRef = useRef<HTMLDivElement>(null);
   const [edge, setEdge] = useState({ l: false, r: false });
@@ -57,7 +59,7 @@ export function IndexReel() {
     const pid = item.labelPartId && work.partIds.includes(item.labelPartId) ? item.labelPartId : own[0];
     if (!pid) return '';
     // 파트 수는 따로 정하지 않고, 참여 파트 수로 자동 계산합니다.
-    const extra = work.partIds.length > 1 ? ` 외 ${work.partIds.length - 1}개 파트` : '';
+    const extra = work.partIds.length > 1 ? fill(d.moreParts, { n: work.partIds.length - 1 }) : '';
     return s.partName(pid) + extra;
   };
   const sub = (w: Work) => [s.artistNames(w), s.usageNames(w)].filter(Boolean).join(' · ');
@@ -74,7 +76,7 @@ export function IndexReel() {
         className="fx-player"
         role="button"
         tabIndex={0}
-        aria-label={`${cur.work.title} 재생`}
+        aria-label={fill(d.play, { title: cur.work.title })}
         onClick={open}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } }}
       >
@@ -99,9 +101,9 @@ export function IndexReel() {
       <aside className="fx-panel">
         <div className="fx-panel-in">
           <div className="fx-ph">
-            <small>FEATURED</small><b>대표작</b>
+            <small>FEATURED</small><b>{d.featured}</b>
             {items.length > 1 && (
-              <span className="fx-count" aria-label={`대표작 ${curIdx + 1}번째, 전체 ${items.length}개`}>
+              <span className="fx-count" aria-label={fill(d.count, { i: curIdx + 1, n: items.length })}>
                 <b>{curIdx + 1}</b> / {items.length}
               </span>
             )}
@@ -119,10 +121,10 @@ export function IndexReel() {
                 </button>
               ))}
             </div>
-            {edge.l && <button type="button" className="fx-nav prev" aria-label="이전 대표작 보기" onClick={() => nudge(-1)}>‹</button>}
-            {edge.r && <button type="button" className="fx-nav next" aria-label="다음 대표작 보기" onClick={() => nudge(1)}>›</button>}
+            {edge.l && <button type="button" className="fx-nav prev" aria-label={d.prev} onClick={() => nudge(-1)}>‹</button>}
+            {edge.r && <button type="button" className="fx-nav next" aria-label={d.next} onClick={() => nudge(1)}>›</button>}
           </div>
-          <Link className="fx-all" href="/portfolio">전체 작업물 보기 <Icon name="arrow" /></Link>
+          <Link className="fx-all" href="/portfolio">{d.all} <Icon name="arrow" /></Link>
         </div>
       </aside>
     </div>

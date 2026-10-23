@@ -5,7 +5,8 @@ import type { Work } from '@/lib/types';
 import { useSite } from './SiteProvider';
 import { WorkCard } from './WorkCard';
 import { Icon } from './Icons';
-import { COPY } from '@/lib/copy';
+import { useLocale } from './LocaleLink';
+import { dict, fill } from '@/lib/dict';
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 
 const PAGE_SIZE = 12;        // PC: 한 페이지에 보여줄 작업물 수 (4열 × 3줄)
@@ -23,6 +24,7 @@ const useIsMobile = () =>
 
 /** 옆으로 미는 줄. 더 볼 내용이 있는 쪽 끝에 그림자와 › 버튼을 보여 "밀 수 있다"는 걸 알려줍니다. */
 function ScrollRow({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  const L = dict(useLocale()).folio;
   const ref = useRef<HTMLDivElement>(null);
   const [edge, setEdge] = useState({ l: false, r: false });
   const update = () => {
@@ -48,7 +50,7 @@ function ScrollRow({ children, className = '' }: { children: React.ReactNode; cl
         <button
           type="button"
           className="hr-sr-prev"
-          aria-label="왼쪽으로 더 보기"
+          	aria-label={L.scrollL}
           onClick={() => ref.current?.scrollBy({ left: -ref.current.clientWidth * 0.6, behavior: 'smooth' })}
         >‹</button>
       )}
@@ -57,7 +59,7 @@ function ScrollRow({ children, className = '' }: { children: React.ReactNode; cl
         <button
           type="button"
           className="hr-sr-next"
-          aria-label="오른쪽으로 더 보기"
+          aria-label={L.scrollR}
           onClick={() => ref.current?.scrollBy({ left: ref.current.clientWidth * 0.6, behavior: 'smooth' })}
         >›</button>
       )}
@@ -109,10 +111,11 @@ function pageNums(cur: number, total: number): (number | '…')[] {
 }
 
 function Pager({ page, pages, onGo }: { page: number; pages: number; onGo: (n: number) => void }) {
+  const L = dict(useLocale()).folio;
   if (pages < 2) return null;
   return (
-    <nav className="hr-pgn" aria-label="페이지 이동">
-      <button onClick={() => onGo(page - 1)} disabled={page === 1} aria-label="이전 페이지">‹</button>
+    <nav className="hr-pgn" aria-label={L.pgNav}>
+      <button onClick={() => onGo(page - 1)} disabled={page === 1} aria-label={L.prevPg}>‹</button>
       {pageNums(page, pages).map((n, i) =>
         n === '…'
           ? <span key={`gap-${i}`} className="gap">…</span>
@@ -122,12 +125,13 @@ function Pager({ page, pages, onGo }: { page: number; pages: number; onGo: (n: n
             </button>
           ),
       )}
-      <button onClick={() => onGo(page + 1)} disabled={page === pages} aria-label="다음 페이지">›</button>
+      <button onClick={() => onGo(page + 1)} disabled={page === pages} aria-label={L.nextPg}>›</button>
     </nav>
   );
 }
 
 export function PortfolioView() {
+  const L = dict(useLocale()).folio;
   const s = useSite();
   const isMobile = useIsMobile();
   const pageSize = isMobile ? MOBILE_PAGE_SIZE : PAGE_SIZE;
@@ -268,14 +272,14 @@ export function PortfolioView() {
           else e.currentTarget.blur();
         }}
         aria-keyshortcuts="/"
-        placeholder="곡 제목, 아티스트 검색"
+        placeholder={L.search}
       />
     </label>
   );
 
   const groupChips = (
     <>
-      <button className={`chip${!groupId ? ' on' : ''}`} onClick={() => { setGroupId(null); setPartId(null); }}>전체</button>
+      <button className={`chip${!groupId ? ' on' : ''}`} onClick={() => { setGroupId(null); setPartId(null); }}>{L.all}</button>
       {s.groups.map((g) => (
         <button key={g.id} className={`chip${groupId === g.id ? ' on' : ''}`} onClick={() => { setGroupId(g.id); setPartId(null); }}>
           {s.t(g.name)}
@@ -286,7 +290,7 @@ export function PortfolioView() {
 
   const partChips = (
     <>
-      <button className={`chip${!partId ? ' on' : ''}`} onClick={() => setPartId(null)}>전체</button>
+      <button className={`chip${!partId ? ' on' : ''}`} onClick={() => setPartId(null)}>{L.all}</button>
       {subParts.map((p) => (
         <button key={p.id} className={`chip${partId === p.id ? ' on' : ''}`} onClick={() => setPartId(p.id)}>{s.t(p.name)}</button>
       ))}
@@ -295,24 +299,24 @@ export function PortfolioView() {
 
   const multiFilters = (
     <>
-      <Multi label="사용처 유형" options={s.usageTypes.map((u) => ({ id: u.id, name: s.t(u.name) }))} value={usage} onChange={setUsage} />
-      <Multi label="아티스트 유형" options={s.artistTypes.map((u) => ({ id: u.id, name: s.t(u.name) }))} value={aType} onChange={setAType} />
+      <Multi label={L.usageType} options={s.usageTypes.map((u) => ({ id: u.id, name: s.t(u.name) }))} value={usage} onChange={setUsage} />
+      <Multi label={L.artistType} options={s.artistTypes.map((u) => ({ id: u.id, name: s.t(u.name) }))} value={aType} onChange={setAType} />
     </>
   );
 
   /* PC: 기존 드롭다운 */
   const sortSelect = (
-    <select className="sel" value={sort} onChange={(e) => setSort(e.target.value as 'new' | 'old')} aria-label="정렬">
-      <option value="new">최신순</option>
-      <option value="old">오래된순</option>
+    <select className="sel" value={sort} onChange={(e) => setSort(e.target.value as 'new' | 'old')} aria-label={L.sort}>
+      <option value="new">{L.newest}</option>
+      <option value="old">{L.oldest}</option>
     </select>
   );
 
   /* 휴대폰: 목록이 따로 뜨지 않는 두 칸 토글 */
   const sortSeg = (
-    <div className="hr-seg" role="group" aria-label="정렬">
-      <button type="button" className={sort === 'new' ? 'on' : ''} aria-pressed={sort === 'new'} onClick={() => setSort('new')}>최신순</button>
-      <button type="button" className={sort === 'old' ? 'on' : ''} aria-pressed={sort === 'old'} onClick={() => setSort('old')}>오래된순</button>
+    <div className="hr-seg" role="group" aria-label={L.sort}>
+      <button type="button" className={sort === 'new' ? 'on' : ''} aria-pressed={sort === 'new'} onClick={() => setSort('new')}>{L.newest}</button>
+      <button type="button" className={sort === 'old' ? 'on' : ''} aria-pressed={sort === 'old'} onClick={() => setSort('old')}>{L.oldest}</button>
     </div>
   );
 
@@ -332,7 +336,7 @@ export function PortfolioView() {
                 onClick={() => setMoreOpen(!moreOpen)}
               >
                 <Icon name="filter" className="" />
-                <span>필터</span>
+                <span>{L.filter}</span>
                 {moreCount > 0 && <b>{moreCount}</b>}
               </button>
             </div>
@@ -370,7 +374,7 @@ export function PortfolioView() {
           <div className="fblk">
             <div className="fh">
               <span className="n">{scopeName ? `FEATURED · ${scopeName}` : 'FEATURED'}</span>
-              <h2>{scopeName ? `${scopeName} 대표작` : '대표작'}</h2>
+              <h2>{scopeName ? fill(L.featuredIn, { name: scopeName }) : L.featured}</h2>
             </div>
             <div
               key={scopeKey}
@@ -383,7 +387,7 @@ export function PortfolioView() {
             {collapsible && (
               <div className="fexp">
                 <button onClick={() => setExpanded(!expanded)}>
-                  {expanded ? '접기' : `펼치기 (+${feats.length - 4})`}
+                  {expanded ? L.collapse : fill(L.expand, { n: feats.length - 4 })}
                 </button>
               </div>
             )}
@@ -392,22 +396,22 @@ export function PortfolioView() {
 
         <div className="fh all-anchor" ref={allRef}>
           <span className="n">ALL</span>
-          <h2>{scopeName ? `${scopeName} 참여 작업물` : '전체 작업물'}</h2>
+          <h2>{scopeName ? fill(L.partWorks, { name: scopeName }) : L.allWorks}</h2>
         </div>
         <div className="meta">
-          <span><b>{count}</b> works{pages > 1 && <> · {page} / {pages} 페이지</>}</span>
-          {active && <button onClick={reset}>필터 초기화</button>}
+          <span><b>{count}</b> works{pages > 1 && fill(L.pageOf, { page, pages })}</span>
+          {active && <button onClick={reset}>{L.reset}</button>}
         </div>
         <div className="grid">
           {shown.length
             ? shown.map((w) => <WorkCard key={w.id} work={w} />)
             : (
               <div className="empty">
-                {feats.length ? COPY.emptyExtra : active ? COPY.emptySearch : COPY.emptyAll}
+                {feats.length ? L.emptyExtra : active ? L.emptySearch : L.emptyAll}
                 {active && (
                   <>
                     <br />
-                    <button className="hr-empty-btn" onClick={reset}>{COPY.resetFilters}</button>
+                    <button className="hr-empty-btn" onClick={reset}>{L.reset}</button>
                   </>
                 )}
               </div>

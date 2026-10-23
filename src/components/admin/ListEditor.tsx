@@ -8,14 +8,16 @@ type Row = { id: number; v: Record<string, string> };
 let seq = 0;
 
 export function ListEditor({ initial, fields, max, itemLabel, addLabel, emptyNote }: {
-  initial: Record<string, string>[];
+  initial: Record<string, string | undefined>[];
   fields: ListField[];
   max: number;
   itemLabel: string;
   addLabel: string;
   emptyNote: string;
 }) {
-  const [rows, setRows] = useState<Row[]>(() => initial.map((v) => ({ id: ++seq, v })));
+  const [rows, setRows] = useState<Row[]>(() =>
+    initial.map((v) => ({ id: ++seq, v: Object.fromEntries(Object.entries(v).map(([k, x]) => [k, x ?? ''])) })),
+  );
 
   const edit = (id: number, key: string, val: string) =>
     setRows((r) => r.map((x) => (x.id === id ? { ...x, v: { ...x.v, [key]: val } } : x)));

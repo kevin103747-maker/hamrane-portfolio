@@ -3,8 +3,13 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { Scramble } from './Scramble';
+import { useLocale } from './LocaleLink';
+import { dict } from '@/lib/dict';
 
-function ago(date: string): string | null {
+type AgoText = ReturnType<typeof dict>['ago'];
+const fill = (t: string, n: number) => t.replace('{n}', String(n));
+
+function ago(date: string, a: AgoText): string | null {
   const m = date.match(/^(\d{4})\D+(\d{1,2})(?:\D+(\d{1,2}))?/);
   if (!m) return null;
   const y = +m[1], mo = +m[2], d = m[3] ? +m[3] : 0;
@@ -15,24 +20,25 @@ function ago(date: string): string | null {
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const days = Math.round((today.getTime() - then.getTime()) / 86_400_000);
     if (days < 0) return null; // 미래 날짜는 붙이지 않습니다
-    if (days === 0) return '오늘';
-    if (days === 1) return '어제';
-    if (days < 31) return `${days}일 전`;
+    if (days === 0) return a.today;
+    if (days === 1) return a.yesterday;
+    if (days < 31) return fill(a.days, days);
   }
 
   const months = (now.getFullYear() - y) * 12 + (now.getMonth() + 1 - mo);
   if (months < 0) return null;
-  if (months === 0) return '이번 달';
-  if (months < 12) return `${months}개월 전`;
-  return `${Math.floor(months / 12)}년 전`;
+  if (months === 0) return a.thisMonth;
+  if (months < 12) return fill(a.months, months);
+  return fill(a.years, Math.floor(months / 12));
 }
 
 export function Ago({ date, delay = 0 }: { date: string; delay?: number }) {
+  const lang = useLocale();
   // 서버가 보낸 화면과 어긋나지 않도록, 처음에는 날짜만 그리고 마운트 후에 상대 시간을 붙입니다.
   const [text, setText] = useState<string | null>(null);
   useEffect(() => {
-    setText(ago(date));
-  }, [date]);
+    setText(ago(date, dict(lang).ago));
+  }, [date, lang]);
   return (
     <>
       <Scramble text={date} delay={delay} />

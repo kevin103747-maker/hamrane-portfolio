@@ -27,6 +27,12 @@ export default async function GuidePage({
         내용을 비우거나 항목을 모두 삭제하면 사이트에서 그 부분이 표시되지 않습니다.
         실제로 지킬 수 있는 조건만 적어 주세요.
       </p>
+      <p>
+        English 칸은 영어 화면(/en/guide)에 쓰입니다. 비워 두면 그 칸만 한국어로 나오고,
+        한국어 칸을 먼저 채워야 합니다. 영어는 한국어 글자 수 제한의 2배까지 쓸 수 있습니다.
+        하단 문의 영역은 영어 칸이 아직 없어서, 영어 화면에서 첫 문장과 답변 시간 안내는 보이지 않고
+        요청 문구와 항목은 기본 영어 문구로 나옵니다.
+      </p>
 
       {ok && (
         <p role="status">
@@ -42,6 +48,14 @@ export default async function GuidePage({
           <legend>페이지 맨 위 인사말 (의뢰 가이드 제목과 소개)</legend>
           <CountedField name="ftTitle" label="제목" defaultValue={g.firstTime.title} soft={20} max={L.ftTitle} />
           <CountedField name="ftBody" label="소개 문장" defaultValue={g.firstTime.body} soft={200} max={L.ftBody} rows={3} />
+          <CountedField
+            name="ftTitleEn" label="English 제목 (비우면 한국어로 표시)" defaultValue={g.firstTime.titleEn ?? ''}
+            soft={L.ftTitle} max={L.ftTitle * 2}
+          />
+          <CountedField
+            name="ftBodyEn" label="English 소개 문장 (비우면 한국어로 표시)" defaultValue={g.firstTime.bodyEn ?? ''}
+            soft={300} max={L.ftBody * 2} rows={3}
+          />
         </fieldset>
 
         <fieldset>
@@ -59,6 +73,9 @@ export default async function GuidePage({
                 key: 'note', name: 'stepNote', label: '덧붙임 한 줄 (선택. 비우면 표시 안 함)', max: L.stepNote,
                 placeholder: '예) 견적 확인까지 비용은 들지 않습니다',
               },
+              { key: 'titleEn', name: 'stepTitleEn', label: 'English 제목 (비우면 한국어로 표시)', max: L.stepTitle * 2 },
+              { key: 'descEn', name: 'stepDescEn', label: 'English 설명 (비우면 한국어로 표시)', max: L.stepDesc * 2, rows: 3 },
+              { key: 'noteEn', name: 'stepNoteEn', label: 'English 덧붙임 한 줄 (비우면 한국어로 표시)', max: L.stepNote * 2 },
             ]}
           />
         </fieldset>
@@ -68,6 +85,14 @@ export default async function GuidePage({
           <CountedField name="ptTitle" label="제목" defaultValue={g.priceTalk.title} soft={30} max={L.ptTitle} />
           <CountedField
             name="ptBody" label="본문 (줄바꿈 가능)" defaultValue={g.priceTalk.body} soft={500} max={L.ptBody} rows={5}
+          />
+          <CountedField
+            name="ptTitleEn" label="English 제목 (비우면 한국어로 표시)" defaultValue={g.priceTalk.titleEn ?? ''}
+            soft={L.ptTitle} max={L.ptTitle * 2}
+          />
+          <CountedField
+            name="ptBodyEn" label="English 본문 (줄바꿈 가능. 비우면 한국어로 표시)" defaultValue={g.priceTalk.bodyEn ?? ''}
+            soft={800} max={L.ptBody * 2} rows={5}
           />
         </fieldset>
 
@@ -82,6 +107,8 @@ export default async function GuidePage({
             fields={[
               { key: 'title', name: 'assureTitle', label: '제목', max: L.assureTitle, placeholder: '예) 문의만으로 확정되지 않아요' },
               { key: 'desc', name: 'assureDesc', label: '설명', max: L.assureDesc, rows: 3, placeholder: '실제로 지킬 수 있는 내용만 적어 주세요' },
+              { key: 'titleEn', name: 'assureTitleEn', label: 'English 제목 (비우면 한국어로 표시)', max: L.assureTitle * 2 },
+              { key: 'descEn', name: 'assureDescEn', label: 'English 설명 (비우면 한국어로 표시)', max: L.assureDesc * 2, rows: 3 },
             ]}
           />
         </fieldset>
@@ -97,6 +124,8 @@ export default async function GuidePage({
             fields={[
               { key: 'q', name: 'faqQ', label: '질문', max: L.faqQ, placeholder: '예) 수정은 몇 번까지 가능한가요?' },
               { key: 'a', name: 'faqA', label: '답변 (줄바꿈 가능)', max: L.faqA, rows: 4, placeholder: '실제 조건을 적어 주세요' },
+              { key: 'qEn', name: 'faqQEn', label: 'English 질문 (비우면 한국어로 표시)', max: L.faqQ * 2 },
+              { key: 'aEn', name: 'faqAEn', label: 'English 답변 (줄바꿈 가능. 비우면 한국어로 표시)', max: L.faqA * 2, rows: 4 },
             ]}
           />
         </fieldset>

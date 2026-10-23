@@ -70,6 +70,7 @@ export default async function DropsPage({
         <ul>
           <li>주소: 공개 링크의 /dl/ 뒤에 붙는 값입니다. 만든 뒤에는 바꿀 수 없으니 이벤트마다 새로 만드세요.</li>
           <li>제목, 한 줄 소개: 페이지와 카카오톡·디스코드 링크 미리보기에 나옵니다.</li>
+          <li>English 칸: 영어 주소(/en/dl/주소)에서 보이는 문구입니다. 비운 칸만 한국어로 대신 나오고, 받기 파일(MP3·WAV)과 유튜브 영상은 한국어·영어 페이지가 같습니다.</li>
           <li>유튜브: 주소를 그대로 붙여 넣으면 됩니다. 미리듣기 영상이 되고, 영상 썸네일이 링크 미리보기 이미지로도 쓰여요.</li>
           <li>종료일(선택): 그날까지 열려 있고 다음 날부터 404가 됩니다.</li>
           <li>MP3·WAV 파일 이름: R2에 올린 이름 그대로 적습니다. 저장할 때 서버가 R2에 있는지 확인하고 용량도 자동으로 읽어요. 비워 두면 &quot;준비 중&quot;으로 보입니다.</li>
@@ -124,6 +125,11 @@ export default async function DropsPage({
         <CountedField name="subtitle" label="한 줄 소개 (제목 아래, 링크 미리보기에도 쓰임)" defaultValue={cur?.subtitle ?? ''} soft={40} max={L.subtitle} />
         <CountedField name="description" label="소개 글 (영상 아래)" defaultValue={cur?.description ?? ''} soft={300} max={L.description} rows={4} />
         <CountedField name="terms" label="이용 안내 (출처 표기 조건 등)" defaultValue={cur?.terms ?? ''} soft={300} max={L.terms} rows={4} />
+        <p className="hr-adm-sub">English (선택) · 비워 두면 영어 화면에서 한국어로 표시됩니다.</p>
+        <CountedField name="titleEn" label="English title" defaultValue={cur?.titleEn ?? ''} soft={60} max={L.title * 2} />
+        <CountedField name="subtitleEn" label="English subtitle" defaultValue={cur?.subtitleEn ?? ''} soft={80} max={L.subtitle * 2} />
+        <CountedField name="descriptionEn" label="English description" defaultValue={cur?.descriptionEn ?? ''} soft={600} max={L.description * 2} rows={4} />
+        <CountedField name="termsEn" label="English terms of use" defaultValue={cur?.termsEn ?? ''} soft={600} max={L.terms * 2} rows={4} />
         <label>
           유튜브 주소 또는 영상 ID (미리듣기)
           <input name="youtube" defaultValue={cur?.youtubeId ?? ''} placeholder="https://youtu.be/..." />
@@ -163,13 +169,16 @@ export default async function DropsPage({
               <small>
                 /dl/{d.slug} · MP3 {d.mp3Path ? '있음' : '없음'} · WAV {d.wavPath ? '있음' : '없음'}
                 {d.endsOn ? ` · ~${d.endsOn}` : ''}
+                {d.titleEn ? '' : ' · EN 미입력'}
               </small>
               <small>{statText(d.slug)}</small>
             </div>
             <div className="hr-row">
               <Link href={`/hr-admin/drops?edit=${d.id}#form`} className="hr-link">수정</Link>
               <a href={`/hr-admin/drop-preview/${d.id}`} target="_blank" rel="noopener noreferrer" className="hr-link">미리보기</a>
+              <a href={`/hr-admin/drop-preview/${d.id}?lang=en`} target="_blank" rel="noopener noreferrer" className="hr-link">EN 미리보기</a>
               {isLive(d) && <a href={`/dl/${d.slug}`} target="_blank" rel="noopener noreferrer" className="hr-link">페이지 열기</a>}
+              {isLive(d) && <a href={`/en/dl/${d.slug}`} target="_blank" rel="noopener noreferrer" className="hr-link">EN 페이지 열기</a>}
               <DropActions id={d.id} slug={d.slug} title={d.title} />
             </div>
           </div>

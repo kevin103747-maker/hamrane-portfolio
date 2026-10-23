@@ -1,10 +1,12 @@
 // src/lib/turnaround.ts — 분야별 소요 기간·빠른 마감·당일 마감의 형식과 표시 규칙
+import { dict, fill } from './dict';
 type FeeType = 'pct' | 'won';
 export type Fee = { type: FeeType; value: number } | null;
 
 export type GroupTurn = {
   avg: string; // 예: "5~7일"
-  rush: { on: boolean; days: string; fee: Fee }; // 빠른 마감
+  avgEn?: string; // 영어 화면용. 비면 avg를 그대로 씁니다.
+  rush: { on: boolean; days: string; daysEn?: string; fee: Fee }; // 빠른 마감
   same: { on: boolean; fee: Fee }; // 당일 마감
 };
 export type TurnaroundSettings = Record<string, GroupTurn>; // 키: 분야 id
@@ -17,8 +19,11 @@ export const emptyTurn = (): GroupTurn => ({
   same: { on: false, fee: null },
 });
 
-export const feeLabel = (f: Fee) =>
-  !f ? '추가요금 별도' : f.type === 'pct' ? `+${f.value}%` : `+${f.value.toLocaleString('ko-KR')}원`;
+export const feeLabel = (f: Fee, lang = 'ko') => {
+  const L = dict(lang).pricing;
+  return !f ? L.feeNone : f.type === 'pct' ? `+${f.value}%` : fill(L.feeWon, { v: f.value.toLocaleString(L.numLocale) });
+};
+
 
 /** 화면에 보여줄 정보가 하나라도 있는 분야만 표시합니다. */
 
@@ -42,7 +47,8 @@ export function parseTurnaround(raw: unknown): TurnaroundSettings {
     const m = rec(o.same);
     out[gid] = {
       avg: s(o.avg),
-      rush: { on: r.on === true, days: s(r.days), fee: parseFee(r.fee) },
+      avgEn: s(o.avgEn),
+      rush: { on: r.on === true, days: s(r.days), daysEn: s(r.daysEn), fee: parseFee(r.fee) },
       same: { on: m.on === true, fee: parseFee(m.fee) },
     };
   }

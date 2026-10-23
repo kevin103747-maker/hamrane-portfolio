@@ -1,8 +1,12 @@
 // src/components/BackToTop.tsx — 아래로 내려갔을 때만 나타나는 맨 위로 버튼
 'use client';
 import { useEffect, useState } from 'react';
+import { useLocale } from './LocaleLink';
+import { dict } from '@/lib/dict';
+
 
 export function BackToTop() {
+  const L = dict(useLocale()).totop;
   const [show, setShow] = useState(false);
 
   useEffect(() => {
@@ -18,7 +22,7 @@ export function BackToTop() {
   };
 
   return (
-    <button type="button" className={`hr-top${show ? ' show' : ''}`} onClick={up} aria-label="맨 위로" tabIndex={show ? 0 : -1}>
+    <button type="button" className={`hr-top${show ? ' show' : ''}`} onClick={up} aria-label={L.label} tabIndex={show ? 0 : -1}>
       ↑
     </button>
   );

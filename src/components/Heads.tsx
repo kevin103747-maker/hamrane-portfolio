@@ -1,6 +1,6 @@
 // src/components/Heads.tsx
 import type { ReactNode } from 'react';
-import Link from 'next/link';
+import Link from '@/components/LocaleLink';
 import { Icon } from './Icons';
 
 export function PageHead({

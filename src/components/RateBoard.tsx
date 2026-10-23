@@ -8,12 +8,14 @@ import type { Discount } from '@/lib/types';
 import { isDiscountActive } from '@/lib/filters';
 import { feeLabel, type Fee, type GroupTurn } from '@/lib/turnaround';
 import { volLabel, type GroupDiscView } from '@/lib/discounts';
-import { badgeClass } from '@/lib/rate-badge';
+import { badgeClass, badgeText } from '@/lib/rate-badge';
 import { BonusNote } from './BonusNote';
 import { track } from '@/lib/track';
 import type { BonusView } from '@/lib/bonus';
 import { GroupWorks } from './GroupWorks';
 import { GroupMixer } from './GroupMixer';
+import { useLocale } from './LocaleLink';
+import { dict, fill } from '@/lib/dict';
 import type { MixItem } from '@/lib/pricing-mixer';
 
 type BoardItem = {
@@ -27,7 +29,13 @@ const toNum = (s: string) => {
   const n = Number(s.replace(/[^\d]/g, ''));
   return Number.isFinite(n) && n > 0 ? n : null;
 };
-const won = (n: number) => n.toLocaleString('ko-KR');
+
+/** 현재 언어의 문구 묶음과 숫자 표기 함수 */
+function useL() {
+  const lang = useLocale();
+  const L = dict(lang).pricing;
+  return { lang, L, won: (n: number) => n.toLocaleString(L.numLocale) };
+}
 
 /** 기본가에 추가요금을 더한 총 금액. 추가요금이 없거나 기본가가 숫자가 아니면 null */
 function withFee(base: number | null, f: Fee): number | null {
@@ -38,9 +46,10 @@ function withFee(base: number | null, f: Fee): number | null {
 function OptRow({ label, days, on, fee, base, isBase }: {
   label: string; days: string; on: boolean; fee: Fee; base: number | null; isBase?: boolean;
 }) {
+  const { lang, L, won } = useL();
   const total = isBase ? base : withFee(base, fee);
   const diff = !isBase && total != null && base != null ? total - base : null;
-  const rate = isBase ? '' : feeLabel(fee) + (fee?.type === 'pct' && diff != null ? ` (+${won(diff)}원)` : '');
+  const rate = isBase ? '' : feeLabel(fee, lang) + (fee?.type === 'pct' && diff != null ? ` (${fill(L.feeWon, { v: won(diff) })})` : '');
 
   return (
     <li className={`hr-ro-row${on ? '' : ' no'}`}>
@@ -52,10 +61,10 @@ function OptRow({ label, days, on, fee, base, isBase }: {
         {on ? (
           <>
             {rate && <em>{rate}</em>}
-            <strong>{total != null ? `${won(total)}원~` : '금액 문의'}</strong>
+            <strong>{total != null ? `${won(total)}${L.cur}~` : L.askPrice}</strong>
           </>
         ) : (
-          <span>불가</span>
+          <span>{L.na}</span>
         )}
       </div>
     </li>
@@ -63,6 +72,7 @@ function OptRow({ label, days, on, fee, base, isBase }: {
 }
 
 function RateModal({ groupName, i, onClose }: { groupName: string; i: BoardItem; onClose: () => void }) {
+  const { L, lang } = useL();
   const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -85,40 +95,40 @@ function RateModal({ groupName, i, onClose }: { groupName: string; i: BoardItem;
   return createPortal(
     <div className="hr-pm-back" onClick={onClose}>
       <div className="hr-pm" role="dialog" aria-modal="true" aria-label={i.name} onClick={(e) => e.stopPropagation()}>
-        <button ref={closeRef} type="button" className="hr-pm-x" aria-label="닫기" onClick={onClose}>
+        <button ref={closeRef} type="button" className="hr-pm-x" aria-label={L.close} onClick={onClose}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
         </button>
 
         <div className="hr-pm-scroll">
-          <div className="hr-pm-top"><span>{groupName}</span>{i.tag && <em className={badgeClass(i.tag)}>{i.tag}</em>}</div>
+          <div className="hr-pm-top"><span>{groupName}</span>{i.tag && <em className={badgeClass(i.tag)}>{badgeText(i.tag, lang)}</em>}</div>
           <h3>{i.name}</h3>
           {i.desc && <p className="hr-pm-desc">{i.desc}</p>}
 
           <div className="hr-pm-est">
-            <small>기본가</small>
+            <small>{L.baseLab}</small>
             <strong><Price price={i.price} discount={i.discount} /></strong>
-            <i>{i.unit} · VAT 포함<Until discount={i.discount} /></i>
+            <i>{i.unit} · {L.vat}<Until discount={i.discount} /></i>
           </div>
 
           {t && (
-            <ul className="hr-ro" aria-label="마감 옵션별 금액">
-              <OptRow label="기본" days={t.avg || '기간 문의'} on fee={null} base={base} isBase />
-              <OptRow label="빠른 마감" days={t.rush.on ? t.rush.days || '기간 문의' : '-'} on={t.rush.on} fee={t.rush.fee} base={base} />
-              <OptRow label="당일 마감" days="당일" on={t.same.on} fee={t.same.fee} base={base} />
+            <ul className="hr-ro" aria-label={L.optAria}>
+              <OptRow label={L.optBase} days={t.avg || L.askTiming} on fee={null} base={base} isBase />
+              <OptRow label={L.optRush} days={t.rush.on ? t.rush.days || L.askTiming : '-'} on={t.rush.on} fee={t.rush.fee} base={base} />
+              <OptRow label={L.optSame} days={L.sameDay} on={t.same.on} fee={t.same.fee} base={base} />
             </ul>
           )}
-                    {i.bonus && <p className="hr-pm-bonus"><b>포함 혜택</b>{i.bonus}</p>}
+          {i.bonus && <p className="hr-pm-bonus"><b>{L.bonusInc}</b>{i.bonus}</p>}
           <p className="hr-pm-note">
-            {onSale ? '할인가 기준으로 계산한 금액입니다. ' : ''}
-            곡의 난이도와 작업량에 따라 달라지며, 확인 후 정확한 금액을 안내드립니다.
+            {onSale ? L.saleNote : ''}
+            {L.rateNote}
           </p>
         </div>
 
         <div className="hr-pm-foot">
           <a className="hr-pm-ask" href="#contact" onClick={() => { track('click', `ask:${i.id}`); onClose(); }}>
-            이 작업으로 문의 <Icon name="arrow" />
+            {L.askThis} <Icon name="arrow" />
           </a>
         </div>
       </div>
@@ -128,6 +138,7 @@ function RateModal({ groupName, i, onClose }: { groupName: string; i: BoardItem;
 }
 
 function RateCard({ groupName, i, showDisc }: { groupName: string; i: BoardItem; showDisc: boolean }) {
+  const { L, lang } = useL();
   const [open, setOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement>(null);
   const close = () => {
@@ -139,28 +150,27 @@ function RateCard({ groupName, i, showDisc }: { groupName: string; i: BoardItem;
     <li className={`hr-rt-card${i.turn ? ' hr-rt-click' : ''}`}>
       <div className="hr-rt-top">
         <b>{i.name}</b>
-        {i.tag && <em className={badgeClass(i.tag)}>{i.tag}</em>}
+        {i.tag && <em className={badgeClass(i.tag)}>{badgeText(i.tag, lang)}</em>}
       </div>
       {i.desc && <p>{i.desc}</p>}
       <div className="hr-rt-price">
-        <span className="hr-rt-lab">기본가</span>
+        <span className="hr-rt-lab">{L.baseLab}</span>
         <strong><Price price={i.price} discount={i.discount} /></strong>
-        <i>{i.unit} · VAT 포함<Until discount={i.discount} /></i>
+        <i>{i.unit} · {L.vat}<Until discount={i.discount} /></i>
       </div>
 
       {i.turn && (
         <div className="hr-rt-avg">
-          <span>평균 소요</span>
-          <b>{i.turn.avg || '문의'}</b>
+          <span>{L.avg}</span>
+          <b>{i.turn.avg || L.ask}</b>
         </div>
       )}
-      {showDisc && i.noDisc && <p className="hr-dc-ex">수량·묶음 할인 제외 작업</p>}
-      {i.noBonus && <p className="hr-dc-ex">{i.noBonus} 제외 작업</p>}
-
+      {showDisc && i.noDisc && <p className="hr-dc-ex">{L.noDisc}</p>}
+      {i.noBonus && <p className="hr-dc-ex">{fill(L.noBonus, { name: i.noBonus })}</p>}
 
       {i.turn && (
         <button ref={btnRef} type="button" className="hr-rt-more" aria-haspopup="dialog" onClick={() => { track('click', `rate:${i.id}`); setOpen(true); }}>
-          마감 옵션·총 금액 보기 <Icon name="arrow" />
+          {L.more} <Icon name="arrow" />
         </button>
       )}
       {open && <RateModal groupName={groupName} i={i} onClose={close} />}
@@ -170,25 +180,28 @@ function RateCard({ groupName, i, showDisc }: { groupName: string; i: BoardItem;
 
 /** 할인 안내: 박스 없이 라벨 + 내용만 */
 function DiscBox({ v }: { v: GroupDiscView }) {
+  const { lang, L } = useL();
   return (
-    <div className="hr-dn" aria-label="할인 안내">
+    <div className="hr-dn" aria-label={L.discAria}>
       {v.volume.length > 0 && (
         <p>
-          <b>수량 할인</b>
-          <span>{v.volume.map(volLabel).join(' · ')}</span>
+          <b>{L.volDisc}</b>
+          <span>{v.volume.map((t) => volLabel(t, lang)).join(' · ')}</span>
         </p>
       )}
       {v.bundle && (
         <p className={v.bundle === 'no' ? 'no' : ''}>
-          <b>묶음 할인</b>
-          <span>{v.bundle === 'yes' ? '여러 분야를 함께 의뢰하면 할인 대상' : '이 분야는 묶음 할인에서 제외'}</span>
+          <b>{L.bundleDisc}</b>
+          <span>{v.bundle === 'yes' ? L.bundleYes : L.bundleNo}</span>
         </p>
       )}
     </div>
   );
 }
+
 /** 옆으로 미는 탭 줄. 더 볼 내용이 있는 쪽 끝에 그림자와 ‹ › 버튼을 보여줍니다. */
 function TabScroller({ children }: { children: React.ReactNode }) {
+  const { L } = useL();
   const ref = useRef<HTMLDivElement>(null);
   const [edge, setEdge] = useState({ l: false, r: false });
 
@@ -212,15 +225,15 @@ function TabScroller({ children }: { children: React.ReactNode }) {
 
   return (
     <div className={`hr-rt-wrap${edge.l ? ' l' : ''}${edge.r ? ' r' : ''}`}>
-      <div className="hr-rt-tabs" ref={ref} role="group" aria-label="분야 선택">{children}</div>
-      {edge.l && <button type="button" className="hr-rt-nav prev" aria-label="왼쪽으로 더 보기" onClick={() => go(-1)}>‹</button>}
-      {edge.r && <button type="button" className="hr-rt-nav next" aria-label="오른쪽으로 더 보기" onClick={() => go(1)}>›</button>}
+      <div className="hr-rt-tabs" ref={ref} role="group" aria-label={L.tabsAria}>{children}</div>
+      {edge.l && <button type="button" className="hr-rt-nav prev" aria-label={L.scrollL} onClick={() => go(-1)}>‹</button>}
+      {edge.r && <button type="button" className="hr-rt-nav next" aria-label={L.scrollR} onClick={() => go(1)}>›</button>}
     </div>
   );
 }
 
-
 export function RateBoard({ groups, bonus }: { groups: BoardGroup[]; bonus?: BonusView }) {
+  const { L } = useL();
   const [cur, setCur] = useState(groups[0]?.id ?? '');
 
   // 주소의 #cat-분야ID 로 들어오면 해당 탭을 엽니다.
@@ -244,10 +257,10 @@ export function RateBoard({ groups, bonus }: { groups: BoardGroup[]; bonus?: Bon
 
   return (
     <div className="hr-rt">
-       {bonus && <BonusNote b={bonus} />}
+      {bonus && <BonusNote b={bonus} />}
       <div className="hr-rt-tabhead">
-        <b>분야 선택</b>
-        <span>총 {groups.length}개 분야 · 눌러서 단가를 확인하세요</span>
+        <b>{L.tabHead}</b>
+        <span>{fill(L.tabSub, { n: groups.length })}</span>
       </div>
       <TabScroller>
         {groups.map((g) => (
@@ -269,12 +282,12 @@ export function RateBoard({ groups, bonus }: { groups: BoardGroup[]; bonus?: Bon
       {groups.map((g) => (
         <section key={g.id} id={`cat-${g.id}`} className="hr-rt-panel" hidden={g.id !== cur} aria-label={g.name}>
           <div className="hr-rt-head">
-            <h3>{g.name}<span>{g.en}</span></h3>
+            <h3>{g.name}{g.en && <span>{g.en}</span>}</h3>
             {g.desc && <p>{g.desc}</p>}
           </div>
 
           {g.disc && <DiscBox v={g.disc} />}
-               <ul className="hr-rt-grid">
+          <ul className="hr-rt-grid">
             {g.items.map((i) => (
               <RateCard key={i.id} groupName={g.name} i={i} showDisc={!!g.disc} />
             ))}

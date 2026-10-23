@@ -25,15 +25,25 @@ export async function saveBonus(fd: FormData) {
   const title = one(fd, 'title');
   const line = one(fd, 'line');
   const detail = String(fd.get('detail') ?? '').trim();
+  const titleEn = one(fd, 'titleEn');
+  const lineEn = one(fd, 'lineEn');
+  const detailEn = String(fd.get('detailEn') ?? '').trim();
 
   if (on && !title) fail('혜택을 켜려면 혜택 이름을 입력하세요.');
   if (title.length > BONUS_LIMITS.title) fail(`혜택 이름은 ${BONUS_LIMITS.title}자 이하로 입력하세요.`);
   if (line.length > BONUS_LIMITS.line) fail(`한 줄 문구는 ${BONUS_LIMITS.line}자 이하로 입력하세요.`);
   if (detail.length > BONUS_LIMITS.detail) fail(`설명은 ${BONUS_LIMITS.detail}자 이하로 입력하세요.`);
+  if (titleEn.length > BONUS_LIMITS.title * 2 || lineEn.length > BONUS_LIMITS.line * 2 || detailEn.length > BONUS_LIMITS.detail * 2) {
+    fail('영어 문구가 너무 깁니다. (한국어 글자 수 제한의 2배까지)');
+  }
 
   const conditions = lines(fd, 'conditions');
   if (conditions.length > BONUS_LIMITS.conditions) fail(`조건은 ${BONUS_LIMITS.conditions}줄까지 입력할 수 있습니다.`);
   if (conditions.some((c) => c.length > BONUS_LIMITS.condLen)) fail(`조건 한 줄은 ${BONUS_LIMITS.condLen}자 이하로 입력하세요.`);
+  const conditionsEn = String(fd.get('conditionsEn') ?? '').split(/\r?\n/).map((s) => s.trim());
+  while (conditionsEn.length && !conditionsEn[conditionsEn.length - 1]) conditionsEn.pop();
+  if (conditionsEn.length > conditions.length) fail('영어 조건은 한국어 조건과 같은 줄 수까지만 입력할 수 있습니다. 줄 순서대로 짝이 맞춰지고, 빈 줄은 그 줄만 한국어로 나옵니다.');
+  if (conditionsEn.some((c) => c.length > BONUS_LIMITS.condLen * 2)) fail(`영어 조건 한 줄은 ${BONUS_LIMITS.condLen * 2}자 이하로 입력하세요.`);
 
   const rawVideos = lines(fd, 'videos');
   if (rawVideos.length > BONUS_LIMITS.videos) fail(`예시 영상은 ${BONUS_LIMITS.videos}개까지 넣을 수 있습니다.`);
@@ -48,7 +58,7 @@ export async function saveBonus(fd: FormData) {
   const rs = await db.from('rate_items').select('id');
   const excluded = (rs.data ?? []).map((x) => x.id as string).filter((id) => fd.get(`ex_${id}`) === 'on');
 
-  const value: BonusSettings = { on, title, line, detail, conditions, videos, excluded };
+  const value: BonusSettings = { on, title, line, detail, conditions, videos, excluded, titleEn, lineEn, detailEn, conditionsEn };
   const { data: old } = await db.from('site_settings').select('value').eq('key', 'bonus').maybeSingle();
   const saved = await db.from('site_settings').upsert({ key: 'bonus', value }, { onConflict: 'key' });
   if (saved.error) fail(`저장 실패: ${saved.error.message}`);

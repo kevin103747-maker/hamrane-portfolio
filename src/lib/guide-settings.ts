@@ -19,6 +19,7 @@ async function load(): Promise<GuideSettings> {
 
   // 저장한 적이 있으면 저장한 값이 우선입니다. 목록이 비어 있으면 "일부러 비운 것"이므로 그대로 비워 둡니다.
   // 다만 예전에 저장된 값에는 새 항목(priceTalk, assure)이 없으므로, 그 경우에만 기본 문구를 씁니다.
+  // 영어 칸(…En)은 저장한 적이 없으면 빈 문자열이고, 화면에서 한국어로 대신합니다.
   const v = rec(data.value);
   const ft = rec(v.firstTime);
   const pt = rec(v.priceTalk);
@@ -26,24 +27,37 @@ async function load(): Promise<GuideSettings> {
   const D = DEFAULT_GUIDE;
 
   return {
-    firstTime: { title: str(ft.title, D.firstTime.title), body: str(ft.body, D.firstTime.body) },
+    firstTime: {
+      title: str(ft.title, D.firstTime.title),
+      body: str(ft.body, D.firstTime.body),
+      titleEn: str(ft.titleEn, ''),
+      bodyEn: str(ft.bodyEn, ''),
+    },
     steps: Array.isArray(v.steps)
       ? v.steps
           .map((s) => rec(s))
-          .map((s) => ({ title: str(s.title, ''), desc: str(s.desc, ''), note: str(s.note, '') }))
+          .map((s) => ({
+            title: str(s.title, ''), desc: str(s.desc, ''), note: str(s.note, ''),
+            titleEn: str(s.titleEn, ''), descEn: str(s.descEn, ''), noteEn: str(s.noteEn, ''),
+          }))
           .filter((s) => s.title && s.desc)
       : D.steps,
-    priceTalk: { title: str(pt.title, D.priceTalk.title), body: str(pt.body, D.priceTalk.body) },
+    priceTalk: {
+      title: str(pt.title, D.priceTalk.title),
+      body: str(pt.body, D.priceTalk.body),
+      titleEn: str(pt.titleEn, ''),
+      bodyEn: str(pt.bodyEn, ''),
+    },
     assure: Array.isArray(v.assure)
       ? v.assure
           .map((a) => rec(a))
-          .map((a) => ({ title: str(a.title, ''), desc: str(a.desc, '') }))
+          .map((a) => ({ title: str(a.title, ''), desc: str(a.desc, ''), titleEn: str(a.titleEn, ''), descEn: str(a.descEn, '') }))
           .filter((a) => a.title && a.desc)
       : D.assure,
     faq: Array.isArray(v.faq)
       ? v.faq
           .map((f) => rec(f))
-          .map((f) => ({ q: str(f.q, ''), a: str(f.a, '') }))
+          .map((f) => ({ q: str(f.q, ''), a: str(f.a, ''), qEn: str(f.qEn, ''), aEn: str(f.aEn, '') }))
           .filter((f) => f.q && f.a)
       : D.faq,
     contact: {

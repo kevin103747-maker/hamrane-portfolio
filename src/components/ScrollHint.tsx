@@ -3,11 +3,14 @@
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Icon } from './Icons';
+import { useLocale } from './LocaleLink';
+import { dict } from '@/lib/dict';
 
 /** 페이지 맨 위에서만 보이는 "아래로 스크롤" 안내. 조금 내려가거나, 내릴 내용이 없으면 사라집니다. */
 export function ScrollHint({ targetId }: { targetId?: string }) {
   const [show, setShow] = useState(false);
   const path = usePathname();
+  const lang = useLocale();
 
   useEffect(() => {
     const check = () => {
@@ -38,7 +41,7 @@ export function ScrollHint({ targetId }: { targetId?: string }) {
       <button
         type="button"
         className={`hr-scroll ${show ? '' : 'hide'}`}
-        aria-label="아래로 스크롤"
+        aria-label={dict(lang).common.scrollDown}
         tabIndex={show ? 0 : -1}
         onClick={go}
       >

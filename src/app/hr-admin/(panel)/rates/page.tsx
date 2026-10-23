@@ -12,8 +12,8 @@ import { saveRate, removeRate, moveRate } from './actions';
 // 문자열 또는 { ko: "..." } 형태 모두 글자로 바꿉니다.
 const txt = (v: unknown): string =>
   typeof v === 'string' ? v : ((v as { ko?: string } | null)?.ko ?? '');
-
 type Disc = { on?: boolean; rate?: number; price?: string; endDate?: string } | null;
+const en = (v: unknown): string => (v as { en?: string } | null)?.en ?? '';
 const todayKst = () => new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
 
 function discLabel(d: Disc) {
@@ -120,6 +120,28 @@ export default async function RatesPage({
         </Section>
 
         <Section
+          open={!!(en(cur?.name) || en(cur?.descr) || en(cur?.unit))}
+          title="영어 문구 (English, 선택)"
+          badge={en(cur?.name) ? '입력됨' : '비어 있음'}
+        >
+          <p className="hr-sub">비워 두면 영어 사이트에서도 위의 한국어가 그대로 보입니다.</p>
+          <label>
+            Name
+            <input name="nameEn" defaultValue={en(cur?.name)} maxLength={80} />
+          </label>
+          <div className="hr-row">
+            <label>
+              Unit (예: per song)
+              <input name="unitEn" defaultValue={en(cur?.unit)} maxLength={30} />
+            </label>
+          </div>
+          <label>
+            Description
+            <input name="descEn" defaultValue={en(cur?.descr)} maxLength={300} />
+          </label>
+        </Section>
+
+        <Section
           open={!!(cur?.discount as Disc)?.on}
           title="이벤트 할인 (선택)"
           badge={(cur?.discount as Disc)?.on ? '켜짐' : '꺼짐'}
@@ -151,6 +173,7 @@ export default async function RatesPage({
                   <small>
                     {x.price}원 / {txt(x.unit)}
                     {x.discount ? ` · ${discLabel(x.discount as Disc)}` : ''}
+                    {en(x.name) && en(x.unit) ? '' : ' · EN 미입력'}
                   </small>
                 </div>
                 <div className="hr-rt-tools">

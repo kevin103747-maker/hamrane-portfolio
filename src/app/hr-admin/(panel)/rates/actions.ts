@@ -29,11 +29,13 @@ const validMoney = (s: string) => /^\d[\d,]*$/.test(s);
 const digits = (s: string) => Number(s.replace(/,/g, ''));
 const money = (s: string) => digits(s).toLocaleString('en-US');
 
-/** 기존 값(다른 언어 키)을 보존하고 ko만 덮어씁니다. */
-const merge = (old: unknown, ko: string) => ({
-  ...(old && typeof old === 'object' ? (old as object) : {}),
-  ko,
-});
+/** 기존 값(다른 언어 키)을 보존하고 ko·en을 덮어씁니다. en이 비어 있으면 en 키를 지웁니다. */
+const mergeBoth = (old: unknown, ko: string, en: string) => {
+  const o: Record<string, unknown> = { ...(old && typeof old === 'object' ? (old as Record<string, unknown>) : {}), ko };
+  if (en) o.en = en;
+  else delete o.en;
+  return o;
+};
 
 /** 정렬 번호: 입력이 있으면 그 값, 없으면 기존 값, 그것도 없으면 맨 끝 다음 번호 */
 async function pickSort(fd: FormData, table: string, current?: number) {
@@ -92,10 +94,14 @@ export async function saveRate(fd: FormData) {
   const desc = str(fd, 'desc');
   const unit = str(fd, 'unit');
   const tag = str(fd, 'tag');
+  const nameEn = str(fd, 'nameEn');
+  const descEn = str(fd, 'descEn');
+  const unitEn = str(fd, 'unitEn');
   const priceIn = str(fd, 'price');
 
   if (!name) fail(back, '이름을 입력하세요.');
   if (!unit) fail(back, '단위를 입력하세요. (예: 곡당)');
+  if (nameEn.length > 80 || unitEn.length > 30 || descEn.length > 300) fail(back, '영어 문구가 너무 깁니다. (이름 80자, 단위 30자, 설명 300자 이내)');
   if (!validMoney(priceIn) || digits(priceIn) <= 0) fail(back, '가격은 0보다 큰 숫자로 입력하세요. (예: 150000)');
   const price = money(priceIn);
   const discount = buildDiscount(fd, price, back);
@@ -113,10 +119,10 @@ export async function saveRate(fd: FormData) {
 
   const row = {
     group_id: groupId,
-    name: merge(before?.name, name),
-    descr: merge(before?.descr, desc),
+    name: mergeBoth(before?.name, name, nameEn),
+    descr: mergeBoth(before?.descr, desc, descEn),
     price,
-    unit: merge(before?.unit, unit),
+    unit: mergeBoth(before?.unit, unit, unitEn),
     tag: pickTag(str(fd, 'badge'), tag),
     discount,
     sort: await pickSort(fd, 'rate_items', before?.sort as number | undefined),
@@ -163,6 +169,8 @@ export async function savePackage(fd: FormData) {
   const name = str(fd, 'name');
   const desc = str(fd, 'desc');
   const totalIn = str(fd, 'total');
+  const nameEn = str(fd, 'nameEn');
+  const descEn = str(fd, 'descEn');
   const itemIds = list(fd, 'itemIds');
 
   // 수량: 선택한 항목만 저장하고, 1이면 저장하지 않습니다.
@@ -213,6 +221,7 @@ export async function savePackage(fd: FormData) {
   if (!num) fail(back, '번호를 입력하세요. (예: 01)');
   if (!tag) fail(back, '태그를 입력하세요. (예: ORIGINAL)');
   if (!name) fail(back, '이름을 입력하세요.');
+  if (nameEn.length > 120 || descEn.length > 300) fail(back, '영어 문구가 너무 깁니다. (이름 120자, 설명 300자 이내)');
   if (!validMoney(totalIn) || digits(totalIn) <= 0) fail(back, '합계는 0보다 큰 숫자로 입력하세요.');
   if (!itemIds.length && !extras.length) fail(back, '포함할 항목을 하나 이상 선택하거나 협업 상품을 추가하세요.');
   const total = money(totalIn);
@@ -233,8 +242,8 @@ export async function savePackage(fd: FormData) {
 
   const row = {
     num, tag,
-    name: merge(before?.name, name),
-    descr: merge(before?.descr, desc),
+    name: mergeBoth(before?.name, name, nameEn),
+    descr: mergeBoth(before?.descr, desc, descEn),
     item_ids: itemIds,
     qty,
     prices,

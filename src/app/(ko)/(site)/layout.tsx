@@ -1,0 +1,6 @@
+// src/app/(ko)/(site)/layout.tsx — 한국어 공개 사이트 껍데기. 본문은 SiteShell에 있습니다.
+import { SiteShell } from '@/components/SiteShell';
+
+export default function SiteLayout({ children }: { children: React.ReactNode }) {
+  return <SiteShell>{children}</SiteShell>;
+}
