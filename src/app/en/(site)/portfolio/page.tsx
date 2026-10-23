@@ -1,2 +1,8 @@
-// 임시: 한국어 본문을 그대로 씁니다. 다음 단계에서 영어 본문으로 교체합니다.
-export { default, metadata } from '@/app/(ko)/(site)/portfolio/page';
+// src/app/en/(site)/portfolio/page.tsx — 영어 포트폴리오. 본문은 PortfolioPage에 있습니다.
+import { PortfolioPage } from '@/components/PortfolioPage';
+
+export const metadata = { title: 'Portfolio' };
+
+export default function EnPortfolio() {
+  return <PortfolioPage lang="en" />;
+}
