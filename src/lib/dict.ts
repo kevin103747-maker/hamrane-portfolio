@@ -197,6 +197,9 @@ const ko = {
     emptyExtra: COPY.emptyExtra,
     emptyAll: COPY.emptyAll,
   },
+  totop: {
+    label: '맨 위로',
+  },
 
   notFound: { title: COPY.notFound.title, body: COPY.notFound.body, home: '홈으로', portfolio: '포트폴리오', pricing: '단가 안내' },
   bonus: {
@@ -409,6 +412,9 @@ const en: Dict = {
     emptySearch: 'No works match your search. Try changing the keywords or filters.',
     emptyExtra: 'No more works to show besides the featured ones.',
     emptyAll: 'No works have been added yet.',
+  },
+  totop: {
+    label: 'Back to top',
   },
 
   notFound: {
