@@ -9,7 +9,7 @@ import { saveGroup, removeGroup, moveGroup, savePart, removePart, movePart } fro
 // 문자열 또는 { ko: "..." } 형태 모두 글자로 바꿉니다.
 const txt = (v: unknown): string =>
   typeof v === 'string' ? v : ((v as { ko?: string } | null)?.ko ?? '');
-
+const en = (v: unknown): string => (v as { en?: string } | null)?.en ?? '';
 export default async function GroupsPage({
   searchParams,
 }: {
@@ -71,8 +71,10 @@ export default async function GroupsPage({
             <form action={saveGroup} className="hr-f">
               <input type="hidden" name="id" value={gr.id} />
               <label>분야 이름<input name="name" required maxLength={30} defaultValue={txt(gr.name)} /></label>
+              <label>분야 이름 (영어, 선택 · 비우면 영문 부제 → 한국어 순으로 대신 나옵니다)<input name="nameEn" maxLength={60} defaultValue={en(gr.name)} /></label>
               <label>영문 부제 (단가표 제목 옆에 작게 표시, 비워도 됨)<input name="en" maxLength={40} defaultValue={gr.en ?? ''} /></label>
               <label>설명 (단가표에서 제목 아래에 표시)<textarea name="descr" rows={2} maxLength={120} defaultValue={txt(gr.descr)} /></label>
+              <label>설명 (영어, 선택)<textarea name="descrEn" rows={3} maxLength={240} defaultValue={en(gr.descr)} /></label>
               <div className="hr-row"><button type="submit" className="hr-adm-btn">분야 저장</button></div>
             </form>
 
@@ -87,9 +89,10 @@ export default async function GroupsPage({
                       <input type="hidden" name="id" value={pt.id} />
                       <input type="hidden" name="groupId" value={gr.id} />
                       <input name="name" required maxLength={30} defaultValue={txt(pt.name)} aria-label="파트 이름" />
+                      <input name="nameEn" maxLength={60} defaultValue={en(pt.name)} placeholder="English" aria-label="파트 이름 (영어)" />
                       <button type="submit">저장</button>
                     </form>
-                    <span className="hr-use">{n ? `곡 ${n}개에서 사용` : '사용 중인 곡 없음'}</span>
+                    <span className="hr-use">{n ? `곡 ${n}개에서 사용` : '사용 중인 곡 없음'} {en(pt.name) ? '' : ' · EN 미입력'} </span>
                     <div className="hr-ptools">
                       <form action={movePart}>
                         <input type="hidden" name="id" value={pt.id} />
@@ -114,6 +117,7 @@ export default async function GroupsPage({
             <form action={savePart} className="hr-prow">
               <input type="hidden" name="groupId" value={gr.id} />
               <input name="name" required maxLength={30} placeholder="새 파트 이름" aria-label="새 파트 이름" />
+              <input name="nameEn" maxLength={60} placeholder="English (선택)" aria-label="새 파트 이름 (영어)" />
               <button type="submit">파트 추가</button>
             </form>
 
@@ -135,8 +139,10 @@ export default async function GroupsPage({
         <p className="hr-adm-sub">맨 아래에 추가됩니다. 위치는 추가한 뒤 ▲▼로 옮기세요.</p>
         <form action={saveGroup} className="hr-f">
           <label>분야 이름<input name="name" required maxLength={30} placeholder="예: 샘플링" /></label>
+          <label>분야 이름 (영어, 선택)<input name="nameEn" maxLength={60} /></label>
           <label>영문 부제 (비워도 됨)<input name="en" maxLength={40} placeholder="예: Sampling" /></label>
           <label>설명<textarea name="descr" rows={2} maxLength={120} /></label>
+          <label>설명 (영어, 선택)<textarea name="descrEn" rows={3} maxLength={240} /></label>
           <div className="hr-row"><button type="submit" className="hr-adm-btn">분야 추가</button></div>
         </form>
       </section>
