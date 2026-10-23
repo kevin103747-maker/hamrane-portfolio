@@ -1,28 +1,35 @@
-// src/components/drop/DropPage.tsx — 무료 배포 페이지 본문. 공개 주소(/dl/...)와 어드민 미리보기가 같이 씁니다.
+// src/components/drop/DropPage.tsx — 무료 배포 페이지 본문. 공개 주소(/dl/..., /en/dl/...)와 어드민 미리보기가 같이 씁니다.
 import Link from 'next/link';
-import { fileUrl, fmtSize, type Drop } from '@/lib/drops';
+import { dropFor, fileUrl, fmtSize, type Drop } from '@/lib/drops';
+import { dict } from '@/lib/dict';
+import { localePath } from '@/lib/i18n';
 import { DropTheme } from './DropTheme';
 import { DropTracker } from './DropTracker';
 
-export function DropPage({ drop, notice, tracked }: { drop: Drop; notice?: string; tracked?: boolean }) {  
+export function DropPage({ drop: raw, notice, tracked, lang = 'ko' }: {
+  drop: Drop; notice?: string; tracked?: boolean; lang?: 'ko' | 'en';
+}) {
+  const drop = dropFor(raw, lang);
+  const L = dict(lang).drop;
+  const to = (p: string) => localePath(lang, p);
   const files = [
-    { ext: 'mp3', label: 'MP3', note: '가볍고 어디서나 재생돼요', path: drop.mp3Path, size: drop.mp3Size },
-    { ext: 'wav', label: 'WAV', note: '무손실 원본 음질 · 편집용', path: drop.wavPath, size: drop.wavSize },
+    { ext: 'mp3', label: 'MP3', note: L.mp3Note, path: drop.mp3Path, size: drop.mp3Size },
+    { ext: 'wav', label: 'WAV', note: L.wavNote, path: drop.wavPath, size: drop.wavSize },
   ];
   return (
     <div className="app">
       <header className="gnb">
         <div className="wrap">
-          <Link className="logo" href="/" aria-label="HamRanè 홈">
+          <Link className="logo" href={to('/')} aria-label={L.logo}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img className="lg lg-dark" src="/logo-on-dark.png" alt="" width={480} height={96} />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img className="lg lg-light" src="/logo-on-light.png" alt="" width={480} height={96} />
           </Link>
           <div className="dl-bar">
-            <Link className="dl-btn ghost" href="/portfolio">포트폴리오</Link>
-            <Link className="dl-btn" href="/">홈페이지 가기</Link>
-            <DropTheme />
+            <Link className="dl-btn ghost" href={to('/portfolio')}>{L.portfolio}</Link>
+            <Link className="dl-btn" href={to('/')}>{L.home}</Link>
+            <DropTheme label={L.theme} />
           </div>
         </div>
       </header>
@@ -56,25 +63,25 @@ export function DropPage({ drop, notice, tracked }: { drop: Drop; notice?: strin
           </div>
 
           <aside className="dl-card">
-            <h2>다운로드</h2>
+            <h2>{L.download}</h2>
             <div className="dl-files">
               {files.map((f) =>
                 f.path ? (
-                    <a key={f.ext} className="dl-file" data-dl={f.ext} href={tracked ? `/dl/${drop.slug}/get/${f.ext}` : fileUrl(f.path)}>
+                  <a key={f.ext} className="dl-file" data-dl={f.ext} href={tracked ? `/dl/${drop.slug}/get/${f.ext}` : fileUrl(f.path)}>
                     <span><b>{f.label}</b><small>{f.note}{f.size ? ` · ${fmtSize(f.size)}` : ''}</small></span>
-                    <span className="go">받기 ↓</span>
+                    <span className="go">{L.get}</span>
                   </a>
                 ) : (
                   <div key={f.ext} className="dl-file off">
-                    <span><b>{f.label}</b><small>준비 중</small></span>
+                    <span><b>{f.label}</b><small>{L.soon}</small></span>
                   </div>
                 ),
               )}
             </div>
-            {drop.endsOn && <p className="dl-hint">{drop.endsOn}까지 받을 수 있어요.</p>}
+            {drop.endsOn && <p className="dl-hint">{L.untilPre}{drop.endsOn}{L.untilPost}</p>}
             {drop.terms && (
               <div className="dl-terms">
-                <h3>이용 안내</h3>
+                <h3>{L.terms}</h3>
                 <p>{drop.terms}</p>
               </div>
             )}
@@ -84,12 +91,12 @@ export function DropPage({ drop, notice, tracked }: { drop: Drop; notice?: strin
         <section className="dl-about">
           <div>
             <h2>HamRanè</h2>
-            <p>더 많은 작업물과 의뢰 안내는 홈페이지에서 볼 수 있어요.</p>
+            <p>{L.aboutText}</p>
           </div>
           <div className="acts">
-            <Link className="dl-btn solid" href="/portfolio">포트폴리오 보기</Link>
-            <Link className="dl-btn ghost" href="/pricing">외주단가</Link>
-            <Link className="dl-btn ghost" href="/guide">의뢰 가이드</Link>
+            <Link className="dl-btn solid" href={to('/portfolio')}>{L.viewPortfolio}</Link>
+            <Link className="dl-btn ghost" href={to('/pricing')}>{L.rates}</Link>
+            <Link className="dl-btn ghost" href={to('/guide')}>{L.guide}</Link>
           </div>
         </section>
       </main>
@@ -97,7 +104,7 @@ export function DropPage({ drop, notice, tracked }: { drop: Drop; notice?: strin
       <footer>
         <div className="wrap">
           <span>© 2026 HamRanè</span>
-          <nav><Link href="/">Home</Link><Link href="/portfolio">Portfolio</Link></nav>
+          <nav><Link href={to('/')}>Home</Link><Link href={to('/portfolio')}>Portfolio</Link></nav>
         </div>
       </footer>
     </div>

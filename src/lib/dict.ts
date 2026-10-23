@@ -211,6 +211,26 @@ const ko = {
     faqTitle: '자주 묻는 질문',
     note: '더 궁금한 점이 있다면 편하게 물어보세요.',
   },
+    drop: {
+    logo: 'HamRanè 홈',
+    portfolio: '포트폴리오',
+    home: '홈페이지 가기',
+    theme: '테마 전환',
+    mp3Note: '가볍고 어디서나 재생돼요',
+    wavNote: '무손실 원본 음질 · 편집용',
+    download: '다운로드',
+    get: '받기 ↓',
+    soon: '준비 중',
+    untilPre: '',
+    untilPost: '까지 받을 수 있어요.',
+    terms: '이용 안내',
+    aboutText: '더 많은 작업물과 의뢰 안내는 홈페이지에서 볼 수 있어요.',
+    viewPortfolio: '포트폴리오 보기',
+    rates: '외주단가',
+    guide: '의뢰 가이드',
+    notFoundTitle: '페이지를 찾을 수 없습니다',
+  },
+
 
   notFound: { title: COPY.notFound.title, body: COPY.notFound.body, home: '홈으로', portfolio: '포트폴리오', pricing: '단가 안내' },
   bonus: {
@@ -438,6 +458,26 @@ const en: Dict = {
     faqTitle: 'Frequently asked questions',
     note: 'If you have any other questions, feel free to ask.',
   },
+    drop: {
+    logo: 'HamRanè home',
+    portfolio: 'Portfolio',
+    home: 'Go to homepage',
+    theme: 'Toggle theme',
+    mp3Note: 'Small file that plays anywhere',
+    wavNote: 'Lossless original quality · for editing',
+    download: 'Download',
+    get: 'Download ↓',
+    soon: 'Coming soon',
+    untilPre: 'Available until ',
+    untilPost: '.',
+    terms: 'Terms of use',
+    aboutText: 'See more of my work and how to commission me on the homepage.',
+    viewPortfolio: 'View portfolio',
+    rates: 'Commission rates',
+    guide: 'Commission guide',
+    notFoundTitle: 'Page not found',
+  },
+
 
   notFound: {
     title: 'Page not found',

@@ -9,6 +9,7 @@ const YT_RE = /^[\w-]{11}$/;
 
 export type Drop = {
   id: string; slug: string; title: string; subtitle: string; description: string; terms: string;
+  titleEn: string; subtitleEn: string; descriptionEn: string; termsEn: string;
   youtubeId: string; mp3Path: string; mp3Size: number; wavPath: string; wavSize: number;
   published: boolean; endsOn: string;
 };
@@ -22,10 +23,24 @@ export function fromRow(r: Row): Drop {
   return {
     id: str(r.id), slug: str(r.slug), title: str(r.title), subtitle: str(r.subtitle),
     description: str(r.description), terms: str(r.terms),
+    titleEn: str(r.title_en), subtitleEn: str(r.subtitle_en),
+    descriptionEn: str(r.description_en), termsEn: str(r.terms_en),
     youtubeId: YT_RE.test(yt) ? yt : '',
     mp3Path: str(r.mp3_path), mp3Size: num(r.mp3_size),
     wavPath: str(r.wav_path), wavSize: num(r.wav_size),
     published: r.published === true, endsOn: str(r.ends_on),
+  };
+}
+
+/** 화면에 보일 문구. 영어 화면은 영어 칸이 채워진 곳만 영어로, 비었으면 한국어로 대신합니다. */
+export function dropFor(d: Drop, lang = 'ko'): Drop {
+  if (lang === 'ko') return d;
+  return {
+    ...d,
+    title: d.titleEn || d.title,
+    subtitle: d.subtitleEn || d.subtitle,
+    description: d.descriptionEn || d.description,
+    terms: d.termsEn || d.terms,
   };
 }
 
