@@ -16,7 +16,8 @@ type Open = { kind: 'work' | 'artist'; id: string } | null;
 
 function WorkModal({ id, onClose, onNav }: { id: string; onClose: () => void; onNav: (d: number) => void }) {
   const s = useSite();
-  const m = dict(useLocale()).modal;
+  const lang = useLocale();
+  const m = dict(lang).modal;
   const w = s.works.find((x) => x.id === id);
   if (!w) return null;
   const clip = parseClip(w.clipUrl);
@@ -60,7 +61,7 @@ function WorkModal({ id, onClose, onNav }: { id: string; onClose: () => void; on
         )}
         {clip && (
           <a className="hr-yt" href={clip.watchUrl} target="_blank" rel="noopener noreferrer">
-            {clip.platform === 'other' ? m.watchOrig : fill(m.watchOn, { label: clip.label })} <Icon name="external" />
+            {clip.platform === 'other' ? m.watchOrig : fill(m.watchOn, { label: lang === 'en' && clip.platform === 'chzzk' ? 'CHZZK' : clip.label })} <Icon name="external" />
           </a>
         )}
       </div>

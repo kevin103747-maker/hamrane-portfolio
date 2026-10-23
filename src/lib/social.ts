@@ -5,6 +5,7 @@ type LinkField = 'youtube' | 'youtube2' | 'soop' | 'chzzk' | 'x' | 'instagram' |
 type Platform = {
   key: SocialKey;
   label: string;
+  en?: string; // 영어 화면에서 쓸 이름(없으면 label)
   field: LinkField; // Links 안에서 주소가 저장되는 이름(= 어드민 입력란 이름)
   placeholder: string;
   hint?: string;
@@ -13,9 +14,9 @@ type Platform = {
 
 export const PLATFORMS: Platform[] = [
   { key: 'yt', label: 'YouTube', field: 'youtube', placeholder: 'https://youtube.com/@...', icon: 'youtube' },
-  { key: 'yt2', label: 'YouTube 서브 채널', field: 'youtube2', placeholder: 'https://youtube.com/@...' },
+  { key: 'yt2', label: 'YouTube 서브 채널', en: 'YouTube (sub)', field: 'youtube2', placeholder: 'https://youtube.com/@...' },
   { key: 'soop', label: 'SOOP', field: 'soop', placeholder: 'https://ch.sooplive.co.kr/...' },
-  { key: 'chzzk', label: '치지직', field: 'chzzk', placeholder: 'https://chzzk.naver.com/...' },
+  { key: 'chzzk', label: '치지직', en: 'CHZZK', field: 'chzzk', placeholder: 'https://chzzk.naver.com/...' },
   { key: 'x', label: 'X', field: 'x', placeholder: 'https://x.com/...', icon: 'x' },
   { key: 'ig', label: 'Instagram', field: 'instagram', placeholder: 'https://instagram.com/...' },
   { key: 'tt', label: 'TikTok', field: 'tiktok', placeholder: 'https://tiktok.com/@...' },
