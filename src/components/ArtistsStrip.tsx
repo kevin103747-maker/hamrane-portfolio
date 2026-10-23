@@ -4,12 +4,15 @@ import { useEffect, useRef, useState } from 'react';
 import { useSite } from './SiteProvider';
 import { useModal } from './ModalContext';
 import { Avatar } from './Avatar';
+import { useLocale } from './LocaleLink';
+import { dict, fill } from '@/lib/dict';
 
 const PER_PAGE = 6;
 const INTERVAL = 5000;
 
 export function ArtistsStrip() {
   const s = useSite();
+  const G = dict(useLocale()).folio;
   const { openArtist } = useModal();
   const list = s.stripArtists;
   const pages = Math.max(1, Math.ceil(list.length / PER_PAGE));
@@ -59,7 +62,7 @@ export function ArtistsStrip() {
         {pages > 1 && (
           <div className="hr-dots">
             {Array.from({ length: pages }, (_, i) => (
-              <button key={i} className={i === cur ? 'on' : ''} onClick={() => setPage(i)} aria-label={`${i + 1}번째 묶음`} />
+              <button key={i} className={i === cur ? 'on' : ''} onClick={() => setPage(i)} aria-label={fill(G.group, { n: i + 1 })} />
             ))}
           </div>
         )}
