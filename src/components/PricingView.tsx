@@ -127,6 +127,7 @@ export async function PricingView({ lang = 'ko' }: { lang?: string }) {
 
         <BundleBox
           tiers={discounts.bundle}
+          lang={lang}
           yes={groups.filter((g) => discounts.groups[g.id]?.bundle).map((g) => gName(g))}
           no={groups.filter((g) => !discounts.groups[g.id]?.bundle).map((g) => gName(g))}
         />
