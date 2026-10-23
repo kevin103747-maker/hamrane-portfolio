@@ -101,13 +101,17 @@
 - Quote: `src/app/hr-admin/(panel)/quote/page.tsx`
 - Stats: `src/app/hr-admin/(panel)/stats/page.tsx`
 - Works: `src/app/hr-admin/(panel)/works/page.tsx`
+- Drops: `src/app/hr-admin/(panel)/drops/page.tsx`
+- Pricing Works: `src/app/hr-admin/(panel)/pricing-works/page.tsx`
+- Drop Preview: `src/app/hr-admin/drop-preview/[id]/page.tsx`
 
-### Public Pages
-- Home: `src/app/(site)/page.tsx`
-- Portfolio: `src/app/(site)/portfolio/page.tsx`
-- Pricing: `src/app/(site)/pricing/page.tsx`
-- Guide: `src/app/(site)/guide/page.tsx`
-- Drop (free download): `src/app/dl/[slug]/page.tsx`
+### Public Pages (Multilingual)
+- Home: `src/app/(ko)/(site)/page.tsx`, `src/app/(en)/(site)/page.tsx`
+- Portfolio: `src/app/(ko)/(site)/portfolio/page.tsx`, `src/app/(en)/(site)/portfolio/page.tsx`
+- Pricing: `src/app/(ko)/(site)/pricing/page.tsx`, `src/app/(en)/(site)/pricing/page.tsx`
+- Guide: `src/app/(ko)/(site)/guide/page.tsx`, `src/app/(en)/(site)/guide/page.tsx`
+- Drop (free download): `src/app/*/dl/[slug]/page.tsx`
+- I18n utilities: `src/lib/i18n.ts` (`localePath()`, `LOCALES`)
 
 
 

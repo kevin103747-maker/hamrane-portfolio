@@ -38,6 +38,14 @@
 - **Admin Actions**: `src/app/hr-admin/(panel)/actions.ts`
 - **Admin Menu**: `src/lib/admin-menu.ts`
 
+## Track Mixer (트랙 분리 듣기)
+- **Player**: `src/components/TrackMixer.tsx`
+- **Popup Hook-up**: `src/components/Modals.tsx` (WorkModal의 "트랙 분리 듣기" 버튼)
+- **Data/Validation**: `src/lib/tracks.ts`, `src/lib/types.ts` (`Work.tracks`), `src/lib/site-data.ts`
+- **Admin Input**: `src/app/hr-admin/(panel)/works/page.tsx`, `src/app/hr-admin/(panel)/actions.ts` (`saveWork`)
+- **Styles**: `src/app/globals.css` (`.hr-mx-*`)
+
+
 ## Drops (Free Download Pages)
 - **Public Page**: `src/app/dl/[slug]/page.tsx`
 - **Download Redirect**: `src/app/dl/[slug]/get/[kind]/route.ts`
@@ -69,12 +77,20 @@
 - **Recent Marquee**: `src/components/RecentMarquee.tsx`
 - **Social Links**: `src/components/SocialLinks.tsx`
 - **Owner Mark**: `src/components/admin/OwnerMark.tsx`
+- **Locale Link**: `src/components/LocaleLink.tsx`
+- **Layout Shells**: `src/components/RootShell.tsx`, `src/components/SiteShell.tsx`
+- **Page Views**: `src/components/HomeView.tsx`, `src/components/PortfolioView.tsx`, `src/components/PortfolioPage.tsx`, `src/components/PricingView.tsx`, `src/components/GuideView.tsx`
+- **Other UI**: Ago, Avatar, BackToTop, BonusNote, GuideBlocks, Heads, IndexReel, PointerFx, Scramble, ScrollHint, Trust
 
 ## Utilities
 - **Copy**: `src/lib/copy.ts`
 - **I18n**: `src/lib/i18n.ts`
 - **Types**: `src/lib/types.ts`
 - **Sample Data**: `src/lib/sample-data.ts`
+- **Dict**: `src/lib/dict.ts`
+- **Clip**: `src/lib/clip.ts`
+- **Work Parts**: `src/lib/work-parts.ts`
+- **Site Metadata**: `src/lib/site-metadata.ts`
 
 ## Styles
 - **Global CSS**: `src/app/globals.css`
