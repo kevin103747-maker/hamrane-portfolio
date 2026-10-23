@@ -876,7 +876,7 @@ footer a:hover { color: var(--mint); }
 .hr-pv:hover { border-color: color-mix(in oklab, var(--mint) 55%, transparent); transform: translateY(-2px); }
 .hr-pv:focus-visible { outline: 2px solid var(--mint); outline-offset: 2px; }
 .hr-pv-tag { font: 500 11px var(--f-mono); letter-spacing: .06em; color: var(--mint); background: var(--mint-soft); padding: 3px 8px; border-radius: 999px; }
-.hr-pv-q { font-size: 18px; font-weight: 700; line-height: 1.4; letter-spacing: -.02em; word-break: keep-all; }
+.hr-pv-q { font-size: 18px; font-weight: 700; line-height: 1.4; letter-spacing: -.02em; word-break: keep-all; white-space: normal; overflow-wrap: anywhere; }
 .hr-pv-go { margin-top: auto; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--text-3); transition: color .2s, gap .2s; }
 .hr-pv:hover .hr-pv-go { color: var(--mint); gap: 9px; }
 
