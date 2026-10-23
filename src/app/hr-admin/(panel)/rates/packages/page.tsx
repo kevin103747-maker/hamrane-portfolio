@@ -11,7 +11,7 @@ import { savePackage, removePackage } from '../actions';
 
 const txt = (v: unknown): string =>
   typeof v === 'string' ? v : ((v as { ko?: string } | null)?.ko ?? '');
-
+const en = (v: unknown): string => (v as { en?: string } | null)?.en ?? '';
 type Disc = { on?: boolean; rate?: number; price?: string; endDate?: string } | null;
 const todayKst = () => new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
 
@@ -89,6 +89,10 @@ export default async function PackagesPage({
             <input name="tag" defaultValue={cur?.tag ?? ''} placeholder="ORIGINAL" required />
           </label>
         </div>
+        <label>
+          이름 (영어, 선택 · 비우면 영어 화면에도 한국어가 나옵니다)
+          <input name="nameEn" maxLength={120} defaultValue={en(cur?.name)} placeholder="I want to make an original band song!" />
+        </label>
         <div className="hr-row">
           <label>
             합계 (정가, 숫자만 · 직접 입력)
@@ -106,6 +110,10 @@ export default async function PackagesPage({
         <label>
           설명 (팝업 안에 보임)
           <input name="desc" defaultValue={txt(cur?.descr)} />
+        </label>
+        <label>
+          설명 (영어, 선택)
+          <input name="descEn" maxLength={300} defaultValue={en(cur?.descr)} />
         </label>
 
         <Section open title="포함할 상품" badge={`${picked.length}개 선택`} hint="체크하고 수량·개당 금액을 정합니다 (금액을 비우면 단가표 금액, 0은 무료)">
@@ -189,6 +197,7 @@ export default async function PackagesPage({
                   {x.total}원 · {(x.item_ids as string[]).map((id) => `${nameOf(id)}${q[id] > 1 ? ` ×${q[id]}` : ''}`).join(', ')}
                   {ex.length ? ` · 협업 ${ex.length}개(${ex.map((e) => e.name).join(', ')})` : ''}
                   {x.discount ? ` · ${discLabel(x.discount as Disc)}` : ''}
+                  {en(x.name) ? '' : ' · EN 미입력'}
                 </small>
               </div>
               <div className="hr-rt-tools">
