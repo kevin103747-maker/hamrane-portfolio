@@ -1704,3 +1704,10 @@ a.dl-file:hover { border-color: var(--mint); background: var(--mint-soft); }
   .lang-ic { left: 7px; width: 14px; height: 14px; }
   .lang-wrap .lang { padding: 0 20px 0 25px; font-size: 11px; background-position: right 6px center; }
 }
+/* ===== 무료 배포: 받기 줄이 카드 밖으로 나가지 않게 ===== */
+.dl-grid > * { min-width: 0; }
+.dl-card, .dl-card .dl-files { min-width: 0; max-width: 100%; }
+.dl-card .dl-file { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; max-width: 100%; box-sizing: border-box; }
+.dl-card .dl-file > span:first-child { flex: 1 1 0; min-width: 0; }
+.dl-card .dl-file small { white-space: normal; overflow-wrap: anywhere; }
+.dl-card .dl-file .go { flex: none; white-space: nowrap; }
