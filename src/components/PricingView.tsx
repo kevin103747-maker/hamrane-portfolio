@@ -15,6 +15,7 @@ import { getBonus } from '@/lib/bonus-settings';
 import { getPricingWorks } from '@/lib/pricing-works';
 import { getPricingMixer, type MixItem } from '@/lib/pricing-mixer';
 import type { BonusView } from '@/lib/bonus';
+import { bonusFor } from '@/lib/bonus';
 
 /** "150,000" 같은 글자에서 금액을 읽습니다. 비었거나 숫자가 아니면 null, "0"은 0(무료)입니다. */
 const amt = (s?: string): number | null => {
@@ -58,10 +59,8 @@ export async function PricingView({ lang = 'ko' }: { lang?: string }) {
   const no = (n: number) => String(n + 1).padStart(2, '0');
   // 서비스 혜택: 켜져 있고 이름이 있을 때만 보입니다. 모든 작업에 기본 적용, 제외 목록만 뺍니다.
   const bonusOn = bn.on && bn.title !== '';
-  const bonusView: BonusView | undefined = bonusOn
-    ? { title: bn.title, line: bn.line, detail: bn.detail, conditions: bn.conditions, videos: bn.videos }
-    : undefined;
-
+  // 영어 화면은 영어 문구가 있는 곳만 영어로, 비었으면 한국어로 대신합니다.
+  const bonusView: BonusView | undefined = bonusOn ? bonusFor(bn, lang) : undefined;
   // 클라이언트 컴포넌트에는 글자만 담은 단순한 데이터로 넘깁니다.
   const board: BoardGroup[] = groups.map((g, n) => ({
     id: g.id,
@@ -78,8 +77,8 @@ export async function PricingView({ lang = 'ko' }: { lang?: string }) {
         id: i.id, name: tr(i.name), desc: tr(i.desc), price: i.price, unit: tr(i.unit), tag: i.tag, discount: i.discount,
         turn: turnOf(turnFor(turnaround, g.id, i.id)),
         noDisc: discounts.excluded.includes(i.id),
-        bonus: bonusOn && !bn.excluded.includes(i.id) ? bn.title : undefined,
-        noBonus: bonusOn && bn.excluded.includes(i.id) ? bn.title : undefined,
+        bonus: bonusOn && !bn.excluded.includes(i.id) ? bonusView?.title : undefined,
+        noBonus: bonusOn && bn.excluded.includes(i.id) ? bonusView?.title : undefined,
       })),
   }));
 

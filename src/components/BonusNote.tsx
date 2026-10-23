@@ -3,9 +3,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { BonusView } from '@/lib/bonus';
+import { useLocale } from './LocaleLink';
+import { dict, fill } from '@/lib/dict';
 
 /** 썸네일만 먼저 보여 주고, 누르면 그때 영상을 불러옵니다. */
 function Video({ id, title }: { id: string; title: string }) {
+  const L = dict(useLocale()).bonus;
   const [play, setPlay] = useState(false);
   return (
     <div className="hr-bn-v">
@@ -17,7 +20,7 @@ function Video({ id, title }: { id: string; title: string }) {
           allowFullScreen
         />
       ) : (
-        <button type="button" onClick={() => setPlay(true)} aria-label={`${title} 예시 영상 재생`}>
+        <button type="button" onClick={() => setPlay(true)} aria-label={fill(L.playAria, { title })}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={`https://i.ytimg.com/vi/${id}/hqdefault.jpg`} alt="" loading="lazy" />
           <span className="play"><span>▶</span></span>
@@ -28,6 +31,7 @@ function Video({ id, title }: { id: string; title: string }) {
 }
 
 function BonusModal({ b, onClose }: { b: BonusView; onClose: () => void }) {
+  const L = dict(useLocale()).bonus;
   const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -45,14 +49,14 @@ function BonusModal({ b, onClose }: { b: BonusView; onClose: () => void }) {
   return createPortal(
     <div className="hr-pm-back" onClick={onClose}>
       <div className="hr-pm" role="dialog" aria-modal="true" aria-label={b.title} onClick={(e) => e.stopPropagation()}>
-        <button ref={closeRef} type="button" className="hr-pm-x" aria-label="닫기" onClick={onClose}>
+        <button ref={closeRef} type="button" className="hr-pm-x" aria-label={L.close} onClick={onClose}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
         </button>
 
         <div className="hr-pm-scroll">
-          <div className="hr-pm-top"><span>서비스 혜택</span></div>
+          <div className="hr-pm-top"><span>{L.modalTop}</span></div>
           <h3>{b.title}</h3>
           {b.line && <p className="hr-pm-desc">{b.line}</p>}
           {b.detail && <p className="hr-pm-desc">{b.detail}</p>}
@@ -63,7 +67,7 @@ function BonusModal({ b, onClose }: { b: BonusView; onClose: () => void }) {
           )}
           {b.videos.length > 0 && (
             <div className="hr-bn-vids">
-              {b.videos.map((id, n) => <Video key={id} id={id} title={`${b.title} 예시 ${n + 1}`} />)}
+              {b.videos.map((id, n) => <Video key={id} id={id} title={fill(L.example, { title: b.title, n: n + 1 })} />)}
             </div>
           )}
         </div>
@@ -74,6 +78,7 @@ function BonusModal({ b, onClose }: { b: BonusView; onClose: () => void }) {
 }
 
 export function BonusNote({ b }: { b: BonusView }) {
+  const L = dict(useLocale()).bonus;
   const [open, setOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement>(null);
   const close = () => {
@@ -84,11 +89,11 @@ export function BonusNote({ b }: { b: BonusView }) {
 
   return (
     <div className="hr-bn">
-      <i>혜택</i>
+      <i>{L.tag}</i>
       <span><b>{b.title}</b>{b.line ? ` · ${b.line}` : ''}</span>
       {hasMore && (
         <button ref={btnRef} type="button" aria-haspopup="dialog" onClick={() => setOpen(true)}>
-          {b.videos.length ? '예시 보기' : '자세히 보기'}
+          {b.videos.length ? L.seeExamples : L.seeMore}
         </button>
       )}
       {open && <BonusModal b={b} onClose={close} />}

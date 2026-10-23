@@ -114,6 +114,15 @@ const ko = {
   },
   
   notFound: { title: COPY.notFound.title, body: COPY.notFound.body, home: '홈으로', portfolio: '포트폴리오', pricing: '단가 안내' },
+  bonus: {
+    tag: '혜택',
+    modalTop: '서비스 혜택',
+    close: '닫기',
+    seeExamples: '예시 보기',
+    seeMore: '자세히 보기',
+    example: '{title} 예시 {n}',
+    playAria: '{title} 예시 영상 재생',
+  },
   error: { title: COPY.error.title, body: COPY.error.body, retry: COPY.error.retry, home: '홈으로' },
 };
 
@@ -238,6 +247,15 @@ const en: Dict = {
     home: 'Home',
     portfolio: 'Portfolio',
     pricing: 'Pricing',
+  },
+  bonus: {
+    tag: 'Bonus',
+    modalTop: 'Bonus service',
+    close: 'Close',
+    seeExamples: 'See examples',
+    seeMore: 'Learn more',
+    example: '{title} — example {n}',
+    playAria: 'Play video: {title}',
   },
   error: {
     title: 'Something went wrong',
