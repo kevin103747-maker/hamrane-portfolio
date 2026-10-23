@@ -8,7 +8,7 @@ import type { Discount } from '@/lib/types';
 import { isDiscountActive } from '@/lib/filters';
 import { feeLabel, type Fee, type GroupTurn } from '@/lib/turnaround';
 import { volLabel, type GroupDiscView } from '@/lib/discounts';
-import { badgeClass } from '@/lib/rate-badge';
+import { badgeClass, badgeText } from '@/lib/rate-badge';
 import { BonusNote } from './BonusNote';
 import { track } from '@/lib/track';
 import type { BonusView } from '@/lib/bonus';
@@ -72,7 +72,7 @@ function OptRow({ label, days, on, fee, base, isBase }: {
 }
 
 function RateModal({ groupName, i, onClose }: { groupName: string; i: BoardItem; onClose: () => void }) {
-  const { L } = useL();
+  const { L, lang } = useL();
   const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -102,7 +102,7 @@ function RateModal({ groupName, i, onClose }: { groupName: string; i: BoardItem;
         </button>
 
         <div className="hr-pm-scroll">
-          <div className="hr-pm-top"><span>{groupName}</span>{i.tag && <em className={badgeClass(i.tag)}>{i.tag}</em>}</div>
+          <div className="hr-pm-top"><span>{groupName}</span>{i.tag && <em className={badgeClass(i.tag)}>{badgeText(i.tag, lang)}</em>}</div>
           <h3>{i.name}</h3>
           {i.desc && <p className="hr-pm-desc">{i.desc}</p>}
 
@@ -138,7 +138,7 @@ function RateModal({ groupName, i, onClose }: { groupName: string; i: BoardItem;
 }
 
 function RateCard({ groupName, i, showDisc }: { groupName: string; i: BoardItem; showDisc: boolean }) {
-  const { L } = useL();
+  const { L, lang } = useL();
   const [open, setOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement>(null);
   const close = () => {
@@ -150,7 +150,7 @@ function RateCard({ groupName, i, showDisc }: { groupName: string; i: BoardItem;
     <li className={`hr-rt-card${i.turn ? ' hr-rt-click' : ''}`}>
       <div className="hr-rt-top">
         <b>{i.name}</b>
-        {i.tag && <em className={badgeClass(i.tag)}>{i.tag}</em>}
+        {i.tag && <em className={badgeClass(i.tag)}>{badgeText(i.tag, lang)}</em>}
       </div>
       {i.desc && <p>{i.desc}</p>}
       <div className="hr-rt-price">

@@ -5,7 +5,8 @@ export type Fee = { type: FeeType; value: number } | null;
 
 export type GroupTurn = {
   avg: string; // 예: "5~7일"
-  rush: { on: boolean; days: string; fee: Fee }; // 빠른 마감
+  avgEn?: string; // 영어 화면용. 비면 avg를 그대로 씁니다.
+  rush: { on: boolean; days: string; daysEn?: string; fee: Fee }; // 빠른 마감
   same: { on: boolean; fee: Fee }; // 당일 마감
 };
 export type TurnaroundSettings = Record<string, GroupTurn>; // 키: 분야 id
@@ -46,7 +47,8 @@ export function parseTurnaround(raw: unknown): TurnaroundSettings {
     const m = rec(o.same);
     out[gid] = {
       avg: s(o.avg),
-      rush: { on: r.on === true, days: s(r.days), fee: parseFee(r.fee) },
+      avgEn: s(o.avgEn),
+      rush: { on: r.on === true, days: s(r.days), daysEn: s(r.daysEn), fee: parseFee(r.fee) },
       same: { on: m.on === true, fee: parseFee(m.fee) },
     };
   }

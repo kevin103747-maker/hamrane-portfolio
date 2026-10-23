@@ -6,7 +6,7 @@ import { dict } from '@/lib/dict';
 import { PageHead, SectionHead } from '@/components/Heads';
 import { RateBoard, type BoardGroup } from '@/components/RateBoard';
 import { PackageList, type PackageView, type PkgLine } from '@/components/PackageList';
-import { turnFor } from '@/lib/turnaround';
+import { turnFor, type GroupTurn } from '@/lib/turnaround';
 import { getTurnaround } from '@/lib/turnaround-settings';
 import { getDiscounts } from '@/lib/discounts-settings';
 import { groupView } from '@/lib/discounts';
@@ -31,6 +31,9 @@ const nounOf = (u: string) => {
 export async function PricingView({ lang = 'ko' }: { lang?: string }) {
   const L = dict(lang).pricing;
   const tr = (v: Text) => tx(v, lang);
+  // 영어 화면: 영어 기간 문구가 있으면 그것을, 없으면 한국어 값을 씁니다.
+  const turnOf = (t?: GroupTurn): GroupTurn | undefined =>
+    !t || lang === 'ko' ? t : { ...t, avg: t.avgEn || t.avg, rush: { ...t.rush, days: t.rush.daysEn || t.rush.days } };
   const [d, turnaround, discounts, bn, pw, pm] = await Promise.all([
     getSiteData(), getTurnaround(), getDiscounts(), getBonus(), getPricingWorks(), getPricingMixer(),
   ]);
@@ -73,7 +76,7 @@ export async function PricingView({ lang = 'ko' }: { lang?: string }) {
       .filter((i) => i.groupId === g.id)
       .map((i) => ({
         id: i.id, name: tr(i.name), desc: tr(i.desc), price: i.price, unit: tr(i.unit), tag: i.tag, discount: i.discount,
-        turn: turnFor(turnaround, g.id, i.id),
+        turn: turnOf(turnFor(turnaround, g.id, i.id)),
         noDisc: discounts.excluded.includes(i.id),
         bonus: bonusOn && !bn.excluded.includes(i.id) ? bn.title : undefined,
         noBonus: bonusOn && bn.excluded.includes(i.id) ? bn.title : undefined,

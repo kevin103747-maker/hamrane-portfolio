@@ -24,6 +24,10 @@ function Fields({ k, t }: { k: string; t: GroupTurn }) {
         평균 소요 기간
         <input name={`avg_${k}`} defaultValue={t.avg} maxLength={TURN_LIMITS.avg} placeholder="예: 5~7일" />
       </label>
+      <label>
+        평균 소요 기간 (영어, 선택 · 비우면 위 한국어 값이 그대로 나옵니다)
+        <input name={`avgEn_${k}`} defaultValue={t.avgEn ?? ''} maxLength={TURN_LIMITS.avg} placeholder="e.g. 5–7 days" />
+      </label>
       <div className="hr-row">
         <label className="hr-chk">
           <input type="checkbox" name={`rushOn_${k}`} defaultChecked={t.rush.on} /> 빠른 마감 가능
@@ -31,6 +35,10 @@ function Fields({ k, t }: { k: string; t: GroupTurn }) {
         <label>
           빠른 마감 기간
           <input name={`rushDays_${k}`} defaultValue={t.rush.days} maxLength={TURN_LIMITS.days} placeholder="예: 2~3일" />
+        </label>
+        <label>
+          빠른 마감 기간 (영어, 선택)
+          <input name={`rushDaysEn_${k}`} defaultValue={t.rush.daysEn ?? ''} maxLength={TURN_LIMITS.days} placeholder="e.g. 2–3 days" />
         </label>
         <label>
           추가 요금
