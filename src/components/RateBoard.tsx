@@ -41,8 +41,8 @@ function useL() {
 function withFee(base: number | null, f: Fee, useUsd: boolean): number | null {
   if (base == null || !f) return null;
   if (f.type === 'pct') return Math.round(base * (1 + f.value / 100));
-  // 금액형 추가요금: USD가 있으면 USD로, 없으면 KRW로
-  if (useUsd && f.valueUsd != null) return base + f.valueUsd;
+  // 금액형 추가요금: USD 계산이면 USD 값만 씁니다. (없으면 계산하지 않음 — 통화를 섞지 않기 위해)
+  if (useUsd) return f.valueUsd != null ? base + f.valueUsd : null;
   return base + f.value;
 }
 
@@ -53,10 +53,7 @@ function OptRow({ label, days, on, fee, base, isBase, useUsd }: {
   const cur = useUsd ? L.curUsd : L.cur;
   const total = isBase ? base : withFee(base, fee, useUsd);
   const diff = !isBase && total != null && base != null ? total - base : null;
-  // 규칙 3: 통화를 섞지 않는다. 추가금이 USD가 없으면 KRW로 표시
-  const canUseUsd = useUsd && fee?.type === 'won' && fee.valueUsd != null;
-  const displayCur = canUseUsd ? L.curUsd : L.cur;
-  const rate = isBase ? '' : feeLabel(fee, lang) + (fee?.type === 'pct' && diff != null ? ` (${fill(displayCur === L.curUsd ? L.feeUsd : L.feeWon, { v: won(diff) })})` : '');
+  const rate = isBase ? '' : feeLabel(fee, lang, useUsd) + (fee?.type === 'pct' && diff != null ? ` (${fill(useUsd ? L.feeUsd : L.feeWon, { v: won(diff) })})` : '');
 
   return (
     <li className={`hr-ro-row${on ? '' : ' no'}`}>
@@ -68,7 +65,7 @@ function OptRow({ label, days, on, fee, base, isBase, useUsd }: {
         {on ? (
           <>
             {rate && <em>{rate}</em>}
-            <strong>{total != null ? `${won(total)}${displayCur}~` : L.askPrice}</strong>
+            <strong>{total != null ? `${won(total)}${cur}~` : L.askPrice}</strong>
           </>
         ) : (
           <span>{L.na}</span>
@@ -77,6 +74,7 @@ function OptRow({ label, days, on, fee, base, isBase, useUsd }: {
     </li>
   );
 }
+
 
 function RateModal({ groupName, i, onClose }: { groupName: string; i: BoardItem; onClose: () => void }) {
   const { L, lang } = useL();
@@ -94,13 +92,15 @@ function RateModal({ groupName, i, onClose }: { groupName: string; i: BoardItem;
     };
   }, [onClose]);
 
-  // 할인 중이면 할인가를 기준으로 계산합니다. USD가 있으면 USD 기준으로.
+  // 할인 중이면 할인가를 기준으로 계산합니다.
   const onSale = !!i.discount?.price && isDiscountActive(i.discount, Date.now());
-  const useUsd = lang === 'en' && i.priceUsd != null;
-  const discUsd = useUsd && i.discount?.priceUsd ? i.discount.priceUsd : undefined;
-  const basePrice = useUsd && discUsd ? discUsd : (onSale ? i.discount!.price! : i.price);
-  const base = toNum(basePrice);
   const t = i.turn;
+  // 영어 화면: 기준 금액과 금액형 마감 추가금이 모두 USD로 준비됐을 때만 USD로 계산합니다.
+  // 하나라도 없으면 팝업 전체를 KRW로 계산합니다. (통화를 섞지 않음)
+  const feeUsdOk = [t?.rush, t?.same].every((o) => !o?.on || !o.fee || o.fee.type !== 'won' || o.fee.valueUsd != null);
+  const baseUsd = onSale ? i.discount?.priceUsd : i.priceUsd;
+  const useUsd = lang === 'en' && !!baseUsd && feeUsdOk;
+  const base = toNum(useUsd ? (baseUsd ?? '') : onSale ? i.discount!.price! : i.price);
 
   return createPortal(
     <div className="hr-pm-back" onClick={onClose}>

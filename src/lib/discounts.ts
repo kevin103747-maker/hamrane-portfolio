@@ -53,7 +53,10 @@ export function parseDiscounts(raw: unknown): DiscountSettings {
         const min = posInt(t.min);
         const value = posInt(t.value);
         const type = t.type;
-        return min >= 2 && value > 0 && (type === 'pct' || type === 'won') ? [{ min, type, value }] : [];
+        const u = posInt(t.valueUsd);
+        return min >= 2 && value > 0 && (type === 'pct' || type === 'won')
+          ? [{ min, type, value, ...(type === 'won' && u > 0 ? { valueUsd: u } : {}) }]
+          : [];
       })
       .sort((a, b) => a.min - b.min);
     groups[gid] = { volume, bundle: r.bundle === true };
