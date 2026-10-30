@@ -11,8 +11,8 @@ export type Work = {
   id: string; title: string; youtubeId: string; date: string; duration: string; thumbUrl?: string; clipUrl?: string;
  artistIds: string[]; usageIds: string[]; partIds: string[]; mainPartId?: string; hidden?: boolean; feat?: Feat; tracks?: Track[];
 };
-export type Discount = { on: boolean; rate?: number; price?: string; endDate?: string }; // endDate: YYYY-MM-DD (KST)
-export type RateItem = { id: string; groupId: string; name: Text; desc: Text; price: string; unit: Text; tag?: string; discount?: Discount };
+export type Discount = { on: boolean; rate?: number; price?: string; priceUsd?: string; endDate?: string }; // endDate: YYYY-MM-DD (KST)
+export type RateItem = { id: string; groupId: string; name: Text; desc: Text; price: string; priceUsd?: string; unit: Text; tag?: string; discount?: Discount };
 export type QueueItem = { workId: string; labelPartId?: string; partCount?: number };
 export type Links = {
   youtube: string; soop: string; x: string; discordServer: string; discordUrl: string;
@@ -24,10 +24,11 @@ export type SiteData = {
   groups: Group[]; parts: Part[]; usageTypes: Tag[]; artistTypes: Tag[]; artists: Artist[]; works: Work[];
   rateItems: RateItem[]; packages: Pkg[]; notice: Text; links: Links; indexQueue: QueueItem[];
 };
-type PkgExtra = { name: string; group?: string; who?: string; price?: string }; // 내 단가표에 없는 협업·외부 상품
+type PkgExtra = { name: string; group?: string; who?: string; price?: string; priceUsd?: string }; // 내 단가표에 없는 협업·외부 상품
 type Pkg = {
-  id: string; no: string; tag: string; name: Text; desc: Text; itemIds: string[]; total: string; discount?: Discount;
+  id: string; no: string; tag: string; name: Text; desc: Text; itemIds: string[]; total: string; totalUsd?: string; discount?: Discount;
   qty?: Record<string, number>; extras?: PkgExtra[];
   prices?: Record<string, string>; // 이 패키지 안에서만 적용하는 개당 금액 (없으면 단가표 금액)
+  pricesUsd?: Record<string, string>; // 개당 금액 USD 짝
   est?: string[]; // 수량이 예시인 단가 항목 id (곡마다 달라질 수 있는 항목)
 };
