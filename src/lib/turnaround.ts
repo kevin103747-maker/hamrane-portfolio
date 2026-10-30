@@ -19,11 +19,11 @@ export const emptyTurn = (): GroupTurn => ({
   same: { on: false, fee: null },
 });
 
-export const feeLabel = (f: Fee, lang = 'ko') => {
+export const feeLabel = (f: Fee, lang = 'ko', usd = true) => {
   const L = dict(lang).pricing;
   if (!f) return L.feeNone;
   if (f.type === 'pct') return `+${f.value}%`;
-  if (lang === 'en' && f.valueUsd != null) {
+  if (lang === 'en' && usd && f.valueUsd != null) {
     return fill(L.feeUsd, { v: f.valueUsd.toLocaleString(L.numLocale) });
   }
   return fill(L.feeWon, { v: f.value.toLocaleString(L.numLocale) });
@@ -40,8 +40,11 @@ function parseFee(v: unknown): Fee {
   const o = rec(v);
   const n = Number(o.value);
   if ((o.type !== 'pct' && o.type !== 'won') || !Number.isFinite(n) || n <= 0) return null;
-  return { type: o.type, value: n };
+  const u = Number(o.valueUsd);
+  const valueUsd = o.type === 'won' && Number.isInteger(u) && u > 0 ? u : undefined;
+  return { type: o.type, value: n, valueUsd };
 }
+
 
 /** DB에 저장된 값을 안전하게 읽습니다. 형식이 틀려도 화면이 깨지지 않게 기본값으로 채웁니다. */
 export function parseTurnaround(raw: unknown): TurnaroundSettings {
