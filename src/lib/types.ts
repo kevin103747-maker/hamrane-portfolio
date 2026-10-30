@@ -24,7 +24,7 @@ export type SiteData = {
   groups: Group[]; parts: Part[]; usageTypes: Tag[]; artistTypes: Tag[]; artists: Artist[]; works: Work[];
   rateItems: RateItem[]; packages: Pkg[]; notice: Text; links: Links; indexQueue: QueueItem[];
 };
-type PkgExtra = { name: string; group?: string; who?: string; price?: string; priceUsd?: string }; // 내 단가표에 없는 협업·외부 상품
+type PkgExtra = { name: string; nameEn?: string; group?: string; groupEn?: string; who?: string; whoEn?: string; price?: string; priceUsd?: string }; // 내 단가표에 없는 협업·외부 상품
 type Pkg = {
   id: string; no: string; tag: string; name: Text; desc: Text; itemIds: string[]; total: string; totalUsd?: string; discount?: Discount;
   qty?: Record<string, number>; extras?: PkgExtra[];

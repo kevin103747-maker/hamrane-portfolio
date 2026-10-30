@@ -47,6 +47,7 @@ export default async function PackagesPage({
   const estSet = new Set<string>((cur?.est ?? []) as string[]);
   const extras: Extra[] = ((cur?.extras ?? []) as Partial<Extra>[]).map((e) => ({
     name: e.name ?? '', group: e.group ?? '', who: e.who ?? '', price: e.price ?? '', priceUsd: e.priceUsd ?? '',
+    nameEn: e.nameEn ?? '', groupEn: e.groupEn ?? '', whoEn: e.whoEn ?? '',
   }));
   const nameOf = (id: string) => txt(items.find((x) => x.id === id)?.name) || id;
 
