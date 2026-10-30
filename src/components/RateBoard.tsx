@@ -38,18 +38,25 @@ function useL() {
 }
 
 /** 기본가에 추가요금을 더한 총 금액. 추가요금이 없거나 기본가가 숫자가 아니면 null */
-function withFee(base: number | null, f: Fee): number | null {
+function withFee(base: number | null, f: Fee, useUsd: boolean): number | null {
   if (base == null || !f) return null;
-  return f.type === 'pct' ? Math.round(base * (1 + f.value / 100)) : base + f.value;
+  if (f.type === 'pct') return Math.round(base * (1 + f.value / 100));
+  // 금액형 추가요금: USD가 있으면 USD로, 없으면 KRW로
+  if (useUsd && f.valueUsd != null) return base + f.valueUsd;
+  return base + f.value;
 }
 
-function OptRow({ label, days, on, fee, base, isBase }: {
-  label: string; days: string; on: boolean; fee: Fee; base: number | null; isBase?: boolean;
+function OptRow({ label, days, on, fee, base, isBase, useUsd }: {
+  label: string; days: string; on: boolean; fee: Fee; base: number | null; isBase?: boolean; useUsd: boolean;
 }) {
   const { lang, L, won } = useL();
-  const total = isBase ? base : withFee(base, fee);
+  const cur = useUsd ? L.curUsd : L.cur;
+  const total = isBase ? base : withFee(base, fee, useUsd);
   const diff = !isBase && total != null && base != null ? total - base : null;
-  const rate = isBase ? '' : feeLabel(fee, lang) + (fee?.type === 'pct' && diff != null ? ` (${fill(L.feeWon, { v: won(diff) })})` : '');
+  // 규칙 3: 통화를 섞지 않는다. 추가금이 USD가 없으면 KRW로 표시
+  const canUseUsd = useUsd && fee?.type === 'won' && fee.valueUsd != null;
+  const displayCur = canUseUsd ? L.curUsd : L.cur;
+  const rate = isBase ? '' : feeLabel(fee, lang) + (fee?.type === 'pct' && diff != null ? ` (${fill(displayCur === L.curUsd ? L.feeUsd : L.feeWon, { v: won(diff) })})` : '');
 
   return (
     <li className={`hr-ro-row${on ? '' : ' no'}`}>
@@ -61,7 +68,7 @@ function OptRow({ label, days, on, fee, base, isBase }: {
         {on ? (
           <>
             {rate && <em>{rate}</em>}
-            <strong>{total != null ? `${won(total)}${L.cur}~` : L.askPrice}</strong>
+            <strong>{total != null ? `${won(total)}${displayCur}~` : L.askPrice}</strong>
           </>
         ) : (
           <span>{L.na}</span>
@@ -117,9 +124,9 @@ function RateModal({ groupName, i, onClose }: { groupName: string; i: BoardItem;
 
           {t && (
             <ul className="hr-ro" aria-label={L.optAria}>
-              <OptRow label={L.optBase} days={t.avg || L.askTiming} on fee={null} base={base} isBase />
-              <OptRow label={L.optRush} days={t.rush.on ? t.rush.days || L.askTiming : '-'} on={t.rush.on} fee={t.rush.fee} base={base} />
-              <OptRow label={L.optSame} days={L.sameDay} on={t.same.on} fee={t.same.fee} base={base} />
+              <OptRow label={L.optBase} days={t.avg || L.askTiming} on fee={null} base={base} isBase useUsd={useUsd} />
+              <OptRow label={L.optRush} days={t.rush.on ? t.rush.days || L.askTiming : '-'} on={t.rush.on} fee={t.rush.fee} base={base} useUsd={useUsd} />
+              <OptRow label={L.optSame} days={L.sameDay} on={t.same.on} fee={t.same.fee} base={base} useUsd={useUsd} />
             </ul>
           )}
           {i.bonus && <p className="hr-pm-bonus"><b>{L.bonusInc}</b>{i.bonus}</p>}
