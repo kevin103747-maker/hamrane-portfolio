@@ -32,7 +32,7 @@ export async function GuideView({ lang }: { lang: 'ko' | 'en' }) {
 
           {show[1] && (
             <div className="hr-gp-blk">
-              <SectionHead n={no(1)} title={L.priceTitle} sub="Pricing" />
+              <SectionHead n={no(1)} title={L.priceTitle} sub={L.priceSub} />
               <div className="hr-gp-price">
                 {pt.title && <h3>{pt.title}</h3>}
                 {pt.body && <p>{pt.body}</p>}

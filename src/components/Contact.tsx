@@ -33,7 +33,7 @@ export function Contact({ guide: G, status }: { guide: ContactGuide; status: Sta
   const label = (k: Key, idle: string) => (done?.k === k ? (done.ok ? d.copied : d.copyFail) : idle);
 
   // 한국어는 어드민 값 그대로. 영어는 lead·reply를 숨기고, ask·fields는 어드민에 값이 있을 때만 영어 기본 문구로 보여 줍니다.
-  const lead = isKo ? G.lead : '';
+  const lead = isKo ? G.lead : (G.lead ? d.lead : '');
   const reply = isKo ? G.reply : '';
   const ask = G.ask ? (isKo ? G.ask : d.ask) : '';
   const fields = G.fields.length ? (isKo ? G.fields : d.fields) : [];
@@ -48,7 +48,7 @@ export function Contact({ guide: G, status }: { guide: ContactGuide; status: Sta
   return (
     <section className="contact-sec" id="contact"><div className="wrap">
       <div className="sh">
-        <div><span className="n">CONTACT</span><h2>{d.title}<span>1:1 Direct</span></h2></div>
+        <div><span className="n">CONTACT</span><h2>{d.title}<span>{d.sub}</span></h2></div>
         <Link className="lk" href="/pricing">{d.pricing} <Icon name="arrow" /></Link>
       </div>
 
