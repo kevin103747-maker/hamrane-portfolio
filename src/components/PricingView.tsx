@@ -104,8 +104,12 @@ export async function PricingView({ lang = 'ko' }: { lang?: string }) {
         }
       }
     }
+    // 영어 화면: 영어 칸이 있으면 그것을, 비었으면 한국어를 씁니다.
+    const pick = (ko?: string, en?: string) => (lang === 'ko' ? ko : en || ko);
     for (const e of p.extras ?? []) {
-      push(e.group?.trim() || L.extraGroup, { name: e.name, qty: 1, unit: amt(e.price), unitUsd: amt(e.priceUsd), collab: true, who: e.who });
+      push(pick(e.group, e.groupEn)?.trim() || L.extraGroup, {
+        name: pick(e.name, e.nameEn) ?? '', qty: 1, unit: amt(e.price), unitUsd: amt(e.priceUsd), collab: true, who: pick(e.who, e.whoEn),
+      });
     }
 
     return {

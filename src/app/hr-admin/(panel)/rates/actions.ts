@@ -221,23 +221,35 @@ export async function savePackage(fd: FormData) {
   const exWho = fd.getAll('exWho').map(String);
   const exPrice = fd.getAll('exPrice').map(String);
   const exPriceUsd = fd.getAll('exPriceUsd').map(String);
-  const extras: { name: string; group?: string; who?: string; price?: string; priceUsd?: string }[] = [];
+  const exNameEn = fd.getAll('exNameEn').map(String);
+  const exGroupEn = fd.getAll('exGroupEn').map(String);
+  const exWhoEn = fd.getAll('exWhoEn').map(String);
+  const extras: {
+    name: string; nameEn?: string; group?: string; groupEn?: string; who?: string; whoEn?: string; price?: string; priceUsd?: string;
+  }[] = [];
   exName.forEach((raw, i) => {
     const n = raw.trim();
     const group = (exGroup[i] ?? '').trim();
     const who = (exWho[i] ?? '').trim();
     const price = (exPrice[i] ?? '').trim();
     const priceUsd = (exPriceUsd[i] ?? '').trim();
-    if (!n && !group && !who && !price && !priceUsd) return; // 빈 줄은 건너뜀
-    if (!n) fail(back, '협업·외부 상품은 이름을 입력해야 합니다.');
+    const nEn = (exNameEn[i] ?? '').trim();
+    const groupEn = (exGroupEn[i] ?? '').trim();
+    const whoEn = (exWhoEn[i] ?? '').trim();
+    if (!n && !group && !who && !price && !priceUsd && !nEn && !groupEn && !whoEn) return; // 빈 줄은 건너뜀
+    if (!n) fail(back, '협업·외부 상품은 한국어 이름을 입력해야 합니다.');
     if (n.length > 30) fail(back, `협업 상품 이름은 30자 이내로 입력하세요. (${n})`);
     if (group.length > 20 || who.length > 20) fail(back, '분야 표기와 담당은 각각 20자 이내로 입력하세요.');
+    if (nEn.length > 60 || groupEn.length > 40 || whoEn.length > 40) fail(back, `영어 문구가 너무 깁니다. (이름 60자, 분야·담당 40자 이내) (${n})`);
     if (price && !validMoney(price)) fail(back, `협업 상품 금액은 숫자로 입력하세요. (무료는 0) (${n})`);
     if (priceUsd && !validMoney(priceUsd)) fail(back, `협업 상품 USD 금액은 숫자로 입력하세요. (${n})`);
     extras.push({
       name: n,
+      ...(nEn ? { nameEn: nEn } : {}),
       ...(group ? { group } : {}),
+      ...(groupEn ? { groupEn } : {}),
       ...(who ? { who } : {}),
+      ...(whoEn ? { whoEn } : {}),
       ...(price ? { price: money(price) } : {}),
       ...(priceUsd ? { priceUsd: money(priceUsd) } : {}),
     });
