@@ -19,7 +19,7 @@ import { dict, fill } from '@/lib/dict';
 import type { MixItem } from '@/lib/pricing-mixer';
 
 type BoardItem = {
-  id: string; name: string; desc: string; price: string; unit: string; tag?: string; discount?: Discount;
+  id: string; name: string; desc: string; price: string; priceUsd?: string; unit: string; tag?: string; discount?: Discount;
   turn?: GroupTurn; noDisc?: boolean; bonus?: string; noBonus?: string;
 };
 export type BoardGroup = { id: string; no: string; name: string; en: string; desc: string; items: BoardItem[]; disc?: GroupDiscView; pick?: string[]; mixer?: { mode: 'mix' | 'ab'; items: MixItem[] } };
@@ -87,9 +87,12 @@ function RateModal({ groupName, i, onClose }: { groupName: string; i: BoardItem;
     };
   }, [onClose]);
 
-  // 할인 중이면 할인가를 기준으로 계산합니다.
+  // 할인 중이면 할인가를 기준으로 계산합니다. USD가 있으면 USD 기준으로.
   const onSale = !!i.discount?.price && isDiscountActive(i.discount, Date.now());
-  const base = toNum(onSale ? i.discount!.price! : i.price);
+  const useUsd = lang === 'en' && i.priceUsd != null;
+  const discUsd = useUsd && i.discount?.priceUsd ? i.discount.priceUsd : undefined;
+  const basePrice = useUsd && discUsd ? discUsd : (onSale ? i.discount!.price! : i.price);
+  const base = toNum(basePrice);
   const t = i.turn;
 
   return createPortal(
@@ -108,7 +111,7 @@ function RateModal({ groupName, i, onClose }: { groupName: string; i: BoardItem;
 
           <div className="hr-pm-est">
             <small>{L.baseLab}</small>
-            <strong><Price price={i.price} discount={i.discount} /></strong>
+            <strong><Price price={i.price} priceUsd={i.priceUsd} discount={i.discount} /></strong>
             <i>{i.unit} · {L.vat}<Until discount={i.discount} /></i>
           </div>
 
@@ -155,7 +158,7 @@ function RateCard({ groupName, i, showDisc }: { groupName: string; i: BoardItem;
       {i.desc && <p>{i.desc}</p>}
       <div className="hr-rt-price">
         <span className="hr-rt-lab">{L.baseLab}</span>
-        <strong><Price price={i.price} discount={i.discount} /></strong>
+        <strong><Price price={i.price} priceUsd={i.priceUsd} discount={i.discount} /></strong>
         <i>{i.unit} · {L.vat}<Until discount={i.discount} /></i>
       </div>
 

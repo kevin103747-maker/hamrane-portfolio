@@ -47,14 +47,16 @@ async function pickSort(fd: FormData, table: string, current?: number) {
 }
 
 /** 할인 입력 → 저장 형태. 아무것도 안 적고 꺼져 있으면 null */
-function buildDiscount(fd: FormData, base: string, back: string) {
+function buildDiscount(fd: FormData, base: string, baseUsd: string | undefined, back: string) {
   const on = flag(fd, 'discOn');
   const rateRaw = str(fd, 'discRate');
   const priceRaw = str(fd, 'discPrice');
+  const priceUsdRaw = str(fd, 'discPriceUsd');
   const end = str(fd, 'discEnd');
-  if (!on && !rateRaw && !priceRaw && !end) return null;
+  if (!on && !rateRaw && !priceRaw && !priceUsdRaw && !end) return null;
 
   const b = validMoney(base) ? digits(base) : 0;
+  const bUsd = baseUsd && validMoney(baseUsd) ? digits(baseUsd) : 0;
 
   let rate: number | undefined;
   if (rateRaw) {
@@ -73,12 +75,20 @@ function buildDiscount(fd: FormData, base: string, back: string) {
     price = (Math.round((b * (100 - rate)) / 100 / 100) * 100).toLocaleString('en-US');
   }
 
+  let priceUsd: string | undefined;
+  if (priceUsdRaw) {
+    if (!validMoney(priceUsdRaw)) fail(back, 'USD 할인가는 숫자로 입력하세요.');
+    priceUsd = money(priceUsdRaw);
+    if (bUsd > 0 && digits(priceUsd) >= bUsd) fail(back, 'USD 할인가는 USD 정가보다 낮아야 합니다.');
+  }
+
   if (on && !price) fail(back, '할인을 켜려면 할인가가 필요합니다. 할인율만 넣으려면 정가가 숫자여야 합니다.');
   if (end && !/^\d{4}-\d{2}-\d{2}$/.test(end)) fail(back, '종료일은 연-월-일 형식으로 입력하세요.');
 
   const d: Record<string, unknown> = { on };
   if (rate !== undefined) d.rate = rate;
   if (price) d.price = price;
+  if (priceUsd) d.priceUsd = priceUsd;
   if (end) d.endDate = end;
   return d;
 }
@@ -98,13 +108,16 @@ export async function saveRate(fd: FormData) {
   const descEn = str(fd, 'descEn');
   const unitEn = str(fd, 'unitEn');
   const priceIn = str(fd, 'price');
+  const priceUsdIn = str(fd, 'priceUsd');
 
   if (!name) fail(back, '이름을 입력하세요.');
   if (!unit) fail(back, '단위를 입력하세요. (예: 곡당)');
   if (nameEn.length > 80 || unitEn.length > 30 || descEn.length > 300) fail(back, '영어 문구가 너무 깁니다. (이름 80자, 단위 30자, 설명 300자 이내)');
   if (!validMoney(priceIn) || digits(priceIn) <= 0) fail(back, '가격은 0보다 큰 숫자로 입력하세요. (예: 150000)');
+  if (priceUsdIn && !validMoney(priceUsdIn)) fail(back, 'USD 가격은 숫자로 입력하세요.');
   const price = money(priceIn);
-  const discount = buildDiscount(fd, price, back);
+  const priceUsd = priceUsdIn ? money(priceUsdIn) : undefined;
+  const discount = buildDiscount(fd, price, priceUsd, back);
 
   const db = adminDb();
   const { data: g } = await db.from('part_groups').select('id').eq('id', groupId).maybeSingle();
@@ -122,6 +135,7 @@ export async function saveRate(fd: FormData) {
     name: mergeBoth(before?.name, name, nameEn),
     descr: mergeBoth(before?.descr, desc, descEn),
     price,
+    price_usd: priceUsd,
     unit: mergeBoth(before?.unit, unit, unitEn),
     tag: pickTag(str(fd, 'badge'), tag),
     discount,
@@ -225,7 +239,9 @@ export async function savePackage(fd: FormData) {
   if (!validMoney(totalIn) || digits(totalIn) <= 0) fail(back, '합계는 0보다 큰 숫자로 입력하세요.');
   if (!itemIds.length && !extras.length) fail(back, '포함할 항목을 하나 이상 선택하거나 협업 상품을 추가하세요.');
   const total = money(totalIn);
-  const discount = buildDiscount(fd, total, back);
+  const totalUsdIn = str(fd, 'totalUsd');
+  const totalUsd = totalUsdIn && validMoney(totalUsdIn) ? money(totalUsdIn) : undefined;
+  const discount = buildDiscount(fd, total, totalUsd, back);
 
   const db = adminDb();
   if (itemIds.length) {

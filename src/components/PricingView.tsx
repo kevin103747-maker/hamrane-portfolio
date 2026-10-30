@@ -74,7 +74,7 @@ export async function PricingView({ lang = 'ko' }: { lang?: string }) {
     items: d.rateItems
       .filter((i) => i.groupId === g.id)
       .map((i) => ({
-        id: i.id, name: tr(i.name), desc: tr(i.desc), price: i.price, unit: tr(i.unit), tag: i.tag, discount: i.discount,
+        id: i.id, name: tr(i.name), desc: tr(i.desc), price: i.price, priceUsd: i.priceUsd, unit: tr(i.unit), tag: i.tag, discount: i.discount,
         turn: turnOf(turnFor(turnaround, g.id, i.id)),
         noDisc: discounts.excluded.includes(i.id),
         bonus: bonusOn && !bn.excluded.includes(i.id) ? bonusView?.title : undefined,

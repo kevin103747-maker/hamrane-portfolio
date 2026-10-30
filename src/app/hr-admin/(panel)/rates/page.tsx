@@ -86,6 +86,12 @@ export default async function RatesPage({
             <input name="price" inputMode="numeric" defaultValue={cur?.price ?? ''} placeholder="150000" required />
           </label>
           <label>
+            영어 화면 가격 (USD, 선택)
+            <input name="priceUsd" inputMode="numeric" defaultValue={cur?.price_usd ?? ''} placeholder="105" />
+          </label>
+        </div>
+        <div className="hr-row">
+          <label>
             단위
             <input name="unit" defaultValue={txt(cur?.unit)} placeholder="곡당" required />
           </label>
@@ -174,6 +180,7 @@ export default async function RatesPage({
                     {x.price}원 / {txt(x.unit)}
                     {x.discount ? ` · ${discLabel(x.discount as Disc)}` : ''}
                     {en(x.name) && en(x.unit) ? '' : ' · EN 미입력'}
+                    {x.price_usd ? '' : ' · USD 미입력'}
                   </small>
                 </div>
                 <div className="hr-rt-tools">
