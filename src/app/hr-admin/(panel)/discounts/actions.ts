@@ -38,7 +38,8 @@ export async function saveDiscounts(fd: FormData) {
     for (let n = 0; n < DISC_LIMITS.volRows; n++) {
       const minS = get(`vMin_${gid}_${n}`);
       const valS = get(`vVal_${gid}_${n}`);
-      if (!minS && !valS) continue; // 빈 단계는 건너뜀
+      const valUsdS = get(`vValUsd_${gid}_${n}`);
+      if (!minS && !valS && !valUsdS) continue; // 빈 단계는 건너뜀
       if (!minS || !valS) fail(`${who}: 수량 할인은 "몇 곡 이상"과 "할인 값"을 둘 다 입력하세요.`);
 
       const min = num(minS);
@@ -48,7 +49,15 @@ export async function saveDiscounts(fd: FormData) {
       if (!(value >= 1)) fail(`${who}: 할인 값은 1 이상의 정수로 입력하세요.`);
       if (type === 'pct' && value > 90) fail(`${who}: 할인율은 90% 이하로 입력하세요.`);
       if (type === 'won' && value > 10_000_000) fail(`${who}: 곡당 할인 금액이 너무 큽니다.`);
-      volume.push({ min, type, value });
+
+      let valueUsd: number | undefined;
+      if (type === 'won' && valUsdS) {
+        const nUsd = num(valUsdS);
+        if (!(nUsd >= 1)) fail(`${who}: USD 할인 값은 1 이상의 정수로 입력하세요.`);
+        valueUsd = nUsd;
+      }
+
+      volume.push({ min, type, value, valueUsd });
     }
     volume.sort((a, b) => a.min - b.min);
     for (let i = 1; i < volume.length; i++) {

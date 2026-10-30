@@ -46,7 +46,7 @@ export default async function PackagesPage({
   const priceMap = (cur?.prices ?? {}) as Record<string, string>;
   const estSet = new Set<string>((cur?.est ?? []) as string[]);
   const extras: Extra[] = ((cur?.extras ?? []) as Partial<Extra>[]).map((e) => ({
-    name: e.name ?? '', group: e.group ?? '', who: e.who ?? '', price: e.price ?? '',
+    name: e.name ?? '', group: e.group ?? '', who: e.who ?? '', price: e.price ?? '', priceUsd: e.priceUsd ?? '',
   }));
   const nameOf = (id: string) => txt(items.find((x) => x.id === id)?.name) || id;
 
@@ -99,6 +99,12 @@ export default async function PackagesPage({
             <input name="total" inputMode="numeric" defaultValue={cur?.total ?? ''} required />
           </label>
           <label>
+            합계 (USD, 선택)
+            <input name="totalUsd" inputMode="numeric" defaultValue={cur?.total_usd ?? ''} />
+          </label>
+        </div>
+        <div className="hr-row">
+          <label>
             번호
             <input name="num" defaultValue={cur?.num ?? String(pkgs.length + 1).padStart(2, '0')} required />
           </label>
@@ -146,6 +152,15 @@ export default async function PackagesPage({
                           inputMode="numeric"
                           placeholder={String(x.price)}
                           defaultValue={priceMap[x.id] ?? ''}
+                        />
+                      </label>
+                      <label className="hr-pkq-n">
+                        개당 금액 (USD, 선택)
+                        <input
+                          name={`priceUsd_${x.id}`}
+                          inputMode="numeric"
+                          placeholder="USD"
+                          defaultValue={(cur?.prices_usd as Record<string, string> | undefined)?.[x.id] ?? ''}
                         />
                       </label>
                       <label className="hr-chk hr-pkq-e">

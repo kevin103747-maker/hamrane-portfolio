@@ -96,6 +96,7 @@ export async function PricingView({ lang = 'ko' }: { lang?: string }) {
             name: tr(it.name),
             qty: p.qty?.[id] ?? 1,
             unit: amt(p.prices?.[id] ?? it.price),
+            unitUsd: amt(p.pricesUsd?.[id]),
             list: amt(it.price),
             est: (p.est ?? []).includes(id),
             noun: lang === 'ko' ? nounOf(tr(it.unit)) : '',
@@ -104,12 +105,12 @@ export async function PricingView({ lang = 'ko' }: { lang?: string }) {
       }
     }
     for (const e of p.extras ?? []) {
-      push(e.group?.trim() || L.extraGroup, { name: e.name, qty: 1, unit: amt(e.price), collab: true, who: e.who });
+      push(e.group?.trim() || L.extraGroup, { name: e.name, qty: 1, unit: amt(e.price), unitUsd: amt(e.priceUsd), collab: true, who: e.who });
     }
 
     return {
       id: p.id, no: p.no, tag: p.tag, name: tr(p.name), desc: tr(p.desc),
-      total: p.total, discount: p.discount,
+      total: p.total, totalUsd: p.totalUsd, discount: p.discount,
       rows: Array.from(rows, ([label, lines]) => ({ label, lines })),
     };
   });

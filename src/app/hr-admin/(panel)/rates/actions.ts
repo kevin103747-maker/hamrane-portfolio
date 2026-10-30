@@ -191,6 +191,8 @@ export async function savePackage(fd: FormData) {
   const qty: Record<string, number> = {};
   // 개당 금액: 입력한 항목만 저장합니다. 비우면 단가표 금액, 0이면 무료입니다.
   const prices: Record<string, string> = {};
+  // 개당 금액 USD
+  const pricesUsd: Record<string, string> = {};
   // 수량이 예시인 항목(곡마다 달라질 수 있음)
   const est: string[] = [];
   for (const iid of itemIds) {
@@ -204,6 +206,12 @@ export async function savePackage(fd: FormData) {
       prices[iid] = money(pr);
     }
 
+    const prUsd = str(fd, `priceUsd_${iid}`);
+    if (prUsd) {
+      if (!validMoney(prUsd)) fail(back, '개당 금액 USD는 숫자로 입력하세요.');
+      pricesUsd[iid] = money(prUsd);
+    }
+
     if (flag(fd, `est_${iid}`)) est.push(iid);
   }
 
@@ -212,22 +220,26 @@ export async function savePackage(fd: FormData) {
   const exGroup = fd.getAll('exGroup').map(String);
   const exWho = fd.getAll('exWho').map(String);
   const exPrice = fd.getAll('exPrice').map(String);
-  const extras: { name: string; group?: string; who?: string; price?: string }[] = [];
+  const exPriceUsd = fd.getAll('exPriceUsd').map(String);
+  const extras: { name: string; group?: string; who?: string; price?: string; priceUsd?: string }[] = [];
   exName.forEach((raw, i) => {
     const n = raw.trim();
     const group = (exGroup[i] ?? '').trim();
     const who = (exWho[i] ?? '').trim();
     const price = (exPrice[i] ?? '').trim();
-    if (!n && !group && !who && !price) return; // 빈 줄은 건너뜀
+    const priceUsd = (exPriceUsd[i] ?? '').trim();
+    if (!n && !group && !who && !price && !priceUsd) return; // 빈 줄은 건너뜀
     if (!n) fail(back, '협업·외부 상품은 이름을 입력해야 합니다.');
     if (n.length > 30) fail(back, `협업 상품 이름은 30자 이내로 입력하세요. (${n})`);
     if (group.length > 20 || who.length > 20) fail(back, '분야 표기와 담당은 각각 20자 이내로 입력하세요.');
     if (price && !validMoney(price)) fail(back, `협업 상품 금액은 숫자로 입력하세요. (무료는 0) (${n})`);
+    if (priceUsd && !validMoney(priceUsd)) fail(back, `협업 상품 USD 금액은 숫자로 입력하세요. (${n})`);
     extras.push({
       name: n,
       ...(group ? { group } : {}),
       ...(who ? { who } : {}),
       ...(price ? { price: money(price) } : {}),
+      ...(priceUsd ? { priceUsd: money(priceUsd) } : {}),
     });
   });
   if (extras.length > 12) fail(back, '협업·외부 상품은 최대 12개까지 넣을 수 있습니다.');
@@ -263,9 +275,11 @@ export async function savePackage(fd: FormData) {
     item_ids: itemIds,
     qty,
     prices,
+    prices_usd: pricesUsd,
     est,
     extras,
     total,
+    total_usd: totalUsd,
     discount,
     sort: await pickSort(fd, 'packages', before?.sort as number | undefined),
   };

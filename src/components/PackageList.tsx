@@ -10,17 +10,18 @@ import type { Discount } from '@/lib/types';
 
 /**
  * unit: 개당 금액(숫자, 0이면 무료). 금액이 정해지지 않은 협업 상품 등은 null
+ * unitUsd: 개당 금액 USD
  * list: 단가표의 개당 정가. 무료 항목에 취소선으로 보여줄 때 씁니다. 협업 상품은 없음
  * est: 수량이 예시인 항목(곡마다 달라질 수 있음)
  * noun: 수량 뒤에 붙일 세는 말(예: 트랙). 없으면 ×N 으로 표시
  */
 export type PkgLine = {
-  name: string; qty: number; unit: number | null; list?: number | null;
+  name: string; qty: number; unit: number | null; unitUsd?: number | null; list?: number | null;
   est?: boolean; noun?: string; collab?: boolean; who?: string;
 };
 type PkgRow = { label: string; lines: PkgLine[] };
 export type PackageView = {
-  id: string; no: string; tag: string; name: string; desc: string; total: string; discount?: Discount; rows: PkgRow[];
+  id: string; no: string; tag: string; name: string; desc: string; total: string; totalUsd?: string; discount?: Discount; rows: PkgRow[];
 };
 
 const toNum = (s: string) => {
@@ -51,11 +52,15 @@ function Modal({ p, onClose }: { p: PackageView; onClose: () => void }) {
     };
   }, [onClose]);
 
-  // 모든 항목에 금액(0 포함)이 있을 때만 합계를 계산해 보여줍니다.
+  // 규칙 3: 통화를 섞지 않습니다. 모든 항목에 USD가 있으면 USD로, 아니면 KRW로.
   const all = p.rows.flatMap((r) => r.lines);
-  const complete = all.length > 0 && all.every((l) => l.unit != null);
-  const sub = complete ? all.reduce((s, l) => s + (l.unit as number) * l.qty, 0) : 0;
-  const total = toNum(p.total);
+  const useUsd = lang === 'en' && p.totalUsd != null && all.length > 0 && all.every((l) => l.unitUsd != null);
+  const cur = useUsd ? L.curUsd : L.cur;
+
+  // 모든 항목에 금액(0 포함)이 있을 때만 합계를 계산해 보여줍니다.
+  const complete = all.length > 0 && all.every((l) => (useUsd ? l.unitUsd != null : l.unit != null));
+  const sub = complete ? all.reduce((s, l) => s + ((useUsd ? l.unitUsd : l.unit) as number) * l.qty, 0) : 0;
+  const total = toNum(useUsd ? (p.totalUsd ?? '') : p.total);
   const diff = complete && total != null ? total - sub : null;
   const hasEst = all.some((l) => l.est);
 
@@ -81,7 +86,7 @@ function Modal({ p, onClose }: { p: PackageView; onClose: () => void }) {
 
           <div className="hr-pm-est">
             <small>{P.est}</small>
-            <strong><Price price={p.total} discount={p.discount} /></strong>
+            <strong><Price price={p.total} priceUsd={p.totalUsd} discount={p.discount} /></strong>
             <i>{L.vat}<Until discount={p.discount} /></i>
           </div>
 
@@ -107,16 +112,16 @@ function Modal({ p, onClose }: { p: PackageView; onClose: () => void }) {
                             {l.list != null && l.list > 0 && (
                               <i className="was">
                                 <span className="sr-only">{P.listPrice}</span>
-                                <s>{won(l.list * l.qty)}{L.cur}</s>
-                                {l.qty > 1 && ` (${won(l.list)}${L.cur} × ${mulText(l)})`}
+                                <s>{won(l.list * l.qty)}{cur}</s>
+                                {l.qty > 1 && ` (${won(l.list)}{cur} × ${mulText(l)})`}
                               </i>
                             )}
                             <b className="free">{P.free}</b>
                           </>
                         ) : (
                           <>
-                            {l.qty > 1 && <i>{won(l.unit)}{L.cur} × {mulText(l)}</i>}
-                            <b>{won(l.unit * l.qty)}{L.cur}</b>
+                            {l.qty > 1 && <i>{won(useUsd ? l.unitUsd as number : l.unit)}{cur} × {mulText(l)}</i>}
+                            <b>{won((useUsd ? l.unitUsd as number : l.unit) * l.qty)}{cur}</b>
                           </>
                         )}
                       </span>
@@ -128,14 +133,14 @@ function Modal({ p, onClose }: { p: PackageView; onClose: () => void }) {
 
             {complete && diff != null ? (
               <div className="hr-pb-sum">
-                <div className="hr-pb-r"><span>{P.sub}</span><b>{won(sub)}{L.cur}</b></div>
+                <div className="hr-pb-r"><span>{P.sub}</span><b>{won(sub)}{cur}</b></div>
                 {diff !== 0 && (
                   <div className="hr-pb-r adj">
                     <span>{diff < 0 ? P.discount : P.adjust}</span>
-                    <b>{diff < 0 ? '-' : '+'}{won(Math.abs(diff))}{L.cur}</b>
+                    <b>{diff < 0 ? '-' : '+'}{won(Math.abs(diff))}{cur}</b>
                   </div>
                 )}
-                <div className="hr-pb-r tot"><span>{P.total}</span><b>{won(total as number)}{L.cur}</b></div>
+                <div className="hr-pb-r tot"><span>{P.total}</span><b>{won(total as number)}{cur}</b></div>
               </div>
             ) : (
               <p className="hr-pb-miss">{P.missing}</p>

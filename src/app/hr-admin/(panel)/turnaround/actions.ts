@@ -36,7 +36,18 @@ export async function saveTurnaround(fd: FormData) {
     const n = Number(raw);
     if (!Number.isInteger(n) || n <= 0) fail(`${who}: 추가 요금은 1 이상의 정수로 입력하세요.`);
     if (type === 'pct' && n > 300) fail(`${who}: 추가 요금 %는 300 이하로 입력하세요.`);
-    return { type, value: n };
+
+    let valueUsd: number | undefined;
+    if (type === 'won') {
+      const rawUsd = field(`${prefix}FeeUsd`, key).replace(/,/g, '');
+      if (rawUsd) {
+        const nUsd = Number(rawUsd);
+        if (!Number.isInteger(nUsd) || nUsd <= 0) fail(`${who}: USD 추가 요금은 1 이상의 정수로 입력하세요.`);
+        valueUsd = nUsd;
+      }
+    }
+
+    return { type, value: n, valueUsd };
   };
 
   /** 한 묶음(분야 또는 작업)의 입력칸을 읽고 검사합니다. */

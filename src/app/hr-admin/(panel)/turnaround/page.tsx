@@ -48,6 +48,7 @@ function Fields({ k, t }: { k: string; t: GroupTurn }) {
               <option value="won">원</option>
             </select>
             <input name={`rushFee_${k}`} inputMode="numeric" defaultValue={t.rush.fee?.value ?? ''} placeholder="예: 30" />
+            <input name={`rushFeeUsd_${k}`} inputMode="numeric" defaultValue={t.rush.fee?.valueUsd ?? ''} placeholder="USD (선택)" />
           </span>
         </label>
       </div>
@@ -63,6 +64,7 @@ function Fields({ k, t }: { k: string; t: GroupTurn }) {
               <option value="won">원</option>
             </select>
             <input name={`sameFee_${k}`} inputMode="numeric" defaultValue={t.same.fee?.value ?? ''} placeholder="예: 50" />
+            <input name={`sameFeeUsd_${k}`} inputMode="numeric" defaultValue={t.same.fee?.valueUsd ?? ''} placeholder="USD (선택)" />
           </span>
         </label>
       </div>

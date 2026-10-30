@@ -2,7 +2,7 @@
 'use client';
 import { useState } from 'react';
 
-export type Extra = { name: string; group: string; who: string; price: string };
+export type Extra = { name: string; group: string; who: string; price: string; priceUsd: string };
 
 export function ExtrasEditor({ initial, max }: { initial: Extra[]; max: number }) {
   const [rows, setRows] = useState<Extra[]>(initial);
@@ -26,11 +26,13 @@ export function ExtrasEditor({ initial, max }: { initial: Extra[]; max: number }
             aria-label={`협업 상품 ${i + 1} 담당`} onChange={(e) => set(i, { who: e.target.value })} />
           <input name="exPrice" value={r.price} inputMode="numeric" maxLength={12} placeholder="금액 (숫자, 선택)"
             aria-label={`협업 상품 ${i + 1} 금액`} onChange={(e) => set(i, { price: e.target.value })} />
+          <input name="exPriceUsd" value={r.priceUsd} inputMode="numeric" maxLength={12} placeholder="USD (선택)"
+            aria-label={`협업 상품 ${i + 1} USD 금액`} onChange={(e) => set(i, { priceUsd: e.target.value })} />
           <button type="button" onClick={() => setRows((x) => x.filter((_, j) => j !== i))}>삭제</button>
         </div>
       ))}
       {rows.length < max && (
-        <button type="button" onClick={() => setRows((x) => [...x, { name: '', group: '', who: '', price: '' }])}>
+        <button type="button" onClick={() => setRows((x) => [...x, { name: '', group: '', who: '', price: '', priceUsd: '' }])}>
           + 협업 상품 추가
         </button>
       )}
