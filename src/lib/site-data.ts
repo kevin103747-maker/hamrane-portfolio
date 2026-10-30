@@ -48,13 +48,13 @@ async function load(): Promise<SiteData | null> {
       partIds: x.part_ids, mainPartId: x.main_part_id ?? undefined, hidden: x.hidden, feat: x.feat ?? undefined, tracks: x.tracks?.length ? parseTracks(x.tracks) : undefined,
     })),
     rateItems: rows(r).map((x) => ({
-      id: x.id, groupId: x.group_id, name: x.name, desc: x.descr, price: x.price, unit: x.unit,
+      id: x.id, groupId: x.group_id, name: x.name, desc: x.descr, price: x.price, priceUsd: x.price_usd || undefined, unit: x.unit,
       tag: x.tag ?? undefined, discount: x.discount ?? undefined,
     })),
     packages: rows(k).map((x) => ({
       id: x.id, no: x.num, tag: x.tag, name: x.name, desc: x.descr, itemIds: x.item_ids,
-      total: x.total, discount: x.discount ?? undefined,
-      qty: x.qty ?? {}, extras: x.extras ?? [], prices: x.prices ?? {}, est: x.est ?? [],
+      total: x.total, totalUsd: x.total_usd || undefined, discount: x.discount ?? undefined,
+      qty: x.qty ?? {}, extras: x.extras ?? [], prices: x.prices ?? {}, pricesUsd: x.prices_usd ?? {}, est: x.est ?? [],
 
     })),
     notice: setting('notice') ?? SAMPLE.notice,

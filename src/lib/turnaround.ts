@@ -1,7 +1,7 @@
 // src/lib/turnaround.ts — 분야별 소요 기간·빠른 마감·당일 마감의 형식과 표시 규칙
 import { dict, fill } from './dict';
 type FeeType = 'pct' | 'won';
-export type Fee = { type: FeeType; value: number } | null;
+export type Fee = { type: FeeType; value: number; valueUsd?: number } | null;
 
 export type GroupTurn = {
   avg: string; // 예: "5~7일"
@@ -21,7 +21,12 @@ export const emptyTurn = (): GroupTurn => ({
 
 export const feeLabel = (f: Fee, lang = 'ko') => {
   const L = dict(lang).pricing;
-  return !f ? L.feeNone : f.type === 'pct' ? `+${f.value}%` : fill(L.feeWon, { v: f.value.toLocaleString(L.numLocale) });
+  if (!f) return L.feeNone;
+  if (f.type === 'pct') return `+${f.value}%`;
+  if (lang === 'en' && f.valueUsd != null) {
+    return fill(L.feeUsd, { v: f.valueUsd.toLocaleString(L.numLocale) });
+  }
+  return fill(L.feeWon, { v: f.value.toLocaleString(L.numLocale) });
 };
 
 

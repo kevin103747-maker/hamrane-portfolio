@@ -28,6 +28,10 @@ function VolRow({ gid, n, t }: { gid: string; n: number; t?: VolTier }) {
         할인 값
         <input name={`vVal_${gid}_${n}`} inputMode="numeric" defaultValue={t?.value ?? ''} placeholder="예: 10" />
       </label>
+      <label>
+        할인 값 (USD, 선택)
+        <input name={`vValUsd_${gid}_${n}`} inputMode="numeric" defaultValue={t?.valueUsd ?? ''} placeholder="예: 5" />
+      </label>
     </div>
   );
 }

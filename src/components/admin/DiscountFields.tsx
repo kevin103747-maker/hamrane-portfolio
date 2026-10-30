@@ -1,5 +1,5 @@
 // src/components/admin/DiscountFields.tsx — 단가 항목·패키지 공용 할인 입력칸
-type D = { on?: boolean; rate?: number; price?: string; endDate?: string } | null | undefined;
+type D = { on?: boolean; rate?: number; price?: string; priceUsd?: string; endDate?: string } | null | undefined;
 
 export function DiscountFields({ d }: { d?: D }) {
   return (
@@ -17,6 +17,12 @@ export function DiscountFields({ d }: { d?: D }) {
           할인가
           <input name="discPrice" inputMode="numeric" defaultValue={d?.price ?? ''} />
         </label>
+        <label>
+          할인가 (USD, 선택)
+          <input name="discPriceUsd" inputMode="numeric" defaultValue={d?.priceUsd ?? ''} />
+        </label>
+      </div>
+      <div className="hr-row">
         <label>
           종료일 (한국 시간, 그날 끝까지)
           <input type="date" name="discEnd" defaultValue={d?.endDate ?? ''} />
