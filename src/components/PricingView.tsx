@@ -6,6 +6,8 @@ import { dict } from '@/lib/dict';
 import { PageHead, SectionHead } from '@/components/Heads';
 import { RateBoard, type BoardGroup } from '@/components/RateBoard';
 import { PackageList, type PackageView, type PkgLine } from '@/components/PackageList';
+import { PriceExplorer } from '@/components/PriceExplorer';
+import { getPriceTree, type PublicNode } from '@/lib/price-tree-data';
 import { turnFor, type GroupTurn } from '@/lib/turnaround';
 import { getTurnaround } from '@/lib/turnaround-settings';
 import { getDiscounts } from '@/lib/discounts-settings';
@@ -31,12 +33,13 @@ const nounOf = (u: string) => {
 
 export async function PricingView({ lang = 'ko' }: { lang?: string }) {
   const L = dict(lang).pricing;
+  const X = dict(lang).pex;
   const tr = (v: Text) => tx(v, lang);
   // 영어 화면: 영어 기간 문구가 있으면 그것을, 없으면 한국어 값을 씁니다.
   const turnOf = (t?: GroupTurn): GroupTurn | undefined =>
     !t || lang === 'ko' ? t : { ...t, avg: t.avgEn || t.avg, rush: { ...t.rush, days: t.rush.daysEn || t.rush.days } };
-  const [d, turnaround, discounts, bn, pw, pm] = await Promise.all([
-    getSiteData(), getTurnaround(), getDiscounts(), getBonus(), getPricingWorks(), getPricingMixer(),
+  const [d, turnaround, discounts, bn, pw, pm, tree] = await Promise.all([
+    getSiteData(), getTurnaround(), getDiscounts(), getBonus(), getPricingWorks(), getPricingMixer(), getPriceTree(lang),
   ]);
   // 분야 이름: 한국어는 그대로, 영어는 어드민 영어 이름 → 기존 영어 라벨 → 한국어 순으로 씁니다.
   const gName = (g: (typeof d.groups)[number]) => (lang === 'ko' ? tr(g.name) : g.name[lang] || g.en || g.name.ko);
@@ -92,6 +95,7 @@ export async function PricingView({ lang = 'ko' }: { lang?: string }) {
       for (const id of p.itemIds) {
         const it = item(id);
         if (it && it.groupId === g.id) {
+          const opt = p.optional?.includes(id) ?? false;
           push(gName(g), {
             name: tr(it.name),
             qty: p.qty?.[id] ?? 1,
@@ -100,15 +104,17 @@ export async function PricingView({ lang = 'ko' }: { lang?: string }) {
             list: amt(it.price),
             est: (p.est ?? []).includes(id),
             noun: lang === 'ko' ? nounOf(tr(it.unit)) : '',
+            optKey: opt ? `i:${id}` : undefined,
           });
         }
       }
     }
     // 영어 화면: 영어 칸이 있으면 그것을, 비었으면 한국어를 씁니다.
     const pick = (ko?: string, en?: string) => (lang === 'ko' ? ko : en || ko);
-    for (const e of p.extras ?? []) {
+    for (const [ei, e] of (p.extras ?? []).entries()) {
       push(pick(e.group, e.groupEn)?.trim() || L.extraGroup, {
         name: pick(e.name, e.nameEn) ?? '', qty: 1, unit: amt(e.price), unitUsd: amt(e.priceUsd), collab: true, who: pick(e.who, e.whoEn),
+        optKey: e.optional ? `e:${ei}` : undefined,
       });
     }
 
@@ -119,31 +125,73 @@ export async function PricingView({ lang = 'ko' }: { lang?: string }) {
     };
   });
 
+  // 폴더 트리에 실제로 등장하는 패키지만 탐색기에 넘깁니다.
+  const treePkgIds = new Set<string>();
+  const collectPkgIds = (ns: PublicNode[]) => {
+    for (const n of ns) {
+      if (n.kind === 'package') treePkgIds.add(n.id); else collectPkgIds(n.children);
+    }
+  };
+  collectPkgIds(tree);
+  const explorerPackages = packages.filter((p) => treePkgIds.has(p.id));
+  const useExplorer = tree.length > 0 && explorerPackages.length > 0;
+
   return (
     <>
       <PageHead crumb="PRICING" title={L.pageTitle} en={L.pageSub} desc={L.pageDesc} />
 
-      <section><div className="wrap">
-        <RateBoard groups={board} bonus={bonusView} />
+      {useExplorer && (
+        <section className="blk"><div className="wrap">
+          <SectionHead n="EXAMPLES" title={L.exTitle} sub={L.exSub} />
+          <p className="hr-rt-cap">{L.exCap}</p>
+          <PriceExplorer roots={tree} packages={explorerPackages} />
+        </div></section>
+      )}
 
-        <p className="hr-pt-note sm">
-          {L.askNote}{' '}<a className="hr-pt-link" href="#contact">{L.askLink}</a>
-        </p>
+      {useExplorer ? (
+        <details className="hr-rt-details">
+          <summary>{X.viewRates}</summary>
+          <div className="hr-rt-details-body">
+            <RateBoard groups={board} bonus={bonusView} />
 
-        <BundleBox
-          tiers={discounts.bundle}
-          lang={lang}
-          yes={groups.filter((g) => discounts.groups[g.id]?.bundle).map((g) => gName(g))}
-          no={groups.filter((g) => !discounts.groups[g.id]?.bundle).map((g) => gName(g))}
-        />
-        <p className="note"><i>NOTE</i>{tr(d.notice)}</p>
-      </div></section>
+            <p className="hr-pt-note sm">
+              {L.askNote}{' '}<a className="hr-pt-link" href="#contact">{L.askLink}</a>
+            </p>
 
-      <section className="blk"><div className="wrap">
-        <SectionHead n="EXAMPLES" title={L.exTitle} sub={L.exSub} />
-        <p className="hr-rt-cap">{L.exCap}</p>
-        <PackageList items={packages} />
-      </div></section>
+            <BundleBox
+              tiers={discounts.bundle}
+              lang={lang}
+              yes={groups.filter((g) => discounts.groups[g.id]?.bundle).map((g) => gName(g))}
+              no={groups.filter((g) => !discounts.groups[g.id]?.bundle).map((g) => gName(g))}
+            />
+            <p className="note"><i>NOTE</i>{tr(d.notice)}</p>
+          </div>
+        </details>
+      ) : (
+        <section><div className="wrap">
+          <RateBoard groups={board} bonus={bonusView} />
+
+          <p className="hr-pt-note sm">
+            {L.askNote}{' '}<a className="hr-pt-link" href="#contact">{L.askLink}</a>
+          </p>
+
+          <BundleBox
+            tiers={discounts.bundle}
+            lang={lang}
+            yes={groups.filter((g) => discounts.groups[g.id]?.bundle).map((g) => gName(g))}
+            no={groups.filter((g) => !discounts.groups[g.id]?.bundle).map((g) => gName(g))}
+          />
+          <p className="note"><i>NOTE</i>{tr(d.notice)}</p>
+        </div></section>
+      )}
+
+      {!useExplorer && (
+        <section className="blk"><div className="wrap">
+          <SectionHead n="EXAMPLES" title={L.exTitle} sub={L.exSub} />
+          <p className="hr-rt-cap">{L.exCap}</p>
+          <PackageList items={packages} />
+        </div></section>
+      )}
 
       <section className="hr-faq-sec"><div className="wrap">
         <Link className="hr-gp-banner" href="/guide">
