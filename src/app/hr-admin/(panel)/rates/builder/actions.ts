@@ -71,12 +71,12 @@ export async function saveOrder(
   }
 
   const db = adminDb();
-  if (folderSorts.length) {
-    const { error } = await db.from('price_folders').upsert(folderSorts);
+  for (const r of folderSorts) {
+    const { error } = await db.from('price_folders').update({ sort: r.sort }).eq('id', r.id);
     if (error) return err(`순서 저장 실패: ${error.message}`);
   }
-  if (slotSorts.length) {
-    const { error } = await db.from('price_slots').upsert(slotSorts);
+  for (const r of slotSorts) {
+    const { error } = await db.from('price_slots').update({ sort: r.sort }).eq('id', r.id);
     if (error) return err(`순서 저장 실패: ${error.message}`);
   }
   await logEdit(me, 'update', 'price_slots', pid ?? 'root', null, { order: nodes });
