@@ -4,29 +4,16 @@ import { redirect } from 'next/navigation';
 import { requireAdmin } from '@/lib/auth/guard';
 import { adminDb } from '@/lib/auth/admin-db';
 import { can, logEdit } from '@/lib/auth/permissions';
+import { str, newId, fail, mergeBoth } from '@/lib/admin/forms';
+import { parseFolderForm } from '@/lib/admin/rate-forms';
 
 const FOLDERS = '/hr-admin/rates/folders';
-
-const str = (fd: FormData, k: string) => String(fd.get(k) ?? '').trim();
-const flag = (fd: FormData, k: string) => fd.get(k) === 'on';
-const newId = (p: string) => `${p}-${Date.now().toString(36)}`;
-
-function fail(path: string, msg: string): never {
-  redirect(`${path}${path.includes('?') ? '&' : '?'}err=${encodeURIComponent(msg)}`);
-}
 
 async function guard() {
   const me = await requireAdmin();
   if (!can(me, 'rates')) redirect('/hr-admin');
   return me;
 }
-
-const mergeBoth = (old: unknown, ko: string, en: string) => {
-  const o: Record<string, unknown> = { ...(old && typeof old === 'object' ? (old as Record<string, unknown>) : {}), ko };
-  if (en) o.en = en;
-  else delete o.en;
-  return o;
-};
 
 type FolderRow = Record<string, unknown>;
 
@@ -70,21 +57,11 @@ function descendants(id: string, map: Map<string, FolderRow>): Set<string> {
 
 export async function saveFolder(fd: FormData) {
   const me = await guard();
-  const id = str(fd, 'id');
+  const p = parseFolderForm(fd);
+  const id = p.ok ? p.data.id : str(fd, 'id');
   const back = id ? `${FOLDERS}?edit=${encodeURIComponent(id)}` : FOLDERS;
-
-  const parentId = str(fd, 'parentId');
-  const name = str(fd, 'name');
-  const nameEn = str(fd, 'nameEn');
-  const desc = str(fd, 'desc');
-  const descEn = str(fd, 'descEn');
-  const hidden = flag(fd, 'hidden');
-
-  if (!name) fail(back, '한국어 이름을 입력하세요.');
-  if (name.length > 20) fail(back, '한국어 이름은 20자 이내로 입력하세요.');
-  if (nameEn.length > 40) fail(back, '영어 이름은 40자 이내로 입력하세요.');
-  if (desc.length > 60) fail(back, '한국어 설명은 60자 이내로 입력하세요.');
-  if (descEn.length > 120) fail(back, '영어 설명은 120자 이내로 입력하세요.');
+  if (!p.ok) fail(back, p.error);
+  const { parentId, name, nameEn, desc, descEn, hidden } = p.data;
 
   const db = adminDb();
   const map = await loadFolders();

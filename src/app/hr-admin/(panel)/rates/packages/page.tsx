@@ -4,8 +4,7 @@ import { redirect } from 'next/navigation';
 import { requireAdmin } from '@/lib/auth/guard';
 import { can } from '@/lib/auth/permissions';
 import { adminDb } from '@/lib/auth/admin-db';
-import { DiscountFields } from '@/components/admin/DiscountFields';
-import { ExtrasEditor, type Extra } from '@/components/admin/ExtrasEditor';
+import { PackageFormFields } from '@/components/admin/PackageFormFields';
 import { Section, Help, Flash } from '@/components/admin/Section';
 import { savePackage, removePackage } from '../actions';
 
@@ -28,28 +27,6 @@ function folderPath(folder: Folder, all: Folder[]): string {
     pid = parent.parent_id;
   }
   return parts.join(' › ');
-}
-
-// 폴더 선택 옵션 생성 (인덴트)
-function folderOptions(all: Folder[], currentId?: string): React.ReactNode[] {
-  const opts: React.ReactNode[] = [<option value="">폴더 없음</option>];
-  const childMap = new Map<string | null, Folder[]>();
-  for (const f of all) {
-    const pid = f.parent_id ?? null;
-    if (!childMap.has(pid)) childMap.set(pid, []);
-    childMap.get(pid)!.push(f);
-  }
-  function add(pid: string | null, depth: number = 0) {
-    const children = childMap.get(pid) ?? [];
-    for (const f of children) {
-      if (f.id === currentId) continue;
-      const label = '  '.repeat(depth) + txt(f.name);
-      opts.push(<option key={f.id} value={f.id}>{label}</option>);
-      add(f.id, depth + 1);
-    }
-  }
-  add(null);
-  return opts;
 }
 
 function discLabel(d: Disc) {
@@ -80,16 +57,7 @@ export default async function PackagesPage({
   const pkgs = p.data ?? [];
   const folders = f.data ?? [];
   const cur = edit ? pkgs.find((x) => x.id === edit) : undefined;
-  const picked: string[] = cur?.item_ids ?? [];
-  const qtyMap = (cur?.qty ?? {}) as Record<string, number>;
-  const priceMap = (cur?.prices ?? {}) as Record<string, string>;
-  const estSet = new Set<string>((cur?.est ?? []) as string[]);
-  const extras: Extra[] = ((cur?.extras ?? []) as Partial<Extra>[]).map((e) => ({
-    name: e.name ?? '', group: e.group ?? '', who: e.who ?? '', price: e.price ?? '', priceUsd: e.priceUsd ?? '',
-    nameEn: e.nameEn ?? '', groupEn: e.groupEn ?? '', whoEn: e.whoEn ?? '', optional: e.optional ?? false,
-  }));
   const nameOf = (id: string) => txt(items.find((x) => x.id === id)?.name) || id;
-  const optionalSet = new Set<string>((cur?.optional ?? []) as string[]);
 
   return (
     <div className="hr-pn-body">
@@ -118,130 +86,7 @@ export default async function PackagesPage({
 
       <form key={cur?.id ?? 'new'} id="form" action={savePackage} className="hr-card hr-f">
         <h2>{cur ? `패키지 수정 · ${txt(cur.name)}` : '새 패키지 추가'}</h2>
-        {cur && <input type="hidden" name="id" value={cur.id} />}
-
-        <div className="hr-row">
-          <label>
-            이름 (사이트에 보이는 질문 문장)
-            <input name="name" defaultValue={txt(cur?.name)} placeholder="오리지널 밴드곡이 만들고싶어요!" required />
-          </label>
-          <label>
-            태그
-            <input name="tag" defaultValue={cur?.tag ?? ''} placeholder="ORIGINAL" required />
-          </label>
-        </div>
-        <label>
-          이름 (영어, 선택 · 비우면 영어 화면에도 한국어가 나옵니다)
-          <input name="nameEn" maxLength={120} defaultValue={en(cur?.name)} placeholder="I want to make an original band song!" />
-        </label>
-        <div className="hr-row">
-          <label>
-            합계 (정가, 숫자만 · 직접 입력)
-            <input name="total" inputMode="numeric" defaultValue={cur?.total ?? ''} required />
-          </label>
-          <label>
-            합계 (USD, 선택)
-            <input name="totalUsd" inputMode="numeric" defaultValue={cur?.total_usd ?? ''} />
-          </label>
-        </div>
-        <div className="hr-row">
-          <label>
-            번호
-            <input name="num" defaultValue={cur?.num ?? String(pkgs.length + 1).padStart(2, '0')} required />
-          </label>
-          <label>
-            순서 (비우면 맨 끝)
-            <input type="number" name="sort" defaultValue={cur?.sort ?? ''} />
-          </label>
-        </div>
-        <label>
-          폴더
-          <select name="folderId" defaultValue={cur?.folder_id ?? ''}>
-            {folderOptions(folders as Folder[], cur?.id)}
-          </select>
-        </label>
-        <label>
-          설명 (팝업 안에 보임)
-          <input name="desc" defaultValue={txt(cur?.descr)} />
-        </label>
-        <label>
-          설명 (영어, 선택)
-          <input name="descEn" maxLength={300} defaultValue={en(cur?.descr)} />
-        </label>
-
-        <Section open title="포함할 상품" badge={`${picked.length}개 선택`} hint="체크하고 수량·개당 금액을 정합니다 (금액을 비우면 단가표 금액, 0은 무료)">
-          {groups.map((grp) => {
-            const rows = items.filter((x) => x.group_id === grp.id);
-            if (!rows.length) return null;
-            const n = rows.filter((x) => picked.includes(x.id)).length;
-            return (
-              <Section
-                key={grp.id}
-                open={n > 0}
-                title={`${grp.num} ${txt(grp.name)}`}
-                badge={n ? `${n}개 선택` : `${rows.length}개 중`}
-              >
-                <div className="hr-chks">
-                  {rows.map((x) => (
-                    <div key={x.id} className="hr-pkq">
-                      <label className="hr-chk">
-                        <input type="checkbox" name="itemIds" value={x.id} defaultChecked={picked.includes(x.id)} />
-                        {txt(x.name)}
-                      </label>
-                      <label className="hr-pkq-n">
-                        수량
-                        <input type="number" name={`qty_${x.id}`} min={1} max={99} defaultValue={qtyMap[x.id] ?? 1} />
-                      </label>
-                      <label className="hr-pkq-n">
-                        개당 금액
-                        <input
-                          name={`price_${x.id}`}
-                          inputMode="numeric"
-                          placeholder={String(x.price)}
-                          defaultValue={priceMap[x.id] ?? ''}
-                        />
-                      </label>
-                      <label className="hr-pkq-n">
-                        개당 금액 (USD, 선택)
-                        <input
-                          name={`priceUsd_${x.id}`}
-                          inputMode="numeric"
-                          placeholder="USD"
-                          defaultValue={(cur?.prices_usd as Record<string, string> | undefined)?.[x.id] ?? ''}
-                        />
-                      </label>
-                      <label className="hr-chk hr-pkq-e">
-                        <input type="checkbox" name={`est_${x.id}`} defaultChecked={estSet.has(x.id)} />
-                        수량은 예시{txt(x.unit) ? ` (${txt(x.unit)})` : ''}
-                      </label>
-                      <label className="hr-chk hr-pkq-e">
-                        <input type="checkbox" name={`opt_${x.id}`} defaultChecked={optionalSet.has(x.id)} />
-                        방문자가 끌 수 있음
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </Section>
-            );
-          })}
-        </Section>
-
-        <Section
-          open={extras.length > 0}
-          title="협업·외부 상품"
-          badge={`${extras.length}개`}
-          hint="내 단가표에 없는 다른 작업자의 몫"
-        >
-          <ExtrasEditor initial={extras} max={12} />
-        </Section>
-
-        <Section
-          open={!!(cur?.discount as Disc)?.on}
-          title="이 패키지 할인 (선택)"
-          badge={(cur?.discount as Disc)?.on ? '켜짐' : '꺼짐'}
-        >
-          <DiscountFields d={cur?.discount as Disc} />
-        </Section>
+        <PackageFormFields cur={cur} groups={groups} items={items} pkgCount={pkgs.length} folders={folders as Folder[]} />
 
         <div className="hr-act">
           {cur && <Link href="/hr-admin/rates/packages">수정 취소</Link>}

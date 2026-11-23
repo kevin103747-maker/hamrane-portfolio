@@ -5,92 +5,18 @@ import { requireAdmin } from '@/lib/auth/guard';
 import { adminDb } from '@/lib/auth/admin-db';
 import { can, logEdit } from '@/lib/auth/permissions';
 import { pickTag } from '@/lib/rate-badge';
+import {
+  str, newId, fail, mergeBoth, validMoney, digits, money, pickSort, buildDiscount,
+} from '@/lib/admin/forms';
+import { parsePackageForm } from '@/lib/admin/rate-forms';
 
 const RATES = '/hr-admin/rates';
 const PKGS = '/hr-admin/rates/packages';
-
-const str = (fd: FormData, k: string) => String(fd.get(k) ?? '').trim();
-const list = (fd: FormData, k: string) => fd.getAll(k).map(String).filter(Boolean);
-const flag = (fd: FormData, k: string) => fd.get(k) === 'on';
-const newId = (p: string) => `${p}-${Date.now().toString(36)}`;
-
-function fail(path: string, msg: string): never {
-  redirect(`${path}${path.includes('?') ? '&' : '?'}err=${encodeURIComponent(msg)}`);
-}
 
 async function guard() {
   const me = await requireAdmin();
   if (!can(me, 'rates')) redirect('/hr-admin');
   return me;
-}
-
-/* ---------- 가격 문자열 도우미 ---------- */
-const validMoney = (s: string) => /^\d[\d,]*$/.test(s);
-const digits = (s: string) => Number(s.replace(/,/g, ''));
-const money = (s: string) => digits(s).toLocaleString('en-US');
-
-/** 기존 값(다른 언어 키)을 보존하고 ko·en을 덮어씁니다. en이 비어 있으면 en 키를 지웁니다. */
-const mergeBoth = (old: unknown, ko: string, en: string) => {
-  const o: Record<string, unknown> = { ...(old && typeof old === 'object' ? (old as Record<string, unknown>) : {}), ko };
-  if (en) o.en = en;
-  else delete o.en;
-  return o;
-};
-
-/** 정렬 번호: 입력이 있으면 그 값, 없으면 기존 값, 그것도 없으면 맨 끝 다음 번호 */
-async function pickSort(fd: FormData, table: string, current?: number) {
-  const raw = str(fd, 'sort');
-  if (raw !== '' && Number.isInteger(Number(raw))) return Number(raw);
-  if (current !== undefined) return current;
-  const { data } = await adminDb().from(table).select('sort').order('sort', { ascending: false }).limit(1);
-  return ((data?.[0]?.sort as number | undefined) ?? 0) + 1;
-}
-
-/** 할인 입력 → 저장 형태. 아무것도 안 적고 꺼져 있으면 null */
-function buildDiscount(fd: FormData, base: string, baseUsd: string | undefined, back: string) {
-  const on = flag(fd, 'discOn');
-  const rateRaw = str(fd, 'discRate');
-  const priceRaw = str(fd, 'discPrice');
-  const priceUsdRaw = str(fd, 'discPriceUsd');
-  const end = str(fd, 'discEnd');
-  if (!on && !rateRaw && !priceRaw && !priceUsdRaw && !end) return null;
-
-  const b = validMoney(base) ? digits(base) : 0;
-  const bUsd = baseUsd && validMoney(baseUsd) ? digits(baseUsd) : 0;
-
-  let rate: number | undefined;
-  if (rateRaw) {
-    rate = Number(rateRaw);
-    if (!Number.isInteger(rate) || rate < 1 || rate > 99) fail(back, '할인율은 1~99 사이의 정수로 입력하세요.');
-  }
-
-  let price: string | undefined;
-  if (priceRaw) {
-    if (!validMoney(priceRaw)) fail(back, '할인가는 숫자로 입력하세요.');
-    price = money(priceRaw);
-    if (b > 0 && digits(price) >= b) fail(back, '할인가는 정가보다 낮아야 합니다.');
-    if (rate === undefined && b > 0) rate = Math.max(1, Math.round((1 - digits(price) / b) * 100));
-  } else if (rate !== undefined && b > 0) {
-    // 할인율만 입력: 100원 단위로 반올림해 할인가를 계산합니다.
-    price = (Math.round((b * (100 - rate)) / 100 / 100) * 100).toLocaleString('en-US');
-  }
-
-  let priceUsd: string | undefined;
-  if (priceUsdRaw) {
-    if (!validMoney(priceUsdRaw)) fail(back, 'USD 할인가는 숫자로 입력하세요.');
-    priceUsd = money(priceUsdRaw);
-    if (bUsd > 0 && digits(priceUsd) >= bUsd) fail(back, 'USD 할인가는 USD 정가보다 낮아야 합니다.');
-  }
-
-  if (on && !price) fail(back, '할인을 켜려면 할인가가 필요합니다. 할인율만 넣으려면 정가가 숫자여야 합니다.');
-  if (end && !/^\d{4}-\d{2}-\d{2}$/.test(end)) fail(back, '종료일은 연-월-일 형식으로 입력하세요.');
-
-  const d: Record<string, unknown> = { on };
-  if (rate !== undefined) d.rate = rate;
-  if (price) d.price = price;
-  if (priceUsd) d.priceUsd = priceUsd;
-  if (end) d.endDate = end;
-  return d;
 }
 
 /* ---------------- 단가 항목 ---------------- */
@@ -117,7 +43,9 @@ export async function saveRate(fd: FormData) {
   if (priceUsdIn && !validMoney(priceUsdIn)) fail(back, 'USD 가격은 숫자로 입력하세요.');
   const price = money(priceIn);
   const priceUsd = priceUsdIn ? money(priceUsdIn) : undefined;
-  const discount = buildDiscount(fd, price, priceUsd, back);
+  const disc = buildDiscount(fd, price, priceUsd);
+  if (!disc.ok) fail(back, disc.error);
+  const discount = disc.discount;
 
   const db = adminDb();
   const { data: g } = await db.from('part_groups').select('id').eq('id', groupId).maybeSingle();
@@ -175,117 +103,18 @@ export async function removeRate(fd: FormData) {
 /* ---------------- 패키지 ---------------- */
 export async function savePackage(fd: FormData) {
   const me = await guard();
-  const id = str(fd, 'id');
-  const back = id ? `${PKGS}?edit=${encodeURIComponent(id)}` : PKGS;
+  const back = str(fd, 'id') ? `${PKGS}?edit=${encodeURIComponent(str(fd, 'id'))}` : PKGS;
 
-  const num = str(fd, 'num');
-  const tag = str(fd, 'tag');
-  const name = str(fd, 'name');
-  const desc = str(fd, 'desc');
-  const totalIn = str(fd, 'total');
-  const nameEn = str(fd, 'nameEn');
-  const descEn = str(fd, 'descEn');
-  const itemIds = list(fd, 'itemIds');
-  const folderId = str(fd, 'folderId');
-
-  // 수량: 선택한 항목만 저장하고, 1이면 저장하지 않습니다.
-  const qty: Record<string, number> = {};
-  // 개당 금액: 입력한 항목만 저장합니다. 비우면 단가표 금액, 0이면 무료입니다.
-  const prices: Record<string, string> = {};
-  // 개당 금액 USD
-  const pricesUsd: Record<string, string> = {};
-  // 수량이 예시인 항목(곡마다 달라질 수 있음)
-  const est: string[] = [];
-  // 방문자가 끌 수 있는 항목 id들
-  const optional: string[] = [];
-  for (const iid of itemIds) {
-    const n = Number(str(fd, `qty_${iid}`) || '1');
-    if (!Number.isInteger(n) || n < 1 || n > 99) fail(back, '수량은 1~99 사이의 정수로 입력하세요.');
-    if (n > 1) qty[iid] = n;
-
-    const pr = str(fd, `price_${iid}`);
-    if (pr) {
-      if (!validMoney(pr)) fail(back, '개당 금액은 숫자로 입력하세요. (무료는 0, 단가표 금액을 쓰려면 비워 두세요)');
-      prices[iid] = money(pr);
-    }
-
-    const prUsd = str(fd, `priceUsd_${iid}`);
-    if (prUsd) {
-      if (!validMoney(prUsd)) fail(back, '개당 금액 USD는 숫자로 입력하세요.');
-      pricesUsd[iid] = money(prUsd);
-    }
-
-    if (flag(fd, `est_${iid}`)) est.push(iid);
-    if (flag(fd, `opt_${iid}`)) optional.push(iid);
-  }
-
-  // 협업·외부 상품: 이름·분야·담당·금액 입력칸이 같은 순서로 넘어옵니다.
-  const exName = fd.getAll('exName').map(String);
-  const exGroup = fd.getAll('exGroup').map(String);
-  const exWho = fd.getAll('exWho').map(String);
-  const exPrice = fd.getAll('exPrice').map(String);
-  const exPriceUsd = fd.getAll('exPriceUsd').map(String);
-  const exNameEn = fd.getAll('exNameEn').map(String);
-  const exGroupEn = fd.getAll('exGroupEn').map(String);
-  const exWhoEn = fd.getAll('exWhoEn').map(String);
-  const exOpt = fd.getAll('exOpt').map(String); // '0' = 고정, '1' = 끌 수 있음
-  const extras: {
-    name: string; nameEn?: string; group?: string; groupEn?: string; who?: string; whoEn?: string; price?: string; priceUsd?: string; optional?: boolean;
-  }[] = [];
-  exName.forEach((raw, i) => {
-    const n = raw.trim();
-    const group = (exGroup[i] ?? '').trim();
-    const who = (exWho[i] ?? '').trim();
-    const price = (exPrice[i] ?? '').trim();
-    const priceUsd = (exPriceUsd[i] ?? '').trim();
-    const nEn = (exNameEn[i] ?? '').trim();
-    const groupEn = (exGroupEn[i] ?? '').trim();
-    const whoEn = (exWhoEn[i] ?? '').trim();
-    const opt = (exOpt[i] ?? '0') === '1';
-    if (!n && !group && !who && !price && !priceUsd && !nEn && !groupEn && !whoEn) return; // 빈 줄은 건너뜀
-    if (!n) fail(back, '협업·외부 상품은 한국어 이름을 입력해야 합니다.');
-    if (n.length > 30) fail(back, `협업 상품 이름은 30자 이내로 입력하세요. (${n})`);
-    if (group.length > 20 || who.length > 20) fail(back, '분야 표기와 담당은 각각 20자 이내로 입력하세요.');
-    if (nEn.length > 60 || groupEn.length > 40 || whoEn.length > 40) fail(back, `영어 문구가 너무 깁니다. (이름 60자, 분야·담당 40자 이내) (${n})`);
-    if (price && !validMoney(price)) fail(back, `협업 상품 금액은 숫자로 입력하세요. (무료는 0) (${n})`);
-    if (priceUsd && !validMoney(priceUsd)) fail(back, `협업 상품 USD 금액은 숫자로 입력하세요. (${n})`);
-    extras.push({
-      name: n,
-      ...(nEn ? { nameEn: nEn } : {}),
-      ...(group ? { group } : {}),
-      ...(groupEn ? { groupEn } : {}),
-      ...(who ? { who } : {}),
-      ...(whoEn ? { whoEn } : {}),
-      ...(price ? { price: money(price) } : {}),
-      ...(priceUsd ? { priceUsd: money(priceUsd) } : {}),
-      ...(opt ? { optional: true } : {}),
-    });
-  });
-  if (extras.length > 12) fail(back, '협업·외부 상품은 최대 12개까지 넣을 수 있습니다.');
-
-  if (!num) fail(back, '번호를 입력하세요. (예: 01)');
-  if (!tag) fail(back, '태그를 입력하세요. (예: ORIGINAL)');
-  if (!name) fail(back, '이름을 입력하세요.');
-  if (nameEn.length > 120 || descEn.length > 300) fail(back, '영어 문구가 너무 깁니다. (이름 120자, 설명 300자 이내)');
-  if (!validMoney(totalIn) || digits(totalIn) <= 0) fail(back, '합계는 0보다 큰 숫자로 입력하세요.');
-  if (!itemIds.length && !extras.length) fail(back, '포함할 항목을 하나 이상 선택하거나 협업 상품을 추가하세요.');
-  const total = money(totalIn);
-  const totalUsdIn = str(fd, 'totalUsd');
-  const totalUsd = totalUsdIn && validMoney(totalUsdIn) ? money(totalUsdIn) : undefined;
-  const discount = buildDiscount(fd, total, totalUsd, back);
+  const p = await parsePackageForm(fd);
+  if (!p.ok) fail(back, p.error);
+  const d = p.data;
+  const { id, num, tag, name, nameEn, desc, descEn, total, totalUsd, itemIds, folderId } = d;
 
   const db = adminDb();
-  if (itemIds.length) {
-    const { data: found } = await db.from('rate_items').select('id').in('id', itemIds);
-    if ((found ?? []).length !== new Set(itemIds).size) fail(back, '존재하지 않는 항목이 포함되어 있습니다. 새로고침 후 다시 선택하세요.');
-  }
   if (folderId) {
     const { data: f } = await db.from('price_folders').select('id').eq('id', folderId).maybeSingle();
     if (!f) fail(back, '폴더를 찾지 못했습니다. 새로고침 후 다시 선택하세요.');
   }
-
-  // optional에서 현재 패키지에 없는 항목 id를 제거
-  const optionalFiltered = optional.filter((id) => itemIds.includes(id));
 
   let before: Record<string, unknown> | null = null;
   if (id) {
@@ -299,16 +128,16 @@ export async function savePackage(fd: FormData) {
     name: mergeBoth(before?.name, name, nameEn),
     descr: mergeBoth(before?.descr, desc, descEn),
     item_ids: itemIds,
-    qty,
-    prices,
-    prices_usd: pricesUsd,
-    est,
-    extras,
+    qty: d.qty,
+    prices: d.prices,
+    prices_usd: d.pricesUsd,
+    est: d.est,
+    extras: d.extras,
     total,
     total_usd: totalUsd,
-    discount,
+    discount: d.discount,
     folder_id: folderId || null,
-    optional: optionalFiltered,
+    optional: d.optional,
     sort: await pickSort(fd, 'packages', before?.sort as number | undefined),
   };
 
