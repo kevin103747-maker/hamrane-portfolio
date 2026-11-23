@@ -55,7 +55,7 @@ async function load(): Promise<SiteData | null> {
       id: x.id, no: x.num, tag: x.tag, name: x.name, desc: x.descr, itemIds: x.item_ids,
       total: x.total, totalUsd: x.total_usd || undefined, discount: x.discount ?? undefined,
       qty: x.qty ?? {}, extras: x.extras ?? [], prices: x.prices ?? {}, pricesUsd: x.prices_usd ?? {}, est: x.est ?? [],
-
+      folderId: x.folder_id ?? undefined, optional: x.optional ?? [],
     })),
     notice: setting('notice') ?? SAMPLE.notice,
     links: setting('links') ?? SAMPLE.links,
