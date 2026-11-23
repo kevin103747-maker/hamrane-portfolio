@@ -15,6 +15,43 @@ const en = (v: unknown): string => (v as { en?: string } | null)?.en ?? '';
 type Disc = { on?: boolean; rate?: number; price?: string; endDate?: string } | null;
 const todayKst = () => new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
 
+type Folder = { id: string; parent_id: string | null; name: { ko: string; en?: string }; sort: number };
+
+// 폴더 트리에서 인덴트 레이블 생성
+function folderPath(folder: Folder, all: Folder[]): string {
+  const parts: string[] = [txt(folder.name)];
+  let pid = folder.parent_id;
+  while (pid) {
+    const parent = all.find((x) => x.id === pid);
+    if (!parent) break;
+    parts.unshift(txt(parent.name));
+    pid = parent.parent_id;
+  }
+  return parts.join(' › ');
+}
+
+// 폴더 선택 옵션 생성 (인덴트)
+function folderOptions(all: Folder[], currentId?: string): React.ReactNode[] {
+  const opts: React.ReactNode[] = [<option value="">폴더 없음</option>];
+  const childMap = new Map<string | null, Folder[]>();
+  for (const f of all) {
+    const pid = f.parent_id ?? null;
+    if (!childMap.has(pid)) childMap.set(pid, []);
+    childMap.get(pid)!.push(f);
+  }
+  function add(pid: string | null, depth: number = 0) {
+    const children = childMap.get(pid) ?? [];
+    for (const f of children) {
+      if (f.id === currentId) continue;
+      const label = '  '.repeat(depth) + txt(f.name);
+      opts.push(<option key={f.id} value={f.id}>{label}</option>);
+      add(f.id, depth + 1);
+    }
+  }
+  add(null);
+  return opts;
+}
+
 function discLabel(d: Disc) {
   if (!d) return '';
   if (!d.on) return '할인 꺼짐';
@@ -32,14 +69,16 @@ export default async function PackagesPage({
   const { ok, err, edit } = await searchParams;
 
   const db = adminDb();
-  const [g, r, p] = await Promise.all([
+  const [g, r, p, f] = await Promise.all([
     db.from('part_groups').select('id, num, name').order('sort', { ascending: true }),
     db.from('rate_items').select('id, group_id, name, price, unit').order('sort', { ascending: true }),
     db.from('packages').select('*').order('sort', { ascending: true }),
+    db.from('price_folders').select('*').order('sort', { ascending: true }),
   ]);
   const groups = g.data ?? [];
   const items = r.data ?? [];
   const pkgs = p.data ?? [];
+  const folders = f.data ?? [];
   const cur = edit ? pkgs.find((x) => x.id === edit) : undefined;
   const picked: string[] = cur?.item_ids ?? [];
   const qtyMap = (cur?.qty ?? {}) as Record<string, number>;
@@ -47,9 +86,10 @@ export default async function PackagesPage({
   const estSet = new Set<string>((cur?.est ?? []) as string[]);
   const extras: Extra[] = ((cur?.extras ?? []) as Partial<Extra>[]).map((e) => ({
     name: e.name ?? '', group: e.group ?? '', who: e.who ?? '', price: e.price ?? '', priceUsd: e.priceUsd ?? '',
-    nameEn: e.nameEn ?? '', groupEn: e.groupEn ?? '', whoEn: e.whoEn ?? '',
+    nameEn: e.nameEn ?? '', groupEn: e.groupEn ?? '', whoEn: e.whoEn ?? '', optional: e.optional ?? false,
   }));
   const nameOf = (id: string) => txt(items.find((x) => x.id === id)?.name) || id;
+  const optionalSet = new Set<string>((cur?.optional ?? []) as string[]);
 
   return (
     <div className="hr-pn-body">
@@ -115,6 +155,12 @@ export default async function PackagesPage({
           </label>
         </div>
         <label>
+          폴더
+          <select name="folderId" defaultValue={cur?.folder_id ?? ''}>
+            {folderOptions(folders as Folder[], cur?.id)}
+          </select>
+        </label>
+        <label>
           설명 (팝업 안에 보임)
           <input name="desc" defaultValue={txt(cur?.descr)} />
         </label>
@@ -168,6 +214,10 @@ export default async function PackagesPage({
                         <input type="checkbox" name={`est_${x.id}`} defaultChecked={estSet.has(x.id)} />
                         수량은 예시{txt(x.unit) ? ` (${txt(x.unit)})` : ''}
                       </label>
+                      <label className="hr-chk hr-pkq-e">
+                        <input type="checkbox" name={`opt_${x.id}`} defaultChecked={optionalSet.has(x.id)} />
+                        방문자가 끌 수 있음
+                      </label>
                     </div>
                   ))}
                 </div>
@@ -205,12 +255,14 @@ export default async function PackagesPage({
         {pkgs.map((x) => {
           const q = (x.qty ?? {}) as Record<string, number>;
           const ex = (x.extras ?? []) as { name: string }[];
+          const folder = x.folder_id ? (folders as Folder[]).find((f) => f.id === x.folder_id) : undefined;
+          const folderPathStr = folder ? folderPath(folder, folders as Folder[]) : '폴더 미지정';
           return (
             <div key={x.id} className="hr-rt-row">
               <div>
                 <b>EX {x.num} · {txt(x.name)} · {x.tag}</b>
                 <small>
-                  {x.total}원 · {(x.item_ids as string[]).map((id) => `${nameOf(id)}${q[id] > 1 ? ` ×${q[id]}` : ''}`).join(', ')}
+                  {folderPathStr} · {x.total}원 · {(x.item_ids as string[]).map((id) => `${nameOf(id)}${q[id] > 1 ? ` ×${q[id]}` : ''}`).join(', ')}
                   {ex.length ? ` · 협업 ${ex.length}개(${ex.map((e) => e.name).join(', ')})` : ''}
                   {x.discount ? ` · ${discLabel(x.discount as Disc)}` : ''}
                   {en(x.name) ? '' : ' · EN 미입력'}

@@ -24,11 +24,13 @@ export type SiteData = {
   groups: Group[]; parts: Part[]; usageTypes: Tag[]; artistTypes: Tag[]; artists: Artist[]; works: Work[];
   rateItems: RateItem[]; packages: Pkg[]; notice: Text; links: Links; indexQueue: QueueItem[];
 };
-type PkgExtra = { name: string; nameEn?: string; group?: string; groupEn?: string; who?: string; whoEn?: string; price?: string; priceUsd?: string }; // 내 단가표에 없는 협업·외부 상품
+type PkgExtra = { name: string; nameEn?: string; group?: string; groupEn?: string; who?: string; whoEn?: string; price?: string; priceUsd?: string; optional?: boolean }; // 내 단가표에 없는 협업·외부 상품
 type Pkg = {
   id: string; no: string; tag: string; name: Text; desc: Text; itemIds: string[]; total: string; totalUsd?: string; discount?: Discount;
   qty?: Record<string, number>; extras?: PkgExtra[];
   prices?: Record<string, string>; // 이 패키지 안에서만 적용하는 개당 금액 (없으면 단가표 금액)
   pricesUsd?: Record<string, string>; // 개당 금액 USD 짝
   est?: string[]; // 수량이 예시인 단가 항목 id (곡마다 달라질 수 있는 항목)
+  folderId?: string; // 이 패키지가 속한 단가 폴더 id
+  optional?: string[]; // 방문자가 끌 수 있는 단가 항목 id들
 };

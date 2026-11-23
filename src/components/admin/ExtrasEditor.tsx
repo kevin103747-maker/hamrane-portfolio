@@ -5,10 +5,10 @@ import type { CSSProperties } from 'react';
 
 export type Extra = {
   name: string; group: string; who: string; price: string; priceUsd: string;
-  nameEn: string; groupEn: string; whoEn: string;
+  nameEn: string; groupEn: string; whoEn: string; optional: boolean;
 };
 
-const BLANK: Extra = { name: '', group: '', who: '', price: '', priceUsd: '', nameEn: '', groupEn: '', whoEn: '' };
+const BLANK: Extra = { name: '', group: '', who: '', price: '', priceUsd: '', nameEn: '', groupEn: '', whoEn: '', optional: false };
 
 // 폭이 모자라면 줄바꿈하고, 칸이 부모 밖으로 나가지 않게 합니다.
 const rowStyle: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: 8, minWidth: 0, width: '100%' };
@@ -33,6 +33,11 @@ export function ExtrasEditor({ initial, max }: { initial: Extra[]; max: number }
       {rows.map((r, i) => (
         <div key={i} className="hr-ex-item" style={{ minWidth: 0, marginTop: 12 }}>
           <div className="hr-ex-row" style={rowStyle}>
+            <select style={cell} name="exOpt" value={r.optional ? '1' : '0'} aria-label={`협업 상품 ${i + 1} 끌 수 있음`}
+              onChange={(e) => set(i, { optional: e.target.value === '1' })}>
+              <option value="0">고정</option>
+              <option value="1">끌 수 있음</option>
+            </select>
             <input style={wide} name="exName" value={r.name} maxLength={30} placeholder="상품 이름 (예: 보컬 녹음)"
               aria-label={`협업 상품 ${i + 1} 이름`} onChange={(e) => set(i, { name: e.target.value })} />
             <input style={cell} name="exGroup" value={r.group} maxLength={20} placeholder="분야 표기 (예: 보컬)"

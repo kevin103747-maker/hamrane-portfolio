@@ -186,6 +186,7 @@ export async function savePackage(fd: FormData) {
   const nameEn = str(fd, 'nameEn');
   const descEn = str(fd, 'descEn');
   const itemIds = list(fd, 'itemIds');
+  const folderId = str(fd, 'folderId');
 
   // 수량: 선택한 항목만 저장하고, 1이면 저장하지 않습니다.
   const qty: Record<string, number> = {};
@@ -195,6 +196,8 @@ export async function savePackage(fd: FormData) {
   const pricesUsd: Record<string, string> = {};
   // 수량이 예시인 항목(곡마다 달라질 수 있음)
   const est: string[] = [];
+  // 방문자가 끌 수 있는 항목 id들
+  const optional: string[] = [];
   for (const iid of itemIds) {
     const n = Number(str(fd, `qty_${iid}`) || '1');
     if (!Number.isInteger(n) || n < 1 || n > 99) fail(back, '수량은 1~99 사이의 정수로 입력하세요.');
@@ -213,6 +216,7 @@ export async function savePackage(fd: FormData) {
     }
 
     if (flag(fd, `est_${iid}`)) est.push(iid);
+    if (flag(fd, `opt_${iid}`)) optional.push(iid);
   }
 
   // 협업·외부 상품: 이름·분야·담당·금액 입력칸이 같은 순서로 넘어옵니다.
@@ -224,8 +228,9 @@ export async function savePackage(fd: FormData) {
   const exNameEn = fd.getAll('exNameEn').map(String);
   const exGroupEn = fd.getAll('exGroupEn').map(String);
   const exWhoEn = fd.getAll('exWhoEn').map(String);
+  const exOpt = fd.getAll('exOpt').map(String); // '0' = 고정, '1' = 끌 수 있음
   const extras: {
-    name: string; nameEn?: string; group?: string; groupEn?: string; who?: string; whoEn?: string; price?: string; priceUsd?: string;
+    name: string; nameEn?: string; group?: string; groupEn?: string; who?: string; whoEn?: string; price?: string; priceUsd?: string; optional?: boolean;
   }[] = [];
   exName.forEach((raw, i) => {
     const n = raw.trim();
@@ -236,6 +241,7 @@ export async function savePackage(fd: FormData) {
     const nEn = (exNameEn[i] ?? '').trim();
     const groupEn = (exGroupEn[i] ?? '').trim();
     const whoEn = (exWhoEn[i] ?? '').trim();
+    const opt = (exOpt[i] ?? '0') === '1';
     if (!n && !group && !who && !price && !priceUsd && !nEn && !groupEn && !whoEn) return; // 빈 줄은 건너뜀
     if (!n) fail(back, '협업·외부 상품은 한국어 이름을 입력해야 합니다.');
     if (n.length > 30) fail(back, `협업 상품 이름은 30자 이내로 입력하세요. (${n})`);
@@ -252,6 +258,7 @@ export async function savePackage(fd: FormData) {
       ...(whoEn ? { whoEn } : {}),
       ...(price ? { price: money(price) } : {}),
       ...(priceUsd ? { priceUsd: money(priceUsd) } : {}),
+      ...(opt ? { optional: true } : {}),
     });
   });
   if (extras.length > 12) fail(back, '협업·외부 상품은 최대 12개까지 넣을 수 있습니다.');
@@ -272,6 +279,13 @@ export async function savePackage(fd: FormData) {
     const { data: found } = await db.from('rate_items').select('id').in('id', itemIds);
     if ((found ?? []).length !== new Set(itemIds).size) fail(back, '존재하지 않는 항목이 포함되어 있습니다. 새로고침 후 다시 선택하세요.');
   }
+  if (folderId) {
+    const { data: f } = await db.from('price_folders').select('id').eq('id', folderId).maybeSingle();
+    if (!f) fail(back, '폴더를 찾지 못했습니다. 새로고침 후 다시 선택하세요.');
+  }
+
+  // optional에서 현재 패키지에 없는 항목 id를 제거
+  const optionalFiltered = optional.filter((id) => itemIds.includes(id));
 
   let before: Record<string, unknown> | null = null;
   if (id) {
@@ -293,6 +307,8 @@ export async function savePackage(fd: FormData) {
     total,
     total_usd: totalUsd,
     discount,
+    folder_id: folderId || null,
+    optional: optionalFiltered,
     sort: await pickSort(fd, 'packages', before?.sort as number | undefined),
   };
 
