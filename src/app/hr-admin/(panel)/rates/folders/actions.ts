@@ -115,27 +115,33 @@ export async function saveFolder(fd: FormData) {
     if (!before) fail(back, '수정할 폴더를 찾지 못했습니다.');
   }
 
+  const newParent = parentId || null;
   const row = {
-    parent_id: parentId || null,
+    parent_id: newParent,
     name: mergeBoth(before?.name, name, nameEn),
     descr: mergeBoth(before?.descr, desc, descEn),
     hidden,
-    sort: 0, // moveFolder에서 재계산
+  };
+
+  // 같은 상위 폴더 안에서 맨 뒤에 붙는 순서값 (자기 자신은 제외)
+  const lastSort = () => {
+    const sib = Array.from(map.values()).filter((f) => f.parent_id === newParent && f.id !== id);
+    return sib.length ? Math.max(...sib.map((f) => (f.sort as number) ?? 0)) + 1 : 1;
   };
 
   if (id) {
-    const { error } = await db.from('price_folders').update(row).eq('id', id);
+    // 상위 폴더가 바뀔 때만 새 위치의 맨 뒤로 보냅니다. 이름·설명만 고치면 순서는 그대로입니다.
+    const moved = ((before?.parent_id as string | null) ?? null) !== newParent;
+    const patch = moved ? { ...row, sort: lastSort() } : row;
+    const { error } = await db.from('price_folders').update(patch).eq('id', id);
     if (error) fail(back, `저장 실패: ${error.message}`);
-    await logEdit(me, 'update', 'price_folders', id, before, row);
+    await logEdit(me, 'update', 'price_folders', id, before, patch);
   } else {
     const nid = newId('fd');
-    // sort: 형제 중 가장 큰 값 + 1
-    const siblings = Array.from(map.values()).filter((f) => f.parent_id === (parentId || null));
-    const maxSort = siblings.length ? Math.max(...siblings.map((f) => (f.sort as number) ?? 0)) : 0;
-    row.sort = maxSort + 1;
-    const { error } = await db.from('price_folders').insert({ id: nid, ...row });
+    const created = { id: nid, ...row, sort: lastSort() };
+    const { error } = await db.from('price_folders').insert(created);
     if (error) fail(back, `저장 실패: ${error.message}`);
-    await logEdit(me, 'create', 'price_folders', nid, null, row);
+    await logEdit(me, 'create', 'price_folders', nid, null, created);
   }
   redirect(`${FOLDERS}?ok=1`);
 }
@@ -179,38 +185,15 @@ export async function moveFolder(fd: FormData) {
   if (!target) fail(FOLDERS, '폴더를 찾지 못했습니다. 새로고침 후 다시 시도하세요.');
   const pid = target.parent_id as string | null;
 
-  // 같은 parent_id 안에서 이웃과 자리를 바꿉니다.
+  // 같은 상위 폴더 안의 형제만 골라 이웃과 자리를 바꾸고, 그 형제들의 순서값만 다시 매깁니다.
   const siblings = folders.filter((x) => x.parent_id === pid);
   const i = siblings.findIndex((x) => x.id === id);
   const j = i + dir;
-  if (i >= 0 && j >= 0 && j < siblings.length) {
-    [siblings[i], siblings[j]] = [siblings[j], siblings[i]];
-  }
+  if (i < 0 || j < 0 || j >= siblings.length) redirect(`${FOLDERS}#row-${id}`); // 맨 위/맨 아래라 옮길 곳이 없음
+  [siblings[i], siblings[j]] = [siblings[j], siblings[i]];
+  const renumbered = siblings.map((x, k) => ({ ...x, sort: k + 1 }));
 
-  // sort 재계산: 전체 목록을 parent별로 그룹화해서 순서대로 번호 매김
-  const byParent = new Map<string | null, FolderRow[]>();
-  for (const f of folders) byParent.set(f.parent_id as string | null, []);
-  for (const f of folders) byParent.get(f.parent_id as string | null)!.push(f);
-
-  let seq = 0;
-  const flat: FolderRow[] = [];
-  // 루트부터, 각 parent의 children을 sort 순서대로
-  const roots = byParent.get(null) ?? [];
-  for (const r of roots) {
-    flat.push({ ...r, sort: seq++ });
-    // 깊이 우선 순회
-    const stack = [r.id as string];
-    while (stack.length) {
-      const cur = stack.shift()!;
-      const children = (byParent.get(cur) ?? []).sort((a, b) => (a.sort as number) - (b.sort as number));
-      for (const c of children) {
-        flat.push({ ...c, sort: seq++ });
-        stack.push(c.id as string);
-      }
-    }
-  }
-
-  const { error: upsertError } = await db.from('price_folders').upsert(flat, { onConflict: 'id' });
+  const { error: upsertError } = await db.from('price_folders').upsert(renumbered, { onConflict: 'id' });
   if (upsertError) fail(FOLDERS, `순서 저장 실패: ${upsertError.message}`);
   await logEdit(me, 'update', 'price_folders', id, null, { dir });
   redirect(`${FOLDERS}?ok=1#row-${id}`);
