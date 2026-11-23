@@ -18,6 +18,7 @@ import type { Discount } from '@/lib/types';
 export type PkgLine = {
   name: string; qty: number; unit: number | null; unitUsd?: number | null; list?: number | null;
   est?: boolean; noun?: string; collab?: boolean; who?: string;
+  optKey?: string; // 방문자가 끌 수 있는 항목의 안정적인 키 (i:<항목id> / e:<extras순번>)
 };
 type PkgRow = { label: string; lines: PkgLine[] };
 export type PackageView = {
@@ -33,12 +34,18 @@ const qtyText = (l: PkgLine) => (l.noun ? `${l.qty}${l.noun}` : `×${l.qty}`);
 /** 계산식용 표기: "20,000원 × 8트랙" */
 const mulText = (l: PkgLine) => (l.noun ? `${l.qty}${l.noun}` : `${l.qty}`);
 
-function Modal({ p, onClose }: { p: PackageView; onClose: () => void }) {
+export function Modal({ p, onClose, initialOff, onAddToCart }: {
+  p: PackageView; onClose: () => void;
+  initialOff?: string[]; // 장바구니에서 열 때 저장된 끔 상태
+  onAddToCart?: (off: string[]) => void; // PC 장바구니 담기 (PC에서만 버튼 표시)
+}) {
   const lang = useLocale();
   const L = dict(lang).pricing;
   const P = dict(lang).pkg;
   const won = (n: number) => n.toLocaleString(L.numLocale);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const [off, setOff] = useState<ReadonlySet<string>>(() => new Set(initialOff ?? []));
+  const isOff = (l: PkgLine) => l.optKey != null && off.has(l.optKey);
 
   useEffect(() => {
     const prevOverflow = document.body.style.overflow;
@@ -53,16 +60,27 @@ function Modal({ p, onClose }: { p: PackageView; onClose: () => void }) {
   }, [onClose]);
 
   // 규칙 3: 통화를 섞지 않습니다. 모든 항목에 USD가 있으면 USD로, 아니면 KRW로.
+  // 끈 항목도 통화 판정에는 포함해, 토글을 바꿔도 표시 통화가 흔들리지 않게 합니다.
   const all = p.rows.flatMap((r) => r.lines);
+  const active = all.filter((l) => !isOff(l));
   const useUsd = lang === 'en' && p.totalUsd != null && all.length > 0 && all.every((l) => l.unitUsd != null);
   const cur = useUsd ? L.curUsd : L.cur;
 
-  // 모든 항목에 금액(0 포함)이 있을 때만 합계를 계산해 보여줍니다.
-  const complete = all.length > 0 && all.every((l) => (useUsd ? l.unitUsd != null : l.unit != null));
-  const sub = complete ? all.reduce((s, l) => s + ((useUsd ? l.unitUsd : l.unit) as number) * l.qty, 0) : 0;
-  const total = toNum(useUsd ? (p.totalUsd ?? '') : p.total);
+  // 모든 '켜진' 항목에 금액(0 포함)이 있을 때만 합계를 계산해 보여줍니다.
+  const complete = active.length > 0 && active.every((l) => (useUsd ? l.unitUsd != null : l.unit != null));
+  const sub = complete ? active.reduce((s, l) => s + ((useUsd ? l.unitUsd : l.unit) as number) * l.qty, 0) : 0;
+  // 끈 항목의 금액만큼 패키지 정가에서도 뺍니다 (할인 전 정가 기준).
+  const removed = all.filter(isOff).reduce((s, l) => s + ((useUsd ? l.unitUsd ?? 0 : l.unit ?? 0) as number) * l.qty, 0);
+  const baseTotal = toNum(useUsd ? (p.totalUsd ?? '') : p.total);
+  const total = baseTotal != null && off.size > 0 ? Math.max(0, baseTotal - removed) : baseTotal;
   const diff = complete && total != null ? total - sub : null;
-  const hasEst = all.some((l) => l.est);
+  const hasEst = active.some((l) => l.est);
+  const toggle = (key: string) =>
+    setOff((prev) => {
+      const n = new Set(prev);
+      if (n.has(key)) n.delete(key); else n.add(key);
+      return n;
+    });
 
   return createPortal(
     <div className="hr-pm-back" onClick={onClose}>
@@ -86,8 +104,14 @@ function Modal({ p, onClose }: { p: PackageView; onClose: () => void }) {
 
           <div className="hr-pm-est">
             <small>{P.est}</small>
-            <strong><Price price={p.total} priceUsd={p.totalUsd} discount={p.discount} /></strong>
-            <i>{L.vat}<Until discount={p.discount} /></i>
+            <strong>
+              {off.size > 0 && total != null ? (
+                <>{won(total)}{cur}~</>
+              ) : (
+                <Price price={p.total} priceUsd={p.totalUsd} discount={p.discount} />
+              )}
+            </strong>
+            <i>{L.vat}{off.size > 0 ? null : <Until discount={p.discount} />}</i>
           </div>
 
           <div className="hr-pb">
@@ -95,17 +119,33 @@ function Modal({ p, onClose }: { p: PackageView; onClose: () => void }) {
               <div key={r.label}>
                 <span className="hr-pb-g">{r.label}</span>
                 <ul>
-                  {r.lines.map((l, i) => (
-                    <li key={`${l.name}-${i}`}>
+                  {r.lines.map((l, i) => {
+                    const offLine = isOff(l);
+                    return (
+                    <li key={`${l.name}-${i}`} className={offLine ? 'off' : undefined}>
                       <span className="hr-pb-n">
                         {l.name}
                         {l.est
                           ? <small className="hr-pb-e">{fill(P.exQty, { q: qtyText(l) })}</small>
                           : l.qty > 1 && <small className="hr-pb-q">×{l.qty}</small>}
                         {l.collab && <small className="hr-pb-c">{P.collab}{l.who ? ` · ${l.who}` : ''}</small>}
+                        {l.optKey ? (
+                          <button
+                            type="button"
+                            className="hr-tg"
+                            role="switch"
+                            aria-checked={!offLine}
+                            aria-label={fill(P.togAria, { name: l.name })}
+                            onClick={() => toggle(l.optKey!)}
+                          ><i /></button>
+                        ) : (
+                          <small className="hr-pb-always">{P.always}</small>
+                        )}
                       </span>
                       <span className="hr-pb-a">
-                        {l.unit == null ? (
+                        {offLine ? (
+                          <em>{P.excluded}</em>
+                        ) : l.unit == null ? (
                           <em>{P.askLater}</em>
                         ) : l.unit === 0 ? (
                           <>
@@ -126,7 +166,8 @@ function Modal({ p, onClose }: { p: PackageView; onClose: () => void }) {
                         )}
                       </span>
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
               </div>
             ))}
@@ -147,12 +188,18 @@ function Modal({ p, onClose }: { p: PackageView; onClose: () => void }) {
             )}
 
             {hasEst && <p className="hr-pb-miss">{P.estNote}</p>}
+            {off.size > 0 && <p className="hr-pb-miss">{P.offNote}</p>}
           </div>
 
           <p className="hr-pm-note">{L.exCap}</p>
         </div>
 
         <div className="hr-pm-foot">
+          {onAddToCart && (
+            <button type="button" className="hr-cart-add" onClick={() => onAddToCart([...off])}>
+              {P.cartAdd}
+            </button>
+          )}
           <a className="hr-pm-ask" href="#contact" onClick={onClose}>
             {P.ask} <Icon name="arrow" />
           </a>
@@ -202,4 +249,25 @@ export function PackageList({ items }: { items: PackageView[] }) {
       {items.map((p) => <Preview key={p.id} p={p} />)}
     </div>
   );
+}
+
+/**
+ * 장바구니·내역 복사용 금액 계산. 끈(optKey가 off에 있는) 항목은 합계에서 빼고,
+ * 가격이 없는('별도 협의') 항목은 0으로 계산하며 ask=true로 표시합니다.
+ * usd는 totalUsd가 있고 켜진 모든 항목에 unitUsd가 있을 때만 값을 가집니다.
+ */
+export function pkgMoney(p: PackageView, off: readonly string[]) {
+  const os = new Set(off);
+  const all = p.rows.flatMap((r) => r.lines);
+  const active = all.filter((l) => !(l.optKey && os.has(l.optKey)));
+  const side = (get: (l: PkgLine) => number | null | undefined, total: string | undefined, strict: boolean) => {
+    const t = toNum(total ?? '');
+    const removed = all.reduce((s, l) => s + (l.optKey && os.has(l.optKey) ? ((get(l) ?? 0) * l.qty) : 0), 0);
+    const adj = t != null ? Math.max(0, t - removed) : null;
+    const sub = active.reduce((s, l) => s + ((get(l) ?? 0) * l.qty), 0);
+    return { amount: adj ?? sub, ask: active.some((l) => get(l) == null), ok: !strict || active.every((l) => get(l) != null) };
+  };
+  const krw = side((l) => l.unit, p.total, false);
+  const usd = p.totalUsd != null ? side((l) => l.unitUsd, p.totalUsd, true) : null;
+  return { krw, usd: usd?.ok ? usd : null };
 }
