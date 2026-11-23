@@ -33,6 +33,7 @@ export const MENU: MenuSection[] = [
       { href: '/hr-admin/pricing-works', label: '단가표 예시 작업물', desc: '단가표 분야별로 가격 아래에 보여줄 작업물 선택', perm: 'rates' },
       { href: '/hr-admin/rates/folders', label: '단가 폴더', desc: '단가표의 폴더 구조 (오리지널곡 > 밴드곡 > packages)', perm: 'rates' },
       { href: '/hr-admin/rates/packages', label: '패키지', desc: '단가표 아래의 구성 예시(질문형 카드와 팝업)', perm: 'rates' },
+      { href: '/hr-admin/rates/builder', label: '단가 빌더', desc: '폴더·패키지 카드를 끌어 배치하는 새 편집 화면', perm: 'rates' },
       { href: '/hr-admin/quote', label: '견적서·명세서', desc: '의뢰인에게 보낼 견적서와 작업 후 명세서를 곡별로 정리해 PNG로 저장', perm: 'rates' },
       { href: '/hr-admin/turnaround', label: '소요·마감', desc: '분야·작업별 평균 소요기간과 빠른·당일 마감 표시', perm: 'rates' },
       { href: '/hr-admin/discounts', label: '할인 규칙', desc: '수량 할인, 묶음 할인과 적용 제외 항목', perm: 'rates' },

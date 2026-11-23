@@ -5,6 +5,7 @@ import { requireAdmin } from '@/lib/auth/guard';
 import { can } from '@/lib/auth/permissions';
 import { adminDb } from '@/lib/auth/admin-db';
 import { Section, Help, Flash } from '@/components/admin/Section';
+import { FolderFormFields } from '@/components/admin/FolderFormFields';
 import { saveFolder, removeFolder, moveFolder } from './actions';
 
 const txt = (v: unknown): string =>
@@ -143,7 +144,6 @@ export default async function FoldersPage({
 
       <form key={cur?.id ?? 'new'} id="form" action={saveFolder} className="hr-card hr-f">
         <h2>{cur ? `폴더 수정 · ${txt(cur.name)}` : '새 폴더 추가'}</h2>
-        {cur && <input type="hidden" name="id" value={cur.id} />}
 
         <label>
           상위 폴더
@@ -152,32 +152,7 @@ export default async function FoldersPage({
           </select>
         </label>
 
-        <div className="hr-row">
-          <label>
-            이름 (한국어, 필수)
-            <input name="name" defaultValue={txt(cur?.name)} maxLength={20} required />
-          </label>
-          <label>
-            이름 (영어, 선택)
-            <input name="nameEn" defaultValue={en(cur?.name)} maxLength={40} />
-          </label>
-        </div>
-
-        <div className="hr-row">
-          <label>
-            설명 (한국어)
-            <input name="desc" defaultValue={txt(cur?.descr)} maxLength={60} />
-          </label>
-          <label>
-            설명 (영어)
-            <input name="descEn" defaultValue={en(cur?.descr)} maxLength={120} />
-          </label>
-        </div>
-
-        <label className="hr-chk">
-          <input type="checkbox" name="hidden" defaultChecked={cur?.hidden} />
-          숨김 (공개 화면에서 보이지 않음)
-        </label>
+        <FolderFormFields cur={cur} />
 
         <div className="hr-act">
           {cur && <Link href="/hr-admin/rates/folders">수정 취소</Link>}
