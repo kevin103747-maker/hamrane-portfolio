@@ -7,7 +7,7 @@ import { PageHead, SectionHead } from '@/components/Heads';
 import { RateBoard, type BoardGroup } from '@/components/RateBoard';
 import { PackageList, type PackageView, type PkgLine } from '@/components/PackageList';
 import { PriceExplorer } from '@/components/PriceExplorer';
-import { getPriceTree, type PublicNode } from '@/lib/price-tree-data';
+import { getPriceTree, getPriceUi, type PublicNode } from '@/lib/price-tree-data';
 import { turnFor, type GroupTurn } from '@/lib/turnaround';
 import { getTurnaround } from '@/lib/turnaround-settings';
 import { getDiscounts } from '@/lib/discounts-settings';
@@ -38,8 +38,8 @@ export async function PricingView({ lang = 'ko' }: { lang?: string }) {
   // 영어 화면: 영어 기간 문구가 있으면 그것을, 없으면 한국어 값을 씁니다.
   const turnOf = (t?: GroupTurn): GroupTurn | undefined =>
     !t || lang === 'ko' ? t : { ...t, avg: t.avgEn || t.avg, rush: { ...t.rush, days: t.rush.daysEn || t.rush.days } };
-  const [d, turnaround, discounts, bn, pw, pm, tree] = await Promise.all([
-    getSiteData(), getTurnaround(), getDiscounts(), getBonus(), getPricingWorks(), getPricingMixer(), getPriceTree(lang),
+  const [d, turnaround, discounts, bn, pw, pm, tree, ui] = await Promise.all([
+    getSiteData(), getTurnaround(), getDiscounts(), getBonus(), getPricingWorks(), getPricingMixer(), getPriceTree(lang), getPriceUi(),
   ]);
   // 분야 이름: 한국어는 그대로, 영어는 어드민 영어 이름 → 기존 영어 라벨 → 한국어 순으로 씁니다.
   const gName = (g: (typeof d.groups)[number]) => (lang === 'ko' ? tr(g.name) : g.name[lang] || g.en || g.name.ko);
@@ -135,6 +135,8 @@ export async function PricingView({ lang = 'ko' }: { lang?: string }) {
   collectPkgIds(tree);
   const explorerPackages = packages.filter((p) => treePkgIds.has(p.id));
   const useExplorer = tree.length > 0 && explorerPackages.length > 0;
+  // 최상위 질문: 영어 화면은 영어가 비면 한국어로 대신합니다.
+  const rootQuestion = lang === 'ko' ? ui.ko : ui.en || ui.ko;
 
   return (
     <>
@@ -144,7 +146,7 @@ export async function PricingView({ lang = 'ko' }: { lang?: string }) {
         <section className="blk"><div className="wrap">
           <SectionHead n="EXAMPLES" title={L.exTitle} sub={L.exSub} />
           <p className="hr-rt-cap">{L.exCap}</p>
-          <PriceExplorer roots={tree} packages={explorerPackages} />
+          <PriceExplorer roots={tree} packages={explorerPackages} rootQuestion={rootQuestion} />
         </div></section>
       )}
 

@@ -140,6 +140,10 @@ const ko = {
   },
   pex: {
     up: '상위로',
+    back: '← 이전으로',
+    backAria: '이전 단계로 이동',
+    qEmpty: '아래에서 하나를 골라 주세요',
+    pkgN: '패키지 {n}개',
     open: '열기',
     viewRates: '분야별 단가 보기',
     root: '단가',
@@ -420,6 +424,10 @@ const en: Dict = {
   },
   pex: {
     up: 'Up',
+    back: '← Back',
+    backAria: 'Go to the previous step',
+    qEmpty: 'Choose one below',
+    pkgN: '{n} packages',
     open: 'Open',
     viewRates: 'View rates by service',
     root: 'Rates',

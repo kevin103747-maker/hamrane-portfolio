@@ -19,9 +19,9 @@ function Cards({ children, pkgMap, onFolder, onPackage }: {
   onFolder?: (id: string) => void;
   onPackage?: (id: string) => void;
 }) {
-  const P = dict(useLocale()).pkg;
+  const X = dict(useLocale()).pex;
   return (
-    <div className="hr-pv-grid">
+    <div className="hr-px-grid">
       {children.map((n) => {
         if (n.kind === 'folder') {
           return (
@@ -29,7 +29,8 @@ function Cards({ children, pkgMap, onFolder, onPackage }: {
               <span className="hr-px-ico"><Icon name="folder" /></span>
               <strong className="hr-pv-q">{n.name}</strong>
               {n.desc && <span className="hr-px-d">{n.desc}</span>}
-              <span className="hr-pv-go">{dict(useLocale()).pex.open}<Icon name="arrow" /></span>
+              {n.pkgs > 0 && <span className="hr-px-meta">{fill(X.pkgN, { n: n.pkgs })}</span>}
+              <span className="hr-pv-go" aria-hidden="true"><Icon name="next" /></span>
             </button>
           );
         }
@@ -40,7 +41,7 @@ function Cards({ children, pkgMap, onFolder, onPackage }: {
             <span className="hr-px-ico"><Icon name="tag" /></span>
             <strong className="hr-pv-q">{p.name}</strong>
             {p.desc && <span className="hr-px-d">{p.desc}</span>}
-            <span className="hr-pv-go">{P.view}<Icon name="arrow" /></span>
+            <span className="hr-pv-go" aria-hidden="true"><Icon name="next" /></span>
           </button>
         );
       })}
@@ -48,8 +49,8 @@ function Cards({ children, pkgMap, onFolder, onPackage }: {
   );
 }
 
-function ExplorerInner({ roots, pkgMap }: {
-  roots: PublicNode[]; pkgMap: Map<string, PackageView>;
+function ExplorerInner({ roots, pkgMap, rootQuestion }: {
+  roots: PublicNode[]; pkgMap: Map<string, PackageView>; rootQuestion: string;
 }) {
   const sp = useSearchParams();
   const router = useRouter();
@@ -136,22 +137,36 @@ function ExplorerInner({ roots, pkgMap }: {
   const addToCart = (id: string, off: string[]) =>
     setCart((prev) => [...prev.filter((x) => x.id !== id), { id, off }]);
 
+  const backBtn = cur ? (
+    <button
+      type="button"
+      className="hr-px-back"
+      aria-label={X.backAria}
+      onClick={() => go(cur.parentId)}
+    >{X.back}</button>
+  ) : null;
+  const question = (cur ? cur.question : rootQuestion) || X.qEmpty;
+
   return (
     <>
-      <nav className="hr-px-crumb" aria-label={X.root}>
-        <button type="button" onClick={() => go(null)}>{X.root}</button>
-        {path.map((f) => (
-          <span key={f.id} className="hr-px-crumb-i">
-            <span className="hr-px-sep" aria-hidden="true">›</span>
-            <button type="button" onClick={() => go(f.id)}>{f.name}</button>
-          </span>
-        ))}
-        {cur && (
-          <button type="button" className="hr-px-up" onClick={() => go(cur.parentId)}>
-            {X.up}
-          </button>
-        )}
-      </nav>
+      {cur && (
+        <div className="hr-px-head">
+          {backBtn}
+          {path.length > 0 && (
+            <nav className="hr-px-crumb hr-px-path" aria-label={X.root}>
+              <button type="button" onClick={() => go(null)}>{X.root}</button>
+              {path.map((f) => (
+                <span key={f.id} className="hr-px-crumb-i">
+                  <span className="hr-px-sep" aria-hidden="true">›</span>
+                  <button type="button" onClick={() => go(f.id)}>{f.name}</button>
+                </span>
+              ))}
+            </nav>
+          )}
+        </div>
+      )}
+
+      <h2 className="hr-px-title">{question}</h2>
 
       {cur?.desc && <p className="hr-px-fdesc">{cur.desc}</p>}
 
@@ -161,6 +176,8 @@ function ExplorerInner({ roots, pkgMap }: {
         onFolder={(id) => go(id)}
         onPackage={(id) => go(curId, id)}
       />
+
+      {cur && <div className="hr-px-foot">{backBtn}</div>}
 
       {openPkg && (
         <Modal
@@ -300,7 +317,9 @@ function CartPanel({ entries, onOpen, onRemove, onClear }: {
   );
 }
 
-export function PriceExplorer({ roots, packages }: { roots: PublicNode[]; packages: PackageView[] }) {
+export function PriceExplorer({ roots, packages, rootQuestion = '' }: {
+  roots: PublicNode[]; packages: PackageView[]; rootQuestion?: string;
+}) {
   const pkgMap = useMemo(() => new Map(packages.map((p) => [p.id, p])), [packages]);
   return (
     <Suspense
@@ -308,7 +327,7 @@ export function PriceExplorer({ roots, packages }: { roots: PublicNode[]; packag
         <Cards children={roots} pkgMap={pkgMap} />
       }
     >
-      <ExplorerInner roots={roots} pkgMap={pkgMap} />
+      <ExplorerInner roots={roots} pkgMap={pkgMap} rootQuestion={rootQuestion} />
     </Suspense>
   );
 }
