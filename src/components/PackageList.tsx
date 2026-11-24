@@ -117,7 +117,12 @@ export function Modal({ p, onClose, initialOff, onAddToCart, discordUrl, cartBad
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     closeRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      // 곡·아티스트 팝업이 위에 열려 있으면 그쪽만 닫히고, 패키지 팝업은 유지합니다.
+      if (document.querySelector('.modal')) return;
+      onClose();
+    };
     window.addEventListener('keydown', onKey);
     return () => {
       document.body.style.overflow = prevOverflow;

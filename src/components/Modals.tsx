@@ -122,15 +122,19 @@ function syncUrl(workId: string | null) {
 export function ModalProvider({ children }: { children: ReactNode }) {
   const s = useSite();
   const [open, setOpen] = useState<Open>(null);
+  // 패키지 팝업(.hr-pm-back, z-index 200) 위에서 열린 경우에만 곡 팝업을 그 위로 올립니다.
+  const [overPkg, setOverPkg] = useState(false);
   const lastFocus = useRef<HTMLElement | null>(null);
 
   const openWork = useCallback((id: string) => {
     lastFocus.current = document.activeElement as HTMLElement | null;
+    setOverPkg(!!document.querySelector('.hr-pm-back'));
     setOpen({ kind: 'work', id });
     syncUrl(id);
   }, []);
   const openArtist = useCallback((id: string) => {
     lastFocus.current = document.activeElement as HTMLElement | null;
+    setOverPkg(!!document.querySelector('.hr-pm-back'));
     setOpen({ kind: 'artist', id });
     syncUrl(null);
   }, []);
@@ -182,7 +186,7 @@ export function ModalProvider({ children }: { children: ReactNode }) {
     <ModalCtx.Provider value={value}>
       {children}
       {open && (
-        <div className="modal" role="dialog" aria-modal="true" onClick={close}>
+        <div className={overPkg ? 'modal hr-modal-over' : 'modal'} role="dialog" aria-modal="true" onClick={close}>
           {open.kind === 'work'
             ? <WorkModal key={open.id} id={open.id} onClose={close} onNav={nav} />
             : <ArtistModal id={open.id} onClose={close} />}

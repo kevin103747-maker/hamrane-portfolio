@@ -1993,3 +1993,6 @@ a.dl-file:hover { border-color: var(--mint); background: var(--mint-soft); }
 .hr-pm-smp-tx b, .hr-pm-smp-tx small { white-space: normal; overflow-wrap: anywhere; }
 .hr-pm-smp-tx b { font-size: 14px; font-weight: 600; color: var(--text); }
 .hr-pm-smp-tx small { font-size: 12px; color: var(--text-3); }
+
+/* ===== 곡 팝업이 패키지 팝업 위에 열릴 때 ===== */
+.modal.hr-modal-over { z-index: 210; }
