@@ -14,7 +14,8 @@ export type BuilderFolder = {
 export type BuilderSlot = {
   id: string;
   folder_id: string | null;
-  package_id: string;
+  package_id: string | null; // 패키지 슬롯이면 값, 항목 슬롯이면 null
+  item_id: string | null; // 항목 슬롯이면 값, 패키지 슬롯이면 null
   sort: number | null;
   created_at?: string;
 };
@@ -22,7 +23,10 @@ export type BuilderSlot = {
 export type BuilderPkg = PackageFormCur & { id: string };
 
 export type BuilderGroup = { id: string; num: unknown; name: unknown };
-export type BuilderItem = { id: string; group_id: string; name: unknown; price: unknown; unit: unknown };
+export type BuilderItem = {
+  id: string; group_id: string; name: unknown; price: unknown; unit: unknown;
+  price_usd?: unknown; discount?: unknown;
+};
 
 export type BuilderResult = { ok: true } | { ok: false; error: string };
 export type BuilderResultData<T> = { ok: true; data: T } | { ok: false; error: string };

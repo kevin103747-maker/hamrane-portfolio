@@ -9,7 +9,8 @@ export type PublicNode =
       pkgs: number; // 이 폴더 아래 보이는 패키지 수 (하위 폴더 포함)
       children: PublicNode[];
     }
-  | { kind: 'package'; id: string };
+  | { kind: 'package'; id: string }
+  | { kind: 'item'; id: string };
 
 type FolderRow = {
   id: string; parent_id: string | null; hidden: boolean | null;
@@ -17,7 +18,7 @@ type FolderRow = {
   question: { ko?: string; en?: string } | null;
   sort: number | null;
 };
-type SlotRow = { id: string; folder_id: string | null; package_id: string; sort: number | null };
+type SlotRow = { id: string; folder_id: string | null; package_id: string | null; item_id: string | null; sort: number | null };
 
 const pick = (v: { ko?: string; en?: string } | null, lang: string) =>
   lang === 'ko' ? (v?.ko ?? '') : (v?.en || v?.ko || '');
@@ -35,12 +36,13 @@ const sortVal = (n: number | null) => n ?? Number.MAX_SAFE_INTEGER;
 export const getPriceTree = cache(async (lang: string): Promise<PublicNode[]> => {
   if (!supabase) return [];
   const sb = supabase;
-  const [fo, sl, pk] = await Promise.all([
+  const [fo, sl, pk, ri] = await Promise.all([
     sb.from('price_folders').select('*'),
     sb.from('price_slots').select('*'),
     sb.from('packages').select('id'),
+    sb.from('rate_items').select('id'),
   ]);
-  const failed = [fo, sl, pk].find((x) => x.error);
+  const failed = [fo, sl, pk, ri].find((x) => x.error);
   if (failed?.error) {
     console.error('[price-tree] Supabase 조회 실패:', failed.error.message);
     return [];
@@ -49,6 +51,7 @@ export const getPriceTree = cache(async (lang: string): Promise<PublicNode[]> =>
   const folders = (fo.data ?? []) as FolderRow[];
   const slots = (sl.data ?? []) as SlotRow[];
   const pkgIds = new Set(((pk.data ?? []) as { id: string }[]).map((x) => x.id));
+  const itemIds = new Set(((ri.data ?? []) as { id: string }[]).map((x) => x.id));
   const fById = new Map(folders.map((f) => [f.id, f]));
 
   // 숨김 폴더 + 그 하위 전체를 제거 대상으로 표시
@@ -68,19 +71,25 @@ export const getPriceTree = cache(async (lang: string): Promise<PublicNode[]> =>
   const kept = folders.filter((f) => !removed.has(f.id));
   const keptIds = new Set(kept.map((f) => f.id));
 
-  // 슬롯: 숨김/삭제된 폴더 아래가 아니고, 실제 있는 패키지만. 같은 부모+같은 패키지 중복은 첫 번째만.
+  // 슬롯: 숨김/삭제된 폴더 아래가 아니고, 실제 있는 패키지·항목만. 같은 부모+같은 대상 중복은 첫 번째만.
+  const slotTarget = (s: SlotRow): { pkg?: string; item?: string } | null => {
+    if (s.package_id && pkgIds.has(s.package_id)) return { pkg: s.package_id };
+    if (s.item_id && itemIds.has(s.item_id)) return { item: s.item_id };
+    return null;
+  };
   const seen = new Set<string>();
-  const liveSlots = slots.filter((s) => {
-    if (s.folder_id != null && !keptIds.has(s.folder_id)) return false;
-    if (!pkgIds.has(s.package_id)) return false;
-    const dk = `${key(s.folder_id)}|${s.package_id}`;
-    if (seen.has(dk)) return false;
+  const liveSlots = slots.flatMap((s) => {
+    if (s.folder_id != null && !keptIds.has(s.folder_id)) return [];
+    const t = slotTarget(s);
+    if (!t) return [];
+    const dk = `${key(s.folder_id)}|${t.pkg ? 'p' : 'i'}:${t.pkg ?? t.item}`;
+    if (seen.has(dk)) return [];
     seen.add(dk);
-    return true;
+    return [{ s, t }];
   });
 
   // 각 부모의 자식 목록 (폴더+슬롯이 sort 번호열 공유)
-  type Item = { sort: number; id: string; folder?: FolderRow; pkg?: string };
+  type Item = { sort: number; id: string; folder?: FolderRow; pkg?: string; item?: string };
   const byParent = new Map<string, Item[]>();
   const push = (parent: string, it: Item) => byParent.set(parent, [...(byParent.get(parent) ?? []), it]);
   for (const f of kept) {
@@ -88,7 +97,7 @@ export const getPriceTree = cache(async (lang: string): Promise<PublicNode[]> =>
     const parent = f.parent_id != null && keptIds.has(f.parent_id) ? f.parent_id : '';
     push(parent, { sort: sortVal(f.sort), id: f.id, folder: f });
   }
-  for (const s of liveSlots) push(key(s.folder_id), { sort: sortVal(s.sort), id: s.id, pkg: s.package_id });
+  for (const { s, t } of liveSlots) push(key(s.folder_id), { sort: sortVal(s.sort), id: s.id, pkg: t.pkg, item: t.item });
   for (const list of byParent.values()) list.sort((a, b) => a.sort - b.sort || a.id.localeCompare(b.id));
 
   // 폴더 하위에 보이는 패키지가 있는지 (깊은 폴더부터 계산)
@@ -105,7 +114,7 @@ export const getPriceTree = cache(async (lang: string): Promise<PublicNode[]> =>
   const hasPkg = new Map<string, boolean>();
   const sortedFolders = [...kept].sort((a, b) => dep(b.id) - dep(a.id));
   for (const f of sortedFolders) {
-    const direct = (byParent.get(f.id) ?? []).some((it) => it.pkg);
+    const direct = (byParent.get(f.id) ?? []).some((it) => it.pkg || it.item);
     const viaChild = (childFolders.get(f.id) ?? [])
       .filter((c) => keptIds.has(c.id))
       .some((c) => hasPkg.get(c.id));
@@ -113,11 +122,12 @@ export const getPriceTree = cache(async (lang: string): Promise<PublicNode[]> =>
   }
 
   const countPkgs = (ns: PublicNode[]): number =>
-    ns.reduce((s, n) => s + (n.kind === 'package' ? 1 : countPkgs(n.children)), 0);
+    ns.reduce((s, n) => s + (n.kind === 'package' || n.kind === 'item' ? 1 : countPkgs(n.children)), 0);
 
   const emit = (parent: string): PublicNode[] =>
     (byParent.get(parent) ?? []).flatMap((it): PublicNode[] => {
       if (it.pkg) return [{ kind: 'package', id: it.pkg }];
+      if (it.item) return [{ kind: 'item', id: it.item }];
       const f = it.folder!;
       if (!hasPkg.get(f.id)) return [];
       const children = emit(f.id);
