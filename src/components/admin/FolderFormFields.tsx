@@ -8,6 +8,7 @@ export type FolderFormCur = {
   name?: unknown;
   descr?: unknown;
   hidden?: boolean | null;
+  question?: unknown;
 };
 
 export function FolderFormFields({ cur }: { cur?: FolderFormCur | null }) {
@@ -34,6 +35,17 @@ export function FolderFormFields({ cur }: { cur?: FolderFormCur | null }) {
         <label>
           설명 (영어)
           <input name="descEn" defaultValue={en(cur?.descr)} maxLength={120} />
+        </label>
+      </div>
+
+      <div className="hr-row">
+        <label>
+          이 폴더 안쪽 단계의 질문 (한국어)
+          <input name="question" defaultValue={txt(cur?.question)} maxLength={40} />
+        </label>
+        <label>
+          이 폴더 안쪽 단계의 질문 (영어)
+          <input name="questionEn" defaultValue={en(cur?.question)} maxLength={80} />
         </label>
       </div>
 

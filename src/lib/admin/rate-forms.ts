@@ -160,6 +160,8 @@ export type ParsedFolder = {
   desc: string;
   descEn: string;
   hidden: boolean;
+  question: string;
+  questionEn: string;
 };
 
 /** saveFolder의 입력 해석 부분. 상위 폴더 존재·순환·깊이 확인은 호출부가 합니다. */
@@ -171,12 +173,16 @@ export function parseFolderForm(fd: FormData): FormResult<ParsedFolder> {
   const desc = str(fd, 'desc');
   const descEn = str(fd, 'descEn');
   const hidden = flag(fd, 'hidden');
+  const question = str(fd, 'question');
+  const questionEn = str(fd, 'questionEn');
 
   if (!name) return bad('한국어 이름을 입력하세요.');
   if (name.length > 20) return bad('한국어 이름은 20자 이내로 입력하세요.');
   if (nameEn.length > 40) return bad('영어 이름은 40자 이내로 입력하세요.');
   if (desc.length > 60) return bad('한국어 설명은 60자 이내로 입력하세요.');
   if (descEn.length > 120) return bad('영어 설명은 120자 이내로 입력하세요.');
+  if (question.length > 40) return bad('한국어 질문은 40자 이내로 입력하세요.');
+  if (questionEn.length > 80) return bad('영어 질문은 80자 이내로 입력하세요.');
 
-  return { ok: true, data: { id, parentId, name, nameEn, desc, descEn, hidden } };
+  return { ok: true, data: { id, parentId, name, nameEn, desc, descEn, hidden, question, questionEn } };
 }

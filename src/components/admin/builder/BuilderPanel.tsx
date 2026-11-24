@@ -1,7 +1,8 @@
 // src/components/admin/builder/BuilderPanel.tsx — 우측 편집 패널과 폴더 선택창
 'use client';
 import { useState, useTransition, type FormEvent, type ReactNode } from 'react';
-import { savePackageBuilder, saveFolderFields } from '@/app/hr-admin/(panel)/rates/builder/actions';
+import { useRouter } from 'next/navigation';
+import { savePackageBuilder, saveFolderFields, savePriceUi } from '@/app/hr-admin/(panel)/rates/builder/actions';
 import { PackageFormFields } from '@/components/admin/PackageFormFields';
 import { FolderFormFields } from '@/components/admin/FolderFormFields';
 import type {
@@ -141,6 +142,49 @@ export function FolderEditForm({
       <div className="hr-act">
         <button type="button" onClick={onClose}>닫기</button>
         <button type="submit" disabled={pending}>수정 저장</button>
+      </div>
+    </form>
+  );
+}
+
+/* ---------- 공개 단가 화면 최상위 질문 (빌더 최상위에서만 표시) ---------- */
+export function PriceUiForm({
+  cur, onToast,
+}: {
+  cur: { ko: string; en: string };
+  onToast: (msg: string) => void;
+}) {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  const submit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    start(async () => {
+      const r = await savePriceUi(fd);
+      if (r.ok) {
+        onToast('저장했습니다.');
+        router.refresh();
+      } else {
+        onToast(r.error);
+      }
+    });
+  };
+  return (
+    <form className="hr-card hr-f hr-bld-priceui" onSubmit={submit}>
+      <h2>최상위 질문</h2>
+      <p>공개 단가 화면 맨 위(폴더 밖)에서 보여지는 질문입니다. 비우면 기본 문구가 나옵니다.</p>
+      <div className="hr-row">
+        <label>
+          질문 (한국어)
+          <input name="question" defaultValue={cur.ko} maxLength={40} />
+        </label>
+        <label>
+          질문 (영어)
+          <input name="questionEn" defaultValue={cur.en} maxLength={80} />
+        </label>
+      </div>
+      <div className="hr-act">
+        <button type="submit" disabled={pending}>저장</button>
       </div>
     </form>
   );

@@ -194,7 +194,7 @@ export async function saveFolderFields(fd: FormData): Promise<BuilderResultData<
   const me = await guard();
   const p = parseFolderForm(fd);
   if (!p.ok) return { ok: false, error: p.error };
-  const { id, name, nameEn, desc, descEn, hidden } = p.data;
+  const { id, name, nameEn, desc, descEn, hidden, question, questionEn } = p.data;
   if (!id) return { ok: false, error: '수정할 폴더가 없습니다.' };
 
   const db = adminDb();
@@ -204,6 +204,7 @@ export async function saveFolderFields(fd: FormData): Promise<BuilderResultData<
   const row = {
     name: mergeBoth(before.name, name, nameEn),
     descr: mergeBoth(before.descr, desc, descEn),
+    question: mergeBoth(before.question, question, questionEn),
     hidden,
   };
   const { error } = await db.from('price_folders').update(row).eq('id', id);
@@ -241,6 +242,28 @@ export async function deleteFolder(id: string): Promise<BuilderResult> {
   const { error } = await db.from('price_folders').delete().eq('id', id);
   if (error) return err(`삭제 실패: ${error.message}`);
   await logEdit(me, 'delete', 'price_folders', id, before, null);
+  return ok();
+}
+
+/* ---------------- 공개 단가 화면 최상위 질문 (site_settings 'price_ui') ---------------- */
+export async function savePriceUi(fd: FormData): Promise<BuilderResult> {
+  const me = await guard();
+  const ko = str(fd, 'question');
+  const en = str(fd, 'questionEn');
+  if (ko.length > 40) return err('한국어 질문은 40자 이내로 입력하세요.');
+  if (en.length > 80) return err('영어 질문은 80자 이내로 입력하세요.');
+
+  const db = adminDb();
+  const { data: old } = await db.from('site_settings').select('value').eq('key', 'price_ui').maybeSingle();
+  const prev = old?.value && typeof old.value === 'object' && !Array.isArray(old.value)
+    ? (old.value as Record<string, unknown>) : {};
+  const prevQ = prev.question && typeof prev.question === 'object' && !Array.isArray(prev.question)
+    ? (prev.question as Record<string, unknown>) : {};
+  const value = { ...prev, question: mergeBoth(prevQ, ko, en) };
+
+  const { error } = await db.from('site_settings').upsert({ key: 'price_ui', value }, { onConflict: 'key' });
+  if (error) return err(`저장 실패: ${error.message}`);
+  await logEdit(me, 'update', 'site_settings', 'price_ui', old?.value ?? null, value);
   return ok();
 }
 

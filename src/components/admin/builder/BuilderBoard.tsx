@@ -24,7 +24,7 @@ import type {
 } from '@/app/hr-admin/(panel)/rates/builder/types';
 import { LevelCard, AddCard, VaultCard, txt, type CardNode, type MenuAction } from './cards';
 import { BuilderTree } from './BuilderTree';
-import { EditPanel, PackageEditForm, FolderEditForm, FolderPicker } from './BuilderPanel';
+import { EditPanel, PackageEditForm, FolderEditForm, FolderPicker, PriceUiForm } from './BuilderPanel';
 
 type LNode = { kind: 'folder' | 'slot'; id: string; sort: number };
 type EditSel =
@@ -58,7 +58,7 @@ function Crumb({ target, label, current, onClick }: { target: string | null; lab
 }
 
 export function BuilderBoard({
-  folders: folders0, slots: slots0, packages: pkgs0, groups, items, folderId,
+  folders: folders0, slots: slots0, packages: pkgs0, groups, items, folderId, priceUi,
 }: {
   folders: BuilderFolder[];
   slots: BuilderSlot[];
@@ -66,6 +66,7 @@ export function BuilderBoard({
   groups: BuilderGroup[];
   items: BuilderItem[];
   folderId: string | null;
+  priceUi: { ko: string; en: string };
 }) {
   const router = useRouter();
   const [folders, setFolders] = useState(folders0);
@@ -471,6 +472,9 @@ export function BuilderBoard({
           <BuilderTree folders={folders} currentId={pid} onNavigate={navigate} />
 
           <div className="hr-bld-main">
+            {pid === null && (
+              <PriceUiForm key={`${priceUi.ko}${priceUi.en}`} cur={priceUi} onToast={showToast} />
+            )}
             <nav className="hr-bld-crumb" aria-label="경로">
               <Crumb target={null} label="단가" current={pid === null} onClick={() => navigate(null)} />
               {crumbPath.map((f, i) => (

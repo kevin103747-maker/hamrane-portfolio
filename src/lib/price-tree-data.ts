@@ -4,12 +4,17 @@ import { cache } from 'react';
 import { supabase } from './supabase';
 
 export type PublicNode =
-  | { kind: 'folder'; id: string; name: string; desc: string; children: PublicNode[] }
+  | {
+      kind: 'folder'; id: string; name: string; desc: string; question: string;
+      pkgs: number; // 이 폴더 아래 보이는 패키지 수 (하위 폴더 포함)
+      children: PublicNode[];
+    }
   | { kind: 'package'; id: string };
 
 type FolderRow = {
   id: string; parent_id: string | null; hidden: boolean | null;
   name: { ko?: string; en?: string } | null; descr: { ko?: string; en?: string } | null;
+  question: { ko?: string; en?: string } | null;
   sort: number | null;
 };
 type SlotRow = { id: string; folder_id: string | null; package_id: string; sort: number | null };
@@ -107,17 +112,47 @@ export const getPriceTree = cache(async (lang: string): Promise<PublicNode[]> =>
     hasPkg.set(f.id, direct || viaChild);
   }
 
+  const countPkgs = (ns: PublicNode[]): number =>
+    ns.reduce((s, n) => s + (n.kind === 'package' ? 1 : countPkgs(n.children)), 0);
+
   const emit = (parent: string): PublicNode[] =>
     (byParent.get(parent) ?? []).flatMap((it): PublicNode[] => {
       if (it.pkg) return [{ kind: 'package', id: it.pkg }];
       const f = it.folder!;
       if (!hasPkg.get(f.id)) return [];
+      const children = emit(f.id);
       return [{
         kind: 'folder', id: f.id,
         name: pick(f.name, lang), desc: pick(f.descr, lang),
-        children: emit(f.id),
+        question: pick(f.question, lang), pkgs: countPkgs(children),
+        children,
       }];
     });
 
   return emit('');
+});
+
+/**
+ * 공개 단가 화면 최상위 질문. site_settings의 'price_ui' 키를 읽습니다.
+ * getSiteData/load()에는 넣지 않고 별도로 조회합니다 (guide/turnaround 설정과 같은 패턴).
+ * 조회 실패·미설정 시 빈 문자열 (호출부에서 기본 문구로 대체).
+ */
+export const getPriceUi = cache(async (): Promise<{ ko: string; en: string }> => {
+  const empty = { ko: '', en: '' };
+  if (!supabase) return empty;
+  const { data, error } = await supabase
+    .from('site_settings').select('value').eq('key', 'price_ui').maybeSingle();
+  if (error) {
+    console.error('[price-ui] 조회 실패:', error.message);
+    return empty;
+  }
+  const v = data?.value;
+  const q = v && typeof v === 'object' && !Array.isArray(v)
+    ? (v as Record<string, unknown>).question : null;
+  const r = q && typeof q === 'object' && !Array.isArray(q)
+    ? (q as Record<string, unknown>) : {};
+  return {
+    ko: typeof r.ko === 'string' ? r.ko : '',
+    en: typeof r.en === 'string' ? r.en : '',
+  };
 });
