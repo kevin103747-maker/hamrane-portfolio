@@ -175,6 +175,9 @@ const ko = {
     actView: '구성 보기',
     cardAsk: '별도 협의',
     cardBase: '기본 구성 기준',
+    addedFmt: '내 견적에 담았어요 · {n}개 · 합계 {amt}',
+    viewCart: '내 견적 보기',
+    cartHint: '여러 패키지를 담아 합계를 볼 수 있어요.',
   },
   bundle: {
     aria: '묶음 할인 안내',
@@ -471,6 +474,9 @@ const en: Dict = {
     actView: 'View details',
     cardAsk: 'Ask for a quote',
     cardBase: 'Base package',
+    addedFmt: 'Added to My Quote · {n} items · Total {amt}',
+    viewCart: 'View My Quote',
+    cartHint: 'Add several packages to see a combined total.',
   },
   bundle: {
     aria: 'Bundle discount info',

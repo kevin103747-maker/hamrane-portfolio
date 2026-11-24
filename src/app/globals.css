@@ -1873,3 +1873,38 @@ a.dl-file:hover { border-color: var(--mint); background: var(--mint-soft); }
 @media (max-width: 620px) {
   .hr-px-sec .hr-px-grid .hr-px-price-v { font-size: 19px; }
 }
+
+/* ===== '내 견적' 패널: 오른쪽 세로 중앙 · 핸들 탭 · 담기 강조 ===== */
+.hr-pm-cartextra { display: none; }
+.hr-pm-added { margin: 8px 0 0; font-size: 12.5px; color: var(--mint); text-align: center; }
+.hr-pm-viewcart { display: block; width: 100%; height: 40px; margin-top: 8px; border-radius: 12px; border: 1px solid var(--line-2); background: var(--card-2); color: var(--text); font-size: 13px; font-weight: 600; }
+.hr-pm-viewcart:hover { border-color: var(--mint); color: var(--mint); }
+.hr-pm-carthint { margin: 8px 0 0; font-size: 12px; line-height: 1.6; color: var(--text-3); text-align: center; }
+
+@media (min-width: 1024px) and (hover: hover) {
+  .hr-pm-cartextra { display: block; }
+  .hr-cart-side { right: 12px; top: 50%; bottom: auto; transform: translateY(-50%); }
+  .hr-cart-handle { right: 0; top: 50%; width: auto; max-height: none; border-radius: 14px 0 0 14px; border-right: 0; }
+  .hr-cart-tab { writing-mode: vertical-rl; padding: 20px 10px; border: 0; background: none; font-size: 12.5px; font-weight: 600; letter-spacing: .08em; color: var(--text-2); }
+  .hr-cart-tab:hover { color: var(--mint); }
+  .hr-cart-min { width: auto; border-radius: 999px; }
+  .hr-cart-min .hr-cart-bar { padding: 10px 18px; }
+  .hr-cart-side .hr-cart-sum b { font-size: 20px; }
+  .hr-cart-side .hr-cart-btns { flex-wrap: wrap; }
+  .hr-cart-dc { background: var(--mint); color: var(--mint-ink); }
+  .hr-cart-dc:hover { background: var(--mint-2); color: var(--mint-ink); border-color: transparent; }
+  .hr-cart-flash { animation: hr-cart-flash 1.5s ease-out; }
+}
+.hr-cart-hint2 { margin: 0; padding: 14px 16px 4px; font-size: 12px; line-height: 1.6; color: var(--text-3); }
+.hr-cart-dcnote { margin: 0; padding: 8px 16px 0; font-size: 12px; color: var(--mint); }
+
+@keyframes hr-cart-flash {
+  0% { border-color: var(--mint); box-shadow: 0 0 0 5px color-mix(in oklab, var(--mint) 28%, transparent), 0 16px 48px rgba(0, 0, 0, .4); }
+  100% { border-color: var(--line-2); box-shadow: 0 16px 48px rgba(0, 0, 0, .4); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hr-cart-flash { animation: none; }
+}
+
+/* 카드 안 가격: button의 white-space: nowrap을 풀어 줍니다 */
+.hr-px-sec .hr-px-grid .hr-px-price, .hr-px-sec .hr-px-grid .hr-px-price-v { white-space: normal; overflow-wrap: anywhere; }
