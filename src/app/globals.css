@@ -2012,3 +2012,6 @@ a.dl-file:hover { border-color: var(--mint); background: var(--mint-soft); }
 .hr-pb-dl > div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .hr-pb-dl dt { color: var(--text-3); }
 .hr-pb-dl dd { margin: 0; text-align: right; color: var(--text-2); white-space: normal; overflow-wrap: anywhere; }
+
+/* ===== 단가 탐색기: 항목(단가) 카드 구분 표시 ===== */
+.hr-px-badge { display: inline-block; padding: 1px 8px; border: 1px dashed var(--line-2); border-radius: 999px; font-size: 11px; font-weight: 600; color: var(--text-2); white-space: nowrap; }
