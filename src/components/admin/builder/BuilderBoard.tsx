@@ -140,6 +140,24 @@ export function BuilderBoard({
   const st = useRef({ folders, slots, pkgs, nodes, pid });
   st.current = { folders, slots, pkgs, nodes, pid };
 
+  /* ---------- 서랍 열기/닫기 + 포커스 복귀 ---------- */
+  const returnFocus = useRef<HTMLElement | null>(null);
+  const openEdit = (sel: EditSel, el?: HTMLElement | null) => {
+    if (!edit) {
+      const a = el ?? (document.activeElement as HTMLElement | null);
+      returnFocus.current = (a?.closest?.('.hr-bld-card, .hr-bld-vaultcard') as HTMLElement | null) ?? a;
+    }
+    setEdit(sel);
+  };
+  const closeEdit = () => {
+    const el = returnFocus.current;
+    returnFocus.current = null;
+    setEdit(null);
+    requestAnimationFrame(() => {
+      if (el?.isConnected) el.focus({ preventScroll: true });
+    });
+  };
+
   const snapshot = () => ({ f: folders, s: slots, p: pkgs });
   const restore = (snap: { f: BuilderFolder[]; s: BuilderSlot[]; p: BuilderPkg[] }) => {
     setFolders(snap.f); setSlots(snap.s); setPkgs(snap.p);
@@ -223,6 +241,7 @@ export function BuilderBoard({
   };
 
   const doAddFolder = async () => {
+    const el = document.activeElement as HTMLElement | null;
     const r = await createFolder(st.current.pid);
     if (!r.ok) { showToast(r.error); return; }
     const p = st.current.pid;
@@ -231,7 +250,7 @@ export function BuilderBoard({
       sort: endSort(p, st.current.folders, st.current.slots), hidden: false,
     };
     setFolders((prev) => [...prev, nf]);
-    setEdit({ type: 'folder', id: nf.id });
+    openEdit({ type: 'folder', id: nf.id }, el);
     router.refresh();
   };
 
@@ -248,7 +267,7 @@ export function BuilderBoard({
     const r = await deleteFolder(folder.id);
     if (!r.ok) { showToast(r.error); return; }
     setFolders((prev) => prev.filter((f) => f.id !== folder.id));
-    if (edit?.type === 'folder' && edit.id === folder.id) setEdit(null);
+    if (edit?.type === 'folder' && edit.id === folder.id) closeEdit();
     if (folderId === folder.id) router.push('/hr-admin/rates/builder');
     router.refresh();
   };
@@ -264,7 +283,7 @@ export function BuilderBoard({
     if (!r.ok) { restore(snap); showToast(r.error); return; }
     setPkgs((prev) => prev.filter((p) => p.id !== pkg.id));
     setSlots((prev) => prev.filter((s) => s.package_id !== pkg.id));
-    if (edit?.type === 'package' && edit.id === pkg.id) setEdit(null);
+    if (edit?.type === 'package' && edit.id === pkg.id) closeEdit();
     router.refresh();
   };
 
@@ -403,7 +422,7 @@ export function BuilderBoard({
       const f = folders.find((x) => x.id === n.id);
       if (!f) return [];
       return [
-        { label: '수정', onClick: () => setEdit({ type: 'folder', id: f.id }) },
+        { label: '수정', onClick: (el) => openEdit({ type: 'folder', id: f.id }, el) },
         { label: '이동…', onClick: () => setPicker({ mode: 'folder-move', folderId: f.id }) },
         { label: f.hidden ? '숨김 해제' : '숨김', onClick: () => void doToggleHidden(f) },
         'sep',
@@ -414,7 +433,7 @@ export function BuilderBoard({
     const p = s ? pkgById.get(s.package_id) : undefined;
     if (!s || !p) return [];
     return [
-      { label: '수정', onClick: () => setEdit({ type: 'package', id: p.id }) },
+      { label: '수정', onClick: (el) => openEdit({ type: 'package', id: p.id }, el) },
       { label: '이동…', onClick: () => setPicker({ mode: 'slot-move', slotId: s.id }) },
       { label: '다른 폴더에도 추가', onClick: () => setPicker({ mode: 'slot-add', pkgId: p.id }) },
       'sep',
@@ -425,7 +444,7 @@ export function BuilderBoard({
   };
 
   const vaultMenu = (p: BuilderPkg): MenuAction[] => [
-    { label: '수정', onClick: () => setEdit({ type: 'package', id: p.id }) },
+    { label: '수정', onClick: (el) => openEdit({ type: 'package', id: p.id }, el) },
     { label: '이동…', onClick: () => setPicker({ mode: 'slot-add', pkgId: p.id }) },
     'sep',
     { label: '패키지 삭제', danger: true, onClick: () => void doDeletePackage(p) },
@@ -433,6 +452,12 @@ export function BuilderBoard({
 
   const editPkg = edit?.type === 'package' ? pkgs.find((p) => p.id === edit.id) ?? null : null;
   const editFolder = edit?.type === 'folder' ? folders.find((f) => f.id === edit.id) ?? null : null;
+
+  const drawerTitle = !edit ? ''
+    : edit.type === 'new-package' ? '새 패키지'
+    : edit.type === 'folder' ? (editFolder ? `폴더 수정 · ${txt(editFolder.name)}` : '폴더 수정')
+    : (editPkg ? `패키지 수정 · ${txt(editPkg.name)}` : '패키지 수정');
+  const drawerKey = edit ? `${edit.type}:${edit.type === 'new-package' ? 'new' : edit.id}` : '';
 
   const overlayNode = (() => {
     if (!activeId) return null;
@@ -470,7 +495,7 @@ export function BuilderBoard({
         onDragEnd={onDragEnd}
         onDragCancel={onDragCancel}
       >
-        <div className="hr-bld">
+        <div className="hr-bld2">
           <BuilderTree folders={folders} currentId={pid} onNavigate={navigate} />
 
           <div className="hr-bld-main">
@@ -502,9 +527,9 @@ export function BuilderBoard({
                     count={nodes.length}
                     shortcut={c.kind === 'slot' ? (slotCountByPkg.get(c.slot.package_id) ?? 0) > 1 : false}
                     menuActions={menuFor(n)}
-                    onOpen={() => {
+                    onOpen={(el) => {
                       if (c.kind === 'folder') navigate(c.folder.id);
-                      else setEdit({ type: 'package', id: c.pkg.id });
+                      else openEdit({ type: 'package', id: c.pkg.id }, el);
                     }}
                     onNudge={(dir) => doNudge(sid(n), dir)}
                     suppressed={() => suppressClick.current}
@@ -512,7 +537,7 @@ export function BuilderBoard({
                 ))}
               </SortableContext>
               <AddCard label="폴더" onClick={() => void doAddFolder()} disabled={levelFull || tooDeep} />
-              <AddCard label="패키지" onClick={() => setEdit({ type: 'new-package' })} />
+              <AddCard label="패키지" onClick={(e) => openEdit({ type: 'new-package' }, e.currentTarget)} />
             </div>
 
             {vaultPkgs.length > 0 && (
@@ -525,7 +550,7 @@ export function BuilderBoard({
                       key={p.id}
                       pkg={p}
                       menuActions={vaultMenu(p)}
-                      onOpen={() => setEdit({ type: 'package', id: p.id })}
+                      onOpen={(el) => openEdit({ type: 'package', id: p.id }, el)}
                       suppressed={() => suppressClick.current}
                     />
                   ))}
@@ -533,9 +558,11 @@ export function BuilderBoard({
               </section>
             )}
           </div>
+        </div>
 
-          <EditPanel>
-            {edit?.type === 'new-package' && (
+        {edit && (
+          <EditPanel title={drawerTitle} focusKey={drawerKey} onClose={closeEdit}>
+            {edit.type === 'new-package' && (
               <PackageEditForm
                 key="new"
                 pkg={null}
@@ -545,7 +572,7 @@ export function BuilderBoard({
                 items={items}
                 works={works}
                 pkgCount={pkgs.length}
-                onClose={() => setEdit(null)}
+                onClose={closeEdit}
                 onToast={showToast}
                 onSaved={(pkg, slot) => {
                   setPkgs((prev) => {
@@ -560,7 +587,7 @@ export function BuilderBoard({
                 }}
               />
             )}
-            {edit?.type === 'package' && (
+            {edit.type === 'package' && (
               editPkg ? (
                 <PackageEditForm
                   key={editPkg.id}
@@ -571,7 +598,7 @@ export function BuilderBoard({
                   items={items}
                   works={works}
                   pkgCount={pkgs.length}
-                  onClose={() => setEdit(null)}
+                  onClose={closeEdit}
                   onToast={showToast}
                   onSaved={(pkg) => {
                     setPkgs((prev) => prev.map((x) => (x.id === pkg.id ? { ...x, ...pkg } : x)));
@@ -579,15 +606,15 @@ export function BuilderBoard({
                   }}
                 />
               ) : (
-                <div className="hr-card"><p>패키지를 찾을 수 없습니다. 삭제되었을 수 있습니다.</p><button type="button" onClick={() => setEdit(null)}>닫기</button></div>
+                <div className="hr-card"><p>패키지를 찾을 수 없습니다. 삭제되었을 수 있습니다.</p><button type="button" onClick={closeEdit}>닫기</button></div>
               )
             )}
-            {edit?.type === 'folder' && (
+            {edit.type === 'folder' && (
               editFolder ? (
                 <FolderEditForm
                   key={editFolder.id}
                   folder={editFolder}
-                  onClose={() => setEdit(null)}
+                  onClose={closeEdit}
                   onToast={showToast}
                   onSaved={(f) => {
                     setFolders((prev) => prev.map((x) => (x.id === f.id ? { ...x, ...f } : x)));
@@ -595,17 +622,11 @@ export function BuilderBoard({
                   }}
                 />
               ) : (
-                <div className="hr-card"><p>폴더를 찾을 수 없습니다.</p><button type="button" onClick={() => setEdit(null)}>닫기</button></div>
+                <div className="hr-card"><p>폴더를 찾을 수 없습니다.</p><button type="button" onClick={closeEdit}>닫기</button></div>
               )
             )}
-            {!edit && (
-              <div className="hr-card hr-bld-panel-empty">
-                <p>카드를 클릭하면 여기서 수정합니다.</p>
-                <p className="hr-sub">폴더 카드를 누르면 그 폴더로 들어가고, 패키지 카드를 누르면 내용과 가격을 고칩니다.</p>
-              </div>
-            )}
           </EditPanel>
-        </div>
+        )}
 
         {picker && pickerProps && (
           <FolderPicker
