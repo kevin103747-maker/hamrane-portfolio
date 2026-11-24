@@ -517,7 +517,7 @@ export function BuilderBoard({
               ))}
             </nav>
 
-            <div ref={gridDrop.setNodeRef} className={`hr-bld-grid${gridDrop.isOver ? ' over' : ''}`}>
+            <div ref={gridDrop.setNodeRef} className={`hr-bld-grid hr-bld-grid2${gridDrop.isOver ? ' over' : ''}`}>
               <SortableContext items={sortableIds} strategy={rectSortingStrategy}>
                 {visible.map(({ n, i, c }) => (
                   <LevelCard

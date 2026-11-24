@@ -532,7 +532,7 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 .hr-bld-toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 80; max-width: min(560px, 92vw); }
 
 /* ===== 단가 빌더: 서랍 편집 패널 ===== */
-.hr-bld2 { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 16px; align-items: start; }
+.hr-bld2 { display: grid; grid-template-columns: clamp(200px, 16vw, 240px) minmax(0, 1fr); gap: 16px; align-items: start; }
 @media (max-width: 860px) { .hr-bld2 { grid-template-columns: 1fr; } }
 .hr-bld2 .hr-bld-tree { min-width: 0; }
 
@@ -551,3 +551,8 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 .hr-bd-body .hr-row > * { min-width: 0; }
 .hr-bd-body .hr-ex-row { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
 .hr-bd-body .hr-pkq { flex-wrap: wrap; }
+
+/* ===== 단가 빌더: 카드 목록 2~3열 그리드 ===== */
+.hr-bld-grid.hr-bld-grid2 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 1150px) { .hr-bld-grid.hr-bld-grid2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 620px) { .hr-bld-grid.hr-bld-grid2 { grid-template-columns: minmax(0, 1fr); } }
