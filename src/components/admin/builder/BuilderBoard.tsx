@@ -12,7 +12,7 @@ import {
   SortableContext, rectSortingStrategy, arrayMove, sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
 import {
-  saveOrder, moveNode, addSlot, removeSlot, createFolder,
+  saveOrder, moveNode, addSlot, addItemSlot, removeSlot, createFolder,
   toggleFolderHidden, deleteFolder, deletePackage,
 } from '@/app/hr-admin/(panel)/rates/builder/actions';
 import {
@@ -23,21 +23,26 @@ import type {
   BuilderFolder, BuilderSlot, BuilderPkg, BuilderGroup, BuilderItem,
 } from '@/app/hr-admin/(panel)/rates/builder/types';
 import type { PackageFormWork } from '@/components/admin/PackageFormFields';
-import { LevelCard, AddCard, VaultCard, txt, type CardNode, type MenuAction } from './cards';
+import { LevelCard, AddCard, VaultCard, VaultItemCard, txt, type CardNode, type MenuAction } from './cards';
 import { BuilderTree } from './BuilderTree';
-import { EditPanel, PackageEditForm, FolderEditForm, FolderPicker, PriceUiForm } from './BuilderPanel';
+import { EditPanel, PackageEditForm, FolderEditForm, FolderPicker, PriceUiForm, ItemEditForm } from './BuilderPanel';
 
 type LNode = { kind: 'folder' | 'slot'; id: string; sort: number };
 type EditSel =
   | { type: 'package'; id: string }
   | { type: 'new-package' }
-  | { type: 'folder'; id: string };
+  | { type: 'folder'; id: string }
+  | { type: 'item'; id: string; slotId?: string };
 type PickerSel =
   | { mode: 'slot-move'; slotId: string }
   | { mode: 'slot-add'; pkgId: string }
+  | { mode: 'item-add'; itemId: string }
   | { mode: 'folder-move'; folderId: string };
 
 const sid = (n: LNode) => (n.kind === 'folder' ? `f:${n.id}` : `s:${n.id}`);
+/** 슬롯 행이 가리키는 대상. 패키지 슬롯이면 packageId, 항목 슬롯이면 itemId. */
+const slotTgt = (s: BuilderSlot) =>
+  s.package_id ? { packageId: s.package_id } : s.item_id ? { itemId: s.item_id } : null;
 const intoId = (target: string | null, zone: string) => `into:${target ?? 'root'}:${zone}`;
 const parseInto = (oid: string): string | null => {
   const rest = oid.slice(5);
@@ -116,12 +121,35 @@ export function BuilderBoard({
   }, [folders, slots, pid]);
 
   const pkgById = useMemo(() => new Map(pkgs.map((p) => [p.id, p])), [pkgs]);
+  const itemById = useMemo(() => new Map(items.map((i) => [i.id, i])), [items]);
+  const groupName = (gid: string) => {
+    const g = groups.find((x) => x.id === gid);
+    return g ? txt(g.name) : '';
+  };
   const slotCountByPkg = useMemo(() => {
     const m = new Map<string, number>();
-    for (const s of slots) m.set(s.package_id, (m.get(s.package_id) ?? 0) + 1);
+    for (const s of slots) if (s.package_id) m.set(s.package_id, (m.get(s.package_id) ?? 0) + 1);
     return m;
   }, [slots]);
   const vaultPkgs = useMemo(() => pkgs.filter((p) => !slotCountByPkg.has(p.id)), [pkgs, slotCountByPkg]);
+  const slotCountByItem = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const s of slots) if (s.item_id) m.set(s.item_id, (m.get(s.item_id) ?? 0) + 1);
+    return m;
+  }, [slots]);
+  const vaultItems = useMemo(() => items.filter((i) => !slotCountByItem.has(i.id)), [items, slotCountByItem]);
+  // 보관함의 항목은 분야(part_groups) 순서대로 묶어 접이식으로 보여줍니다.
+  const vaultGroups = useMemo(() => {
+    const byGroup = new Map<string, BuilderItem[]>();
+    for (const it of vaultItems) byGroup.set(it.group_id, [...(byGroup.get(it.group_id) ?? []), it]);
+    const out = groups
+      .map((g) => ({ group: g, list: byGroup.get(g.id) ?? [] }))
+      .filter((x) => x.list.length > 0);
+    const known = new Set(groups.map((g) => g.id));
+    const rest = vaultItems.filter((i) => !known.has(i.group_id));
+    if (rest.length) out.push({ group: { id: '__other', num: null, name: { ko: '기타' } }, list: rest });
+    return out;
+  }, [vaultItems, groups]);
 
   const crumbPath = useMemo(() => {
     const path: BuilderFolder[] = [];
@@ -198,7 +226,9 @@ export function BuilderBoard({
     const S = st.current;
     const slot = S.slots.find((s) => s.id === slotId);
     if (!slot) { showToast('카드를 찾지 못했습니다. 새로고침 후 다시 시도하세요.'); return; }
-    const why = slotMoveError(slot.package_id, target, S.folders, S.slots, slot.id);
+    const tgt = slotTgt(slot);
+    if (!tgt) { showToast('카드를 찾지 못했습니다. 새로고침 후 다시 시도하세요.'); return; }
+    const why = slotMoveError(tgt, target, S.folders, S.slots, slot.id);
     if (why) { showToast(why); return; }
     const snap = snapshot();
     const sort = endSort(target, S.folders, S.slots);
@@ -210,13 +240,29 @@ export function BuilderBoard({
 
   const doAddSlot = async (pkgId: string, target: string | null) => {
     const S = st.current;
-    const why = slotMoveError(pkgId, target, S.folders, S.slots);
+    const why = slotMoveError({ packageId: pkgId }, target, S.folders, S.slots);
     if (why) { showToast(why); return; }
     const snap = snapshot();
     const tmpId = `tmp-${Date.now().toString(36)}`;
     const sort = endSort(target, S.folders, S.slots);
-    setSlots((prev) => [...prev, { id: tmpId, folder_id: target, package_id: pkgId, sort }]);
+    setSlots((prev) => [...prev, { id: tmpId, folder_id: target, package_id: pkgId, item_id: null, sort }]);
     const r = await addSlot(pkgId, target);
+    if (!r.ok) { restore(snap); showToast(r.error); }
+    else {
+      setSlots((prev) => prev.map((s) => (s.id === tmpId ? { ...s, id: r.data.id } : s)));
+      router.refresh();
+    }
+  };
+
+  const doAddItemSlot = async (itemId: string, target: string | null) => {
+    const S = st.current;
+    const why = slotMoveError({ itemId }, target, S.folders, S.slots);
+    if (why) { showToast(why); return; }
+    const snap = snapshot();
+    const tmpId = `tmp-${Date.now().toString(36)}`;
+    const sort = endSort(target, S.folders, S.slots);
+    setSlots((prev) => [...prev, { id: tmpId, folder_id: target, package_id: null, item_id: itemId, sort }]);
+    const r = await addItemSlot(itemId, target);
     if (!r.ok) { restore(snap); showToast(r.error); }
     else {
       setSlots((prev) => prev.map((s) => (s.id === tmpId ? { ...s, id: r.data.id } : s)));
@@ -294,6 +340,7 @@ export function BuilderBoard({
     if (!p) return;
     if (p.mode === 'folder-move') void doMoveFolder(p.folderId, target);
     else if (p.mode === 'slot-move') void doMoveSlot(p.slotId, target);
+    else if (p.mode === 'item-add') void doAddItemSlot(p.itemId, target);
     else void doAddSlot(p.pkgId, target);
   };
   const pickerProps = (() => {
@@ -307,16 +354,23 @@ export function BuilderBoard({
     }
     if (picker.mode === 'slot-move') {
       const slot = slots.find((s) => s.id === picker.slotId);
-      const pkgId = slot?.package_id ?? '';
+      const tgt = slot ? slotTgt(slot) : null;
       return {
         title: '슬롯 이동',
-        validate: (t: string | null) => (slot ? slotMoveError(pkgId, t, folders, slots, slot.id) : '카드를 찾지 못했습니다.'),
+        validate: (t: string | null) => (slot && tgt ? slotMoveError(tgt, t, folders, slots, slot.id) : '카드를 찾지 못했습니다.'),
+      };
+    }
+    if (picker.mode === 'item-add') {
+      return {
+        title: '다른 폴더에도 추가',
+        hint: '같은 항목의 바로가기를 만듭니다. 원래 카드와 내용이 함께 바뀝니다.',
+        validate: (t: string | null) => slotMoveError({ itemId: picker.itemId }, t, folders, slots),
       };
     }
     return {
       title: '다른 폴더에도 추가',
       hint: '같은 패키지의 바로가기를 만듭니다. 원래 카드와 내용이 함께 바뀝니다.',
-      validate: (t: string | null) => slotMoveError(picker.pkgId, t, folders, slots),
+      validate: (t: string | null) => slotMoveError({ packageId: picker.pkgId }, t, folders, slots),
     };
   })();
 
@@ -361,6 +415,12 @@ export function BuilderBoard({
     const S = st.current;
 
     // 보관함 카드: 항상 "추가"
+    if (aid.startsWith('vaulti:')) {
+      const itemId = aid.slice(7);
+      const target = oid.startsWith('into:') ? parseInto(oid) : S.pid;
+      void doAddItemSlot(itemId, target);
+      return;
+    }
     if (aid.startsWith('vault:')) {
       const pkgId = aid.slice(6);
       const target = oid.startsWith('into:') ? parseInto(oid) : S.pid;
@@ -376,8 +436,12 @@ export function BuilderBoard({
       else {
         const slot = S.slots.find((s) => s.id === aData.refId);
         if (!slot) return;
-        if (altRef.current) void doAddSlot(slot.package_id, target);
-        else void doMoveSlot(slot.id, target);
+        if (altRef.current) {
+          if (slot.package_id) void doAddSlot(slot.package_id, target);
+          else if (slot.item_id) void doAddItemSlot(slot.item_id, target);
+        } else {
+          void doMoveSlot(slot.id, target);
+        }
       }
       return;
     }
@@ -407,8 +471,16 @@ export function BuilderBoard({
       return f ? { kind: 'folder', folder: f } : null;
     }
     const s = slots.find((x) => x.id === n.id);
-    const p = s ? pkgById.get(s.package_id) : undefined;
-    return s && p ? { kind: 'slot', slot: s, pkg: p } : null;
+    if (!s) return null;
+    if (s.package_id) {
+      const p = pkgById.get(s.package_id);
+      return p ? { kind: 'slot', slot: s, pkg: p } : null;
+    }
+    if (s.item_id) {
+      const it = itemById.get(s.item_id);
+      return it ? { kind: 'itemslot', slot: s, item: it, group: groupName(it.group_id) } : null;
+    }
+    return null;
   };
 
   // 카드로 그릴 수 있는 노드만 정렬·표시합니다.
@@ -430,8 +502,19 @@ export function BuilderBoard({
       ];
     }
     const s = slots.find((x) => x.id === n.id);
-    const p = s ? pkgById.get(s.package_id) : undefined;
-    if (!s || !p) return [];
+    if (!s) return [];
+    if (s.item_id) {
+      const it = itemById.get(s.item_id);
+      if (!it) return [];
+      return [
+        { label: '이동…', onClick: () => setPicker({ mode: 'slot-move', slotId: s.id }) },
+        { label: '다른 폴더에도 추가', onClick: () => setPicker({ mode: 'item-add', itemId: it.id }) },
+        'sep',
+        { label: '여기서 빼기', onClick: () => void doRemoveSlot(s.id) },
+      ];
+    }
+    const p = s.package_id ? pkgById.get(s.package_id) : undefined;
+    if (!p) return [];
     return [
       { label: '수정', onClick: (el) => openEdit({ type: 'package', id: p.id }, el) },
       { label: '이동…', onClick: () => setPicker({ mode: 'slot-move', slotId: s.id }) },
@@ -450,17 +533,27 @@ export function BuilderBoard({
     { label: '패키지 삭제', danger: true, onClick: () => void doDeletePackage(p) },
   ];
 
+  const vaultItemMenu = (it: BuilderItem): MenuAction[] => [
+    { label: '이동…', onClick: () => setPicker({ mode: 'item-add', itemId: it.id }) },
+  ];
+
   const editPkg = edit?.type === 'package' ? pkgs.find((p) => p.id === edit.id) ?? null : null;
   const editFolder = edit?.type === 'folder' ? folders.find((f) => f.id === edit.id) ?? null : null;
+  const editItem = edit?.type === 'item' ? items.find((i) => i.id === edit.id) ?? null : null;
 
   const drawerTitle = !edit ? ''
     : edit.type === 'new-package' ? '새 패키지'
     : edit.type === 'folder' ? (editFolder ? `폴더 수정 · ${txt(editFolder.name)}` : '폴더 수정')
+    : edit.type === 'item' ? (editItem ? `단가 항목 · ${txt(editItem.name)}` : '단가 항목')
     : (editPkg ? `패키지 수정 · ${txt(editPkg.name)}` : '패키지 수정');
   const drawerKey = edit ? `${edit.type}:${edit.type === 'new-package' ? 'new' : edit.id}` : '';
 
   const overlayNode = (() => {
     if (!activeId) return null;
+    if (activeId.startsWith('vaulti:')) {
+      const it = itemById.get(activeId.slice(7));
+      return it ? <div className="hr-bld-card itemslot ghost">{txt(it.name)}</div> : null;
+    }
     if (activeId.startsWith('vault:')) {
       const p = pkgById.get(activeId.slice(6));
       return p ? <div className="hr-bld-card pkg ghost">{txt(p.name)}</div> : null;
@@ -470,8 +563,8 @@ export function BuilderBoard({
     const c = cardFor(n);
     if (!c) return null;
     return (
-      <div className={`hr-bld-card ${c.kind} ghost`}>
-        {c.kind === 'folder' ? txt(c.folder.name) : txt(c.pkg.name)}
+      <div className={`hr-bld-card ${c.kind === 'itemslot' ? 'itemslot' : c.kind} ghost`}>
+        {c.kind === 'folder' ? txt(c.folder.name) : c.kind === 'itemslot' ? txt(c.item.name) : txt(c.pkg.name)}
       </div>
     );
   })();
@@ -525,10 +618,13 @@ export function BuilderBoard({
                     node={c}
                     index={i}
                     count={nodes.length}
-                    shortcut={c.kind === 'slot' ? (slotCountByPkg.get(c.slot.package_id) ?? 0) > 1 : false}
+                    shortcut={c.kind === 'slot'
+                      ? (slotCountByPkg.get(c.slot.package_id ?? '') ?? 0) > 1
+                      : c.kind === 'itemslot' ? (slotCountByItem.get(c.item.id) ?? 0) > 1 : false}
                     menuActions={menuFor(n)}
                     onOpen={(el) => {
                       if (c.kind === 'folder') navigate(c.folder.id);
+                      else if (c.kind === 'itemslot') openEdit({ type: 'item', id: c.item.id, slotId: c.slot.id }, el);
                       else openEdit({ type: 'package', id: c.pkg.id }, el);
                     }}
                     onNudge={(dir) => doNudge(sid(n), dir)}
@@ -539,6 +635,30 @@ export function BuilderBoard({
               <AddCard label="폴더" onClick={() => void doAddFolder()} disabled={levelFull || tooDeep} />
               <AddCard label="패키지" onClick={(e) => openEdit({ type: 'new-package' }, e.currentTarget)} />
             </div>
+
+            {vaultGroups.length > 0 && (
+              <section className="hr-card hr-bld-vault">
+                <h2>어디에도 배치되지 않은 단가 항목 ({vaultItems.length})</h2>
+                <p>카드를 폴더·경로·트리 위에 놓거나 &quot;이동…&quot;으로 배치합니다.</p>
+                {vaultGroups.map(({ group, list }) => (
+                  <details key={group.id} className="hr-bld-vgroup">
+                    <summary>{txt(group.name)} ({list.length})</summary>
+                    <div className="hr-bld-vaultlist">
+                      {list.map((it) => (
+                        <VaultItemCard
+                          key={it.id}
+                          item={it}
+                          group=""
+                          menuActions={vaultItemMenu(it)}
+                          onOpen={(el) => openEdit({ type: 'item', id: it.id }, el)}
+                          suppressed={() => suppressClick.current}
+                        />
+                      ))}
+                    </div>
+                  </details>
+                ))}
+              </section>
+            )}
 
             {vaultPkgs.length > 0 && (
               <section className="hr-card hr-bld-vault">
@@ -607,6 +727,25 @@ export function BuilderBoard({
                 />
               ) : (
                 <div className="hr-card"><p>패키지를 찾을 수 없습니다. 삭제되었을 수 있습니다.</p><button type="button" onClick={closeEdit}>닫기</button></div>
+              )
+            )}
+            {edit.type === 'item' && (
+              editItem ? (
+                <ItemEditForm
+                  key={editItem.id}
+                  item={editItem}
+                  group={groupName(editItem.group_id)}
+                  slotId={edit.slotId}
+                  onClose={closeEdit}
+                  onRemove={edit.slotId ? () => {
+                    const sid2 = edit.slotId!;
+                    if (!window.confirm(`이 카드를 이 폴더에서 뺄까요?`)) return;
+                    void doRemoveSlot(sid2);
+                    closeEdit();
+                  } : undefined}
+                />
+              ) : (
+                <div className="hr-card"><p>단가 항목을 찾을 수 없습니다.</p><button type="button" onClick={closeEdit}>닫기</button></div>
               )
             )}
             {edit.type === 'folder' && (

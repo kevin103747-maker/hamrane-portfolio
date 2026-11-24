@@ -8,12 +8,16 @@ import { str, newId, mergeBoth, pickSort } from '@/lib/admin/forms';
 import { parsePackageForm, parseFolderForm } from '@/lib/admin/rate-forms';
 import {
   folderDepth, folderMoveError, slotMoveError, endSort, MAX_DEPTH, MAX_CHILDREN,
-  type TreeFolder, type TreeSlot,
+  type TreeFolder, type TreeSlot, type SlotTarget,
 } from '@/lib/price-tree';
 import type { BuilderResult, BuilderResultData } from './types';
 
 type FolderRow = Record<string, unknown> & { id: string; parent_id: string | null };
-type SlotRow = Record<string, unknown> & { id: string; folder_id: string | null; package_id: string };
+type SlotRow = Record<string, unknown> & { id: string; folder_id: string | null; package_id: string | null; item_id: string | null };
+
+/** 슬롯 행이 가리키는 대상(패키지 또는 항목). 둘 다 없으면 null. */
+const slotTargetOf = (s: { package_id: string | null; item_id: string | null }): SlotTarget | null =>
+  s.package_id ? { packageId: s.package_id } : s.item_id ? { itemId: s.item_id } : null;
 
 const err = (error: string): BuilderResult => ({ ok: false, error });
 const ok = (): BuilderResult => ({ ok: true });
@@ -113,7 +117,9 @@ export async function moveNode(
   const s = slots.find((x) => x.id === id);
   if (!s) return err('카드를 찾지 못했습니다. 새로고침 후 다시 시도하세요.');
   if (pid && !folders.some((x) => x.id === pid)) return err('상위 폴더를 찾지 못했습니다.');
-  const why = slotMoveError(s.package_id, pid, tf, ts, s.id);
+  const tgt = slotTargetOf(s);
+  if (!tgt) return err('카드를 찾지 못했습니다. 새로고침 후 다시 시도하세요.');
+  const why = slotMoveError(tgt, pid, tf, ts, s.id);
   if (why) return err(why);
   const sort = endSort(pid, tf, ts);
   const { error } = await db.from('price_slots').update({ folder_id: pid, sort }).eq('id', id);
@@ -138,11 +144,38 @@ export async function addSlot(
   const { data: pkg } = await db.from('packages').select('id').eq('id', packageId).maybeSingle();
   if (!pkg) return { ok: false, error: '패키지를 찾지 못했습니다. 새로고침 후 다시 시도하세요.' };
   if (pid && !folders.some((x) => x.id === pid)) return { ok: false, error: '폴더를 찾지 못했습니다.' };
-  const why = slotMoveError(packageId, pid, tf, ts);
+  const why = slotMoveError({ packageId: packageId }, pid, tf, ts);
   if (why) return { ok: false, error: why };
 
   const nid = newId('sl');
-  const row = { id: nid, folder_id: pid, package_id: packageId, sort: endSort(pid, tf, ts) };
+  const row = { id: nid, folder_id: pid, package_id: packageId, item_id: null, sort: endSort(pid, tf, ts) };
+  const { error } = await db.from('price_slots').insert(row);
+  if (error) return { ok: false, error: `추가 실패: ${error.message}` };
+  await logEdit(me, 'create', 'price_slots', nid, null, row);
+  return { ok: true, data: { id: nid } };
+}
+
+/** 단가 항목 바로가기(슬롯) 추가. 패키지 addSlot과 같은 검증·로그 규칙을 따릅니다. */
+export async function addItemSlot(
+  itemId: string,
+  folderId: string | null,
+): Promise<BuilderResultData<{ id: string }>> {
+  const me = await guard();
+  const db = adminDb();
+  const t = await loadTree();
+  if ('error' in t) return { ok: false, error: t.error };
+  const { folders, slots } = t;
+  const { folders: tf, slots: ts } = asTree(folders, slots);
+  const pid = folderId || null;
+
+  const { data: item } = await db.from('rate_items').select('id').eq('id', itemId).maybeSingle();
+  if (!item) return { ok: false, error: '단가 항목을 찾지 못했습니다. 새로고침 후 다시 시도하세요.' };
+  if (pid && !folders.some((x) => x.id === pid)) return { ok: false, error: '폴더를 찾지 못했습니다.' };
+  const why = slotMoveError({ itemId: itemId }, pid, tf, ts);
+  if (why) return { ok: false, error: why };
+
+  const nid = newId('sl');
+  const row = { id: nid, folder_id: pid, package_id: null, item_id: itemId, sort: endSort(pid, tf, ts) };
   const { error } = await db.from('price_slots').insert(row);
   if (error) return { ok: false, error: `추가 실패: ${error.message}` };
   await logEdit(me, 'create', 'price_slots', nid, null, row);
@@ -234,7 +267,7 @@ export async function deleteFolder(id: string): Promise<BuilderResult> {
     return err('하위 폴더가 들어 있어요. 먼저 하위 폴더를 옮기거나 삭제해 주세요.');
   }
   const n = slots.filter((x) => x.folder_id === id).length;
-  if (n > 0) return err(`패키지 ${n}개가 이 폴더에 배치되어 있어요. 먼저 다른 폴더로 옮기거나 빼 주세요.`);
+  if (n > 0) return err(`배치된 카드 ${n}개가 이 폴더에 있어요. 먼저 다른 폴더로 옮기거나 빼 주세요.`);
 
   const db = adminDb();
   const { data: before } = await db.from('price_folders').select('*').eq('id', id).maybeSingle();
@@ -270,7 +303,7 @@ export async function savePriceUi(fd: FormData): Promise<BuilderResult> {
 /* ---------------- 패키지 저장·삭제 (빌더 패널) ---------------- */
 export async function savePackageBuilder(
   fd: FormData,
-): Promise<BuilderResultData<{ pkg: Record<string, unknown>; slot: { id: string; folder_id: string | null; package_id: string; sort: number } | null }>> {
+): Promise<BuilderResultData<{ pkg: Record<string, unknown>; slot: { id: string; folder_id: string | null; package_id: string; item_id: null; sort: number } | null }>> {
   const me = await guard();
   const p = await parsePackageForm(fd);
   if (!p.ok) return { ok: false, error: p.error };
@@ -315,7 +348,7 @@ export async function savePackageBuilder(
   }
 
   // 새 패키지는 slotFolderId 입력칸이 있으면(최상위도 포함) 그 폴더 끝에 바로가기를 만듭니다.
-  let slot: { id: string; folder_id: string | null; package_id: string; sort: number } | null = null;
+  let slot: { id: string; folder_id: string | null; package_id: string; item_id: null; sort: number } | null = null;
   const hasSlotTarget = fd.has('slotFolderId');
   const slotFolderId = str(fd, 'slotFolderId') || null;
   if (!d.id && hasSlotTarget) {
@@ -325,10 +358,10 @@ export async function savePackageBuilder(
       const { folders: tf, slots: ts } = asTree(folders, slots);
       const pid = slotFolderId;
       const folderOk = !pid || folders.some((x) => x.id === pid);
-      const why = folderOk ? slotMoveError(pkgId, pid, tf, ts) : '폴더를 찾지 못했습니다.';
+      const why = folderOk ? slotMoveError({ packageId: pkgId }, pid, tf, ts) : '폴더를 찾지 못했습니다.';
       if (!why) {
         const sid = newId('sl');
-        slot = { id: sid, folder_id: pid, package_id: pkgId, sort: endSort(pid, tf, ts) };
+        slot = { id: sid, folder_id: pid, package_id: pkgId, item_id: null, sort: endSort(pid, tf, ts) };
         const { error } = await db.from('price_slots').insert(slot);
         if (!error) await logEdit(me, 'create', 'price_slots', sid, null, slot);
         else slot = null;

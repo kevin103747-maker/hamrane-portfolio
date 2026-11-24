@@ -22,7 +22,7 @@ export default async function BuilderPage({
     db.from('price_slots').select('*').order('sort', { ascending: true }).order('id', { ascending: true }),
     db.from('packages').select('*').order('sort', { ascending: true }).order('id', { ascending: true }),
     db.from('part_groups').select('id, num, name').order('sort', { ascending: true }),
-    db.from('rate_items').select('id, group_id, name, price, unit').order('sort', { ascending: true }),
+    db.from('rate_items').select('id, group_id, name, price, price_usd, discount, unit').order('sort', { ascending: true }),
     db.from('site_settings').select('value').eq('key', 'price_ui').maybeSingle(),
     db.from('works').select('id, title, artist_ids, hidden').order('work_date', { ascending: false }),
     db.from('artists').select('id, name'),
