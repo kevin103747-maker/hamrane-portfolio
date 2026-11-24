@@ -545,3 +545,9 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 .hr-bd-x:hover { border-color: var(--mint); color: var(--mint); }
 .hr-bd-body { flex: 1; min-height: 0; overflow: auto; padding: 16px 20px 28px; display: grid; gap: 16px; align-content: start; }
 .hr-bd-body .hr-bld-form > h2 { display: none; }
+
+/* ===== 단가 빌더 서랍: 폼 입력칸 자동 줄바꿈 ===== */
+.hr-bd-body .hr-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; align-items: end; }
+.hr-bd-body .hr-row > * { min-width: 0; }
+.hr-bd-body .hr-ex-row { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.hr-bd-body .hr-pkq { flex-wrap: wrap; }
