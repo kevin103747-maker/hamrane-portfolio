@@ -145,7 +145,7 @@ const ko = {
     dcNote: '견적이 복사됐어요. 디스코드에서 붙여 넣어 주세요.',
     backList: '← 목록으로',
     itemsN: '구성 {n}개',
-    moreBelow: '↓ 아래에 더 있어요',
+    moreBelow: '↓ scroll',
   },
   pex: {
     up: '상위로',
@@ -449,7 +449,7 @@ const en: Dict = {
     dcNote: 'Copied. Paste it in Discord.',
     backList: '← Back to list',
     itemsN: '{n} items',
-    moreBelow: '↓ More below',
+    moreBelow: '↓ scroll',
   },
   pex: {
     up: 'Up',
