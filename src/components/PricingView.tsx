@@ -121,6 +121,7 @@ export async function PricingView({ lang = 'ko' }: { lang?: string }) {
     return {
       id: p.id, no: p.no, tag: p.tag, name: tr(p.name), desc: tr(p.desc),
       total: p.total, totalUsd: p.totalUsd, discount: p.discount,
+      workIds: p.workIds,
       rows: Array.from(rows, ([label, lines]) => ({ label, lines })),
     };
   });

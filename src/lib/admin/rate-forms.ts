@@ -31,6 +31,7 @@ export type ParsedPackage = {
   extras: PackageExtra[];
   discount: Record<string, unknown> | null;
   folderId: string;
+  workIds: string[];
 };
 
 /** savePackage의 입력 해석 부분. rate_items 존재 확인까지 하고, 폴더 확인·저장은 호출부가 합니다. */
@@ -45,6 +46,9 @@ export async function parsePackageForm(fd: FormData): Promise<FormResult<ParsedP
   const descEn = str(fd, 'descEn');
   const itemIds = list(fd, 'itemIds');
   const folderId = str(fd, 'folderId');
+  // 샘플 곡: 폼이 보낸 순서대로, 중복은 첫 등장만 남깁니다.
+  const workIds = [...new Set(list(fd, 'workIds'))];
+  if (workIds.length > 3) return bad('샘플 곡은 최대 3개까지 연결할 수 있습니다.');
 
   // 수량: 선택한 항목만 저장하고, 1이면 저장하지 않습니다.
   const qty: Record<string, number> = {};
@@ -138,6 +142,12 @@ export async function parsePackageForm(fd: FormData): Promise<FormResult<ParsedP
       return bad('존재하지 않는 항목이 포함되어 있습니다. 새로고침 후 다시 선택하세요.');
     }
   }
+  if (workIds.length) {
+    const { data: foundWorks } = await db.from('works').select('id').in('id', workIds);
+    if ((foundWorks ?? []).length !== workIds.length) {
+      return bad('존재하지 않는 곡이 포함되어 있습니다. 새로고침 후 다시 선택하세요.');
+    }
+  }
 
   // optional에서 현재 패키지에 없는 항목 id를 제거
   const optionalFiltered = optional.filter((x) => itemIds.includes(x));
@@ -147,7 +157,7 @@ export async function parsePackageForm(fd: FormData): Promise<FormResult<ParsedP
     data: {
       id, num, tag, name, nameEn, desc, descEn, total, totalUsd,
       itemIds, qty, prices, pricesUsd, est, optional: optionalFiltered,
-      extras, discount: disc.discount, folderId,
+      extras, discount: disc.discount, folderId, workIds,
     },
   };
 }

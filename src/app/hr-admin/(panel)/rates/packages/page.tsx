@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { requireAdmin } from '@/lib/auth/guard';
 import { can } from '@/lib/auth/permissions';
 import { adminDb } from '@/lib/auth/admin-db';
-import { PackageFormFields } from '@/components/admin/PackageFormFields';
+import { PackageFormFields, type PackageFormWork } from '@/components/admin/PackageFormFields';
 import { Section, Help, Flash } from '@/components/admin/Section';
 import { savePackage, removePackage } from '../actions';
 
@@ -46,16 +46,25 @@ export default async function PackagesPage({
   const { ok, err, edit } = await searchParams;
 
   const db = adminDb();
-  const [g, r, p, f] = await Promise.all([
+  const [g, r, p, f, w, a] = await Promise.all([
     db.from('part_groups').select('id, num, name').order('sort', { ascending: true }),
     db.from('rate_items').select('id, group_id, name, price, unit').order('sort', { ascending: true }),
     db.from('packages').select('*').order('sort', { ascending: true }),
     db.from('price_folders').select('*').order('sort', { ascending: true }),
+    db.from('works').select('id, title, artist_ids, hidden').order('work_date', { ascending: false }),
+    db.from('artists').select('id, name'),
   ]);
   const groups = g.data ?? [];
   const items = r.data ?? [];
   const pkgs = p.data ?? [];
   const folders = f.data ?? [];
+  const artistName = new Map<string, string>((a.data ?? []).map((x) => [x.id as string, x.name as string]));
+  const works: PackageFormWork[] = (w.data ?? []).map((x) => ({
+    id: x.id as string,
+    title: x.title as string,
+    artist: ((x.artist_ids as string[] | null) ?? []).map((i) => artistName.get(i)).filter(Boolean).join(', '),
+    hidden: !!x.hidden,
+  }));
   const cur = edit ? pkgs.find((x) => x.id === edit) : undefined;
   const nameOf = (id: string) => txt(items.find((x) => x.id === id)?.name) || id;
 
@@ -86,7 +95,7 @@ export default async function PackagesPage({
 
       <form key={cur?.id ?? 'new'} id="form" action={savePackage} className="hr-card hr-f">
         <h2>{cur ? `패키지 수정 · ${txt(cur.name)}` : '새 패키지 추가'}</h2>
-        <PackageFormFields cur={cur} groups={groups} items={items} pkgCount={pkgs.length} folders={folders as Folder[]} />
+        <PackageFormFields cur={cur} groups={groups} items={items} pkgCount={pkgs.length} folders={folders as Folder[]} works={works} />
 
         <div className="hr-act">
           {cur && <Link href="/hr-admin/rates/packages">수정 취소</Link>}

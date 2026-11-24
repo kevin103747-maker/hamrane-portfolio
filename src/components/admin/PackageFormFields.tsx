@@ -1,4 +1,6 @@
 // src/components/admin/PackageFormFields.tsx — 패키지 폼의 입력칸 (기존 패키지 화면과 빌더 편집 패널이 같이 씁니다)
+'use client';
+import { useMemo, useState } from 'react';
 import { DiscountFields } from '@/components/admin/DiscountFields';
 import { ExtrasEditor, type Extra } from '@/components/admin/ExtrasEditor';
 import { Section } from '@/components/admin/Section';
@@ -14,11 +16,69 @@ export type PackageFormCur = {
   total?: string | null; total_usd?: string | null; item_ids?: string[] | null;
   qty?: unknown; prices?: unknown; prices_usd?: unknown; est?: unknown;
   extras?: unknown; optional?: unknown; discount?: unknown;
-  folder_id?: string | null; sort?: number | null;
+  folder_id?: string | null; sort?: number | null; work_ids?: string[] | null;
 };
 export type PackageFormGroup = { id: string; num: unknown; name: unknown };
 export type PackageFormItem = { id: string; group_id: string; name: unknown; price: unknown; unit: unknown };
 export type PackageFormFolder = { id: string; parent_id: string | null; name: unknown; sort?: number | null };
+export type PackageFormWork = { id: string; title: string; artist: string; hidden: boolean };
+
+const SAMPLE_MAX = 3;
+
+/* 샘플 곡 선택: 검색으로 골라 넣고, 위/아래로 순서를 정합니다. workIds hidden input이 순서대로 제출됩니다. */
+function SampleWorksPicker({ works, initial }: { works: PackageFormWork[]; initial: string[] }) {
+  const [sel, setSel] = useState<string[]>(() => [...new Set(initial)]);
+  const [q, setQ] = useState('');
+  const byId = useMemo(() => new Map(works.map((w) => [w.id, w])), [works]);
+  const ql = q.trim();
+  // 숨김 곡은 후보에서 뺍니다. 이미 골라 둔 숨김·삭제된 곡은 목록에 표시해 그대로 둘지 지울지 고를 수 있게 합니다.
+  const cands = works.filter((w) => !w.hidden && !sel.includes(w.id) && (!ql || w.title.includes(ql)));
+  const full = sel.length >= SAMPLE_MAX;
+  const nameOf = (id: string) => {
+    const w = byId.get(id);
+    if (!w) return '삭제된 곡';
+    return `${w.title}${w.artist ? ` · ${w.artist}` : ''}${w.hidden ? ' (숨김)' : ''}`;
+  };
+  const toggle = (id: string) =>
+    setSel((s) => (s.includes(id) ? s.filter((x) => x !== id) : s.length < SAMPLE_MAX ? [...s, id] : s));
+  const move = (i: number, d: number) =>
+    setSel((s) => {
+      const j = i + d;
+      if (j < 0 || j >= s.length) return s;
+      const n = [...s];
+      [n[i], n[j]] = [n[j], n[i]];
+      return n;
+    });
+  return (
+    <div>
+      {sel.map((id, i) => (
+        <div key={id} className="hr-pkq">
+          <span className="hr-pkq-n" style={{ flex: 1 }}>{i + 1}. {nameOf(id)}</span>
+          <span className="hr-mv">
+            <button type="button" onClick={() => move(i, -1)} disabled={i === 0} aria-label="위로">↑</button>
+            <button type="button" onClick={() => move(i, 1)} disabled={i === sel.length - 1} aria-label="아래로">↓</button>
+          </span>
+          <button type="button" onClick={() => toggle(id)}>빼기</button>
+        </div>
+      ))}
+      {sel.map((id) => <input key={id} type="hidden" name="workIds" value={id} />)}
+      <label>
+        곡 검색 (제목)
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="예: 신곡, 콜라보" />
+      </label>
+      <div className="hr-chks">
+        {cands.map((w) => (
+          <label key={w.id} className="hr-chk">
+            <input type="checkbox" checked={false} onChange={() => toggle(w.id)} disabled={full} />
+            {w.title}{w.artist ? ` · ${w.artist}` : ''}
+          </label>
+        ))}
+        {!cands.length && <small>고를 수 있는 곡이 없습니다.</small>}
+      </div>
+      {full && <small>최대 {SAMPLE_MAX}개까지 연결할 수 있습니다.</small>}
+    </div>
+  );
+}
 
 // 폴더 선택 옵션 (들여쓰기 레이블). folders를 넘기지 않으면 폴더 선택칸을 그리지 않습니다.
 function folderOptions(all: PackageFormFolder[], currentId?: string): { value: string; label: string }[] {
@@ -41,13 +101,14 @@ function folderOptions(all: PackageFormFolder[], currentId?: string): { value: s
 }
 
 export function PackageFormFields({
-  cur, groups, items, pkgCount, folders,
+  cur, groups, items, pkgCount, folders, works = [],
 }: {
   cur?: PackageFormCur | null;
   groups: PackageFormGroup[];
   items: PackageFormItem[];
   pkgCount: number;
   folders?: PackageFormFolder[];
+  works?: PackageFormWork[];
 }) {
   const picked: string[] = cur?.item_ids ?? [];
   const qtyMap = (cur?.qty ?? {}) as Record<string, number>;
@@ -182,6 +243,15 @@ export function PackageFormFields({
         hint="내 단가표에 없는 다른 작업자의 몫"
       >
         <ExtrasEditor initial={extras} max={12} />
+      </Section>
+
+      <Section
+        open={(cur?.work_ids?.length ?? 0) > 0}
+        title="샘플 곡"
+        badge={`${cur?.work_ids?.length ?? 0}/${SAMPLE_MAX}개`}
+        hint="공개 패키지 팝업에 '이 구성으로 작업한 곡'으로 나옵니다"
+      >
+        <SampleWorksPicker works={works} initial={cur?.work_ids ?? []} />
       </Section>
 
       <Section

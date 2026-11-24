@@ -56,6 +56,7 @@ async function load(): Promise<SiteData | null> {
       total: x.total, totalUsd: x.total_usd || undefined, discount: x.discount ?? undefined,
       qty: x.qty ?? {}, extras: x.extras ?? [], prices: x.prices ?? {}, pricesUsd: x.prices_usd ?? {}, est: x.est ?? [],
       folderId: x.folder_id ?? undefined, optional: x.optional ?? [],
+      workIds: Array.isArray(x.work_ids) ? x.work_ids.filter((i): i is string => typeof i === 'string') : [],
     })),
     notice: setting('notice') ?? SAMPLE.notice,
     links: setting('links') ?? SAMPLE.links,

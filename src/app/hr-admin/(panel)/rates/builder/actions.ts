@@ -298,6 +298,7 @@ export async function savePackageBuilder(
     total_usd: d.totalUsd,
     discount: d.discount,
     optional: d.optional,
+    work_ids: d.workIds,
     sort: await pickSort(fd, 'packages', before?.sort as number | undefined),
   };
 

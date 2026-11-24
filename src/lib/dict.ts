@@ -146,6 +146,7 @@ const ko = {
     backList: '← 목록으로',
     itemsN: '구성 {n}개',
     moreBelow: '↓ scroll',
+    samples: '이 구성으로 작업한 곡 듣기',
   },
   pex: {
     up: '상위로',
@@ -450,6 +451,7 @@ const en: Dict = {
     backList: '← Back to list',
     itemsN: '{n} items',
     moreBelow: '↓ scroll',
+    samples: 'Songs made with this package',
   },
   pex: {
     up: 'Up',

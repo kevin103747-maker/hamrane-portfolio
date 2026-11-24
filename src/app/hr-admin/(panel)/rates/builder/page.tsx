@@ -4,6 +4,7 @@ import { requireAdmin } from '@/lib/auth/guard';
 import { can } from '@/lib/auth/permissions';
 import { adminDb } from '@/lib/auth/admin-db';
 import { BuilderBoard } from '@/components/admin/builder/BuilderBoard';
+import type { PackageFormWork } from '@/components/admin/PackageFormFields';
 import type { BuilderFolder, BuilderSlot, BuilderPkg, BuilderGroup, BuilderItem } from './types';
 
 export default async function BuilderPage({
@@ -16,15 +17,17 @@ export default async function BuilderPage({
   const { f } = await searchParams;
 
   const db = adminDb();
-  const [fo, sl, pk, g, r, ui] = await Promise.all([
+  const [fo, sl, pk, g, r, ui, w, a] = await Promise.all([
     db.from('price_folders').select('*').order('sort', { ascending: true }).order('id', { ascending: true }),
     db.from('price_slots').select('*').order('sort', { ascending: true }).order('id', { ascending: true }),
     db.from('packages').select('*').order('sort', { ascending: true }).order('id', { ascending: true }),
     db.from('part_groups').select('id, num, name').order('sort', { ascending: true }),
     db.from('rate_items').select('id, group_id, name, price, unit').order('sort', { ascending: true }),
     db.from('site_settings').select('value').eq('key', 'price_ui').maybeSingle(),
+    db.from('works').select('id, title, artist_ids, hidden').order('work_date', { ascending: false }),
+    db.from('artists').select('id, name'),
   ]);
-  const failed = [fo, sl, pk, g, r].find((x) => x.error);
+  const failed = [fo, sl, pk, g, r, w, a].find((x) => x.error);
   if (failed?.error) {
     return (
       <div className="hr-pn-body">
@@ -42,6 +45,14 @@ export default async function BuilderPage({
     en: typeof uiQ.en === 'string' ? uiQ.en : '',
   };
 
+  const artistName = new Map<string, string>((a.data ?? []).map((x) => [x.id as string, x.name as string]));
+  const works: PackageFormWork[] = (w.data ?? []).map((x) => ({
+    id: x.id as string,
+    title: x.title as string,
+    artist: ((x.artist_ids as string[] | null) ?? []).map((i) => artistName.get(i)).filter(Boolean).join(', '),
+    hidden: !!x.hidden,
+  }));
+
   return (
     <BuilderBoard
       folders={(fo.data ?? []) as BuilderFolder[]}
@@ -49,6 +60,7 @@ export default async function BuilderPage({
       packages={(pk.data ?? []) as BuilderPkg[]}
       groups={(g.data ?? []) as BuilderGroup[]}
       items={(r.data ?? []) as BuilderItem[]}
+      works={works}
       folderId={f ?? null}
       priceUi={priceUi}
     />
