@@ -1953,3 +1953,14 @@ a.dl-file:hover { border-color: var(--mint); background: var(--mint-soft); }
   .hr-pm-copybtn { display: none; }
   .hr-pm-copylnk { display: inline; }
 }
+
+/* ===== 팝업 막대 압축 + 링크형 보기 버튼 ===== */
+.hr-pm-bar-s { gap: 6px; padding-top: 10px; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+.hr-pm-viewlnk { display: none; padding: 0; border: 0; background: none; font: inherit; font-size: 12px; color: var(--text-3); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.hr-pm-viewlnk:hover { color: var(--mint); }
+@media (min-width: 1024px) and (hover: hover) {
+  .hr-pm-viewlnk { display: inline; }
+}
+
+/* ===== 단가 탐색기: 설명문–질문 문장 사이 간격 ===== */
+.hr-px-sec .wrap > .hr-px-title:first-child { margin-top: 12px; }

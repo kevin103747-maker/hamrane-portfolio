@@ -52,6 +52,10 @@ export function Modal({ p, onClose, initialOff, onAddToCart, discordUrl, cartBad
   const [copied, setCopied] = useState(false);
   const [dcNote, setDcNote] = useState(false);
   const [added, setAdded] = useState(false);
+  const [hintSeen, setHintSeen] = useState(false);
+  useEffect(() => {
+    try { if (sessionStorage.getItem('hr-cart-hint-seen')) setHintSeen(true); } catch { /* 저장소 접근 실패는 무시 */ }
+  }, []);
   const isOff = (l: PkgLine) => l.optKey != null && off.has(l.optKey);
 
   useEffect(() => {
@@ -242,7 +246,7 @@ export function Modal({ p, onClose, initialOff, onAddToCart, discordUrl, cartBad
 
           <p className="hr-pm-note">{L.exCap}</p>
 
-          <div className="hr-pm-bar">
+          <div className="hr-pm-bar hr-pm-bar-s">
             {off.size > 0 && (
               <div className="hr-pm-bar-sum">
                 <span className="hr-pm-bar-pair">
@@ -263,7 +267,12 @@ export function Modal({ p, onClose, initialOff, onAddToCart, discordUrl, cartBad
                 <button
                   type="button"
                   className="hr-cart-add hr-pm-cartbtn"
-                  onClick={() => { onAddToCart([...off]); setAdded(true); }}
+                  onClick={() => {
+                    onAddToCart([...off]);
+                    setAdded(true);
+                    setHintSeen(true);
+                    try { sessionStorage.setItem('hr-cart-hint-seen', '1'); } catch { /* 저장 실패는 무시 */ }
+                  }}
                 >
                   {P.cartAdd}
                 </button>
@@ -278,6 +287,11 @@ export function Modal({ p, onClose, initialOff, onAddToCart, discordUrl, cartBad
               )}
             </div>
             <div className="hr-pm-bar-links">
+              {added && onViewCart && (
+                <button type="button" className="hr-pm-viewlnk" onClick={onViewCart}>
+                  {X.viewCart}
+                </button>
+              )}
               <button type="button" className="hr-pm-copylnk" onClick={copyQuote}>
                 {copied ? X.copied : X.copyItems}
               </button>
@@ -290,12 +304,7 @@ export function Modal({ p, onClose, initialOff, onAddToCart, discordUrl, cartBad
                 {fill(X.addedFmt, { n: cartBadge.n, amt: cartBadge.total })}
               </p>
             )}
-            {added && onViewCart && (
-              <button type="button" className="hr-pm-viewcart" onClick={onViewCart}>
-                {X.viewCart}
-              </button>
-            )}
-            {onAddToCart && !cartBadge && <p className="hr-pm-carthint">{X.cartHint}</p>}
+            {onAddToCart && !cartBadge && !hintSeen && <p className="hr-pm-carthint">{X.cartHint}</p>}
             {dcNote && <p className="hr-pm-dcnote">{P.dcNote}</p>}
           </div>
         </div>
