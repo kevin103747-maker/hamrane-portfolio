@@ -61,7 +61,7 @@ export async function saveFolder(fd: FormData) {
   const id = p.ok ? p.data.id : str(fd, 'id');
   const back = id ? `${FOLDERS}?edit=${encodeURIComponent(id)}` : FOLDERS;
   if (!p.ok) fail(back, p.error);
-  const { parentId, name, nameEn, desc, descEn, hidden } = p.data;
+  const { parentId, name, nameEn, desc, descEn, hidden, question, questionEn } = p.data;
 
   const db = adminDb();
   const map = await loadFolders();
@@ -97,6 +97,7 @@ export async function saveFolder(fd: FormData) {
     parent_id: newParent,
     name: mergeBoth(before?.name, name, nameEn),
     descr: mergeBoth(before?.descr, desc, descEn),
+    question: mergeBoth(before?.question, question, questionEn),
     hidden,
   };
 

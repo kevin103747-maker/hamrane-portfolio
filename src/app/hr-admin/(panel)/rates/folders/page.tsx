@@ -14,7 +14,8 @@ const en = (v: unknown): string => (v as { en?: string } | null)?.en ?? '';
 
 type Folder = {
   id: string; parent_id: string | null; name: { ko: string; en?: string };
-  descr: { ko: string; en?: string }; sort: number; hidden: boolean;
+  descr: { ko: string; en?: string }; question?: { ko?: string; en?: string } | null;
+  sort: number; hidden: boolean;
 };
 
 export default async function FoldersPage({

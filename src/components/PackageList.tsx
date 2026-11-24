@@ -34,17 +34,21 @@ const qtyText = (l: PkgLine) => (l.noun ? `${l.qty}${l.noun}` : `×${l.qty}`);
 /** 계산식용 표기: "20,000원 × 8트랙" */
 const mulText = (l: PkgLine) => (l.noun ? `${l.qty}${l.noun}` : `${l.qty}`);
 
-export function Modal({ p, onClose, initialOff, onAddToCart }: {
+export function Modal({ p, onClose, initialOff, onAddToCart, discordUrl }: {
   p: PackageView; onClose: () => void;
   initialOff?: string[]; // 장바구니에서 열 때 저장된 끔 상태
   onAddToCart?: (off: string[]) => void; // PC 장바구니 담기 (PC에서만 버튼 표시)
+  discordUrl?: string; // 디스코드 문의 링크. 없으면 문의 버튼을 숨깁니다.
 }) {
   const lang = useLocale();
   const L = dict(lang).pricing;
   const P = dict(lang).pkg;
+  const X = dict(lang).pex;
   const won = (n: number) => n.toLocaleString(L.numLocale);
   const closeRef = useRef<HTMLButtonElement>(null);
   const [off, setOff] = useState<ReadonlySet<string>>(() => new Set(initialOff ?? []));
+  const [copied, setCopied] = useState(false);
+  const [dcNote, setDcNote] = useState(false);
   const isOff = (l: PkgLine) => l.optKey != null && off.has(l.optKey);
 
   useEffect(() => {
@@ -75,12 +79,49 @@ export function Modal({ p, onClose, initialOff, onAddToCart }: {
   const total = baseTotal != null && off.size > 0 ? Math.max(0, baseTotal - removed) : baseTotal;
   const diff = complete && total != null ? total - sub : null;
   const hasEst = active.some((l) => l.est);
+  const canToggle = all.some((l) => l.optKey != null);
   const toggle = (key: string) =>
     setOff((prev) => {
       const n = new Set(prev);
       if (n.has(key)) n.delete(key); else n.add(key);
       return n;
     });
+
+  // 끈 항목의 원래 금액 (취소선 표시용)
+  const offAmt = (l: PkgLine) => {
+    const g = useUsd ? l.unitUsd : l.unit;
+    return g == null ? null : `${won(g * l.qty)}${cur}`;
+  };
+
+  // 장바구니 '내역 복사'와 같은 형식의 견적 텍스트
+  const quoteText = () => {
+    const r = pkgCopyLines(p, [...off], { useUsd, cur, won, sub: X.sub, lineAsk: P.askLater, offTag: X.offTag });
+    const out = [...r.lines, `${X.total}: ${won(r.amount)}${cur}~ ${L.vat}`];
+    if (r.ask) out.push(X.askLater);
+    return out.join('\n');
+  };
+  const copyQuote = async () => {
+    const text = quoteText();
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      window.prompt(X.copyFail, text);
+    }
+  };
+  const inquireDiscord = async () => {
+    if (!discordUrl) return;
+    const text = quoteText();
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      window.prompt(X.copyFail, text);
+    }
+    setDcNote(true);
+    setTimeout(() => setDcNote(false), 4000);
+    window.open(discordUrl, '_blank', 'noopener,noreferrer');
+  };
 
   return createPortal(
     <div className="hr-pm-back" onClick={onClose}>
@@ -98,9 +139,11 @@ export function Modal({ p, onClose, initialOff, onAddToCart }: {
         </button>
 
         <div className="hr-pm-scroll">
+          <button type="button" className="hr-pm-tolist" onClick={onClose}>{P.backList}</button>
           <div className="hr-pm-top"><span>EX {p.no}</span><em>{p.tag}</em></div>
           <h3>{p.name}</h3>
           {p.desc && <p className="hr-pm-desc">{p.desc}</p>}
+          {canToggle && <p className="hr-pm-tognote">{P.exclNote}</p>}
 
           <div className="hr-pm-est">
             <small>{P.est}</small>
@@ -130,21 +173,24 @@ export function Modal({ p, onClose, initialOff, onAddToCart }: {
                           : l.qty > 1 && <small className="hr-pb-q">×{l.qty}</small>}
                         {l.collab && <small className="hr-pb-c">{P.collab}{l.who ? ` · ${l.who}` : ''}</small>}
                         {l.optKey ? (
-                          <button
-                            type="button"
-                            className="hr-tg"
-                            role="switch"
-                            aria-checked={!offLine}
-                            aria-label={fill(P.togAria, { name: l.name })}
-                            onClick={() => toggle(l.optKey!)}
-                          ><i /></button>
+                          <>
+                            <button
+                              type="button"
+                              className="hr-tg"
+                              role="switch"
+                              aria-checked={!offLine}
+                              aria-label={fill(P.togAria, { name: l.name })}
+                              onClick={() => toggle(l.optKey!)}
+                            ><i /></button>
+                            <small className={`hr-tg-lab${offLine ? '' : ' in'}`}>{offLine ? P.togOff : P.togOn}</small>
+                          </>
                         ) : (
                           <small className="hr-pb-always">{P.always}</small>
                         )}
                       </span>
                       <span className="hr-pb-a">
                         {offLine ? (
-                          <em>{P.excluded}</em>
+                          offAmt(l) != null ? <i className="was"><s>{offAmt(l)}</s></i> : <em>–</em>
                         ) : l.unit == null ? (
                           <em>{P.askLater}</em>
                         ) : l.unit === 0 ? (
@@ -195,6 +241,17 @@ export function Modal({ p, onClose, initialOff, onAddToCart }: {
         </div>
 
         <div className="hr-pm-foot">
+          <div className="hr-pm-btns">
+            <button type="button" className="hr-pm-qcopy" onClick={copyQuote}>
+              {copied ? X.copied : P.quoteCopy}
+            </button>
+            {discordUrl && (
+              <button type="button" className="hr-pm-dc" onClick={inquireDiscord}>
+                {P.dcAsk}
+              </button>
+            )}
+          </div>
+          {dcNote && <p className="hr-pm-dcnote">{P.dcNote}</p>}
           {onAddToCart && (
             <button type="button" className="hr-cart-add" onClick={() => onAddToCart([...off])}>
               {P.cartAdd}
@@ -256,6 +313,32 @@ export function PackageList({ items }: { items: PackageView[] }) {
  * 가격이 없는('별도 협의') 항목은 0으로 계산하며 ask=true로 표시합니다.
  * usd는 totalUsd가 있고 켜진 모든 항목에 unitUsd가 있을 때만 값을 가집니다.
  */
+/**
+ * 장바구니·내역 복사·디스코드 문의가 함께 쓰는 패키지 한 줄 분량의 복사 텍스트.
+ * pkgMoney와 같은 계산(끈 항목 제외, 금액 없으면 0 처리 + ask 표시)으로 만든 뒤
+ * 통화 표기만 호출부의 현재 통화를 따릅니다.
+ */
+export function pkgCopyLines(p: PackageView, off: readonly string[], c: {
+  useUsd: boolean; cur: string; won: (n: number) => string;
+  sub: string; lineAsk: string; offTag: string;
+}): { lines: string[]; amount: number; ask: boolean } {
+  const m = pkgMoney(p, off);
+  const mm = c.useUsd && m.usd ? m.usd : m.krw;
+  const lines = [`[${p.name}] ${c.sub}: ${c.won(mm.amount)}${c.cur}~`];
+  for (const r of p.rows) {
+    for (const l of r.lines) {
+      if (l.optKey != null && off.includes(l.optKey)) {
+        lines.push(` - (${c.offTag}) ${l.name}`);
+      } else {
+        const get = c.useUsd ? l.unitUsd : l.unit;
+        const amt = get == null ? c.lineAsk : `${c.won(get * l.qty)}${c.cur}`;
+        lines.push(` - ${l.name}${l.qty > 1 ? ` ×${l.qty}` : ''}  ${amt}`);
+      }
+    }
+  }
+  return { lines, amount: mm.amount, ask: mm.ask };
+}
+
 export function pkgMoney(p: PackageView, off: readonly string[]) {
   const os = new Set(off);
   const all = p.rows.flatMap((r) => r.lines);

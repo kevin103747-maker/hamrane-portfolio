@@ -16,12 +16,13 @@ export default async function BuilderPage({
   const { f } = await searchParams;
 
   const db = adminDb();
-  const [fo, sl, pk, g, r] = await Promise.all([
+  const [fo, sl, pk, g, r, ui] = await Promise.all([
     db.from('price_folders').select('*').order('sort', { ascending: true }).order('id', { ascending: true }),
     db.from('price_slots').select('*').order('sort', { ascending: true }).order('id', { ascending: true }),
     db.from('packages').select('*').order('sort', { ascending: true }).order('id', { ascending: true }),
     db.from('part_groups').select('id, num, name').order('sort', { ascending: true }),
     db.from('rate_items').select('id, group_id, name, price, unit').order('sort', { ascending: true }),
+    db.from('site_settings').select('value').eq('key', 'price_ui').maybeSingle(),
   ]);
   const failed = [fo, sl, pk, g, r].find((x) => x.error);
   if (failed?.error) {
@@ -33,6 +34,14 @@ export default async function BuilderPage({
     );
   }
 
+  // 공개 단가 화면 최상위 질문 (site_settings 'price_ui'.question). 조회 실패 시 빈 값.
+  const uiV = ui.data?.value as { question?: { ko?: unknown; en?: unknown } } | null | undefined;
+  const uiQ = uiV?.question ?? {};
+  const priceUi = {
+    ko: typeof uiQ.ko === 'string' ? uiQ.ko : '',
+    en: typeof uiQ.en === 'string' ? uiQ.en : '',
+  };
+
   return (
     <BuilderBoard
       folders={(fo.data ?? []) as BuilderFolder[]}
@@ -41,6 +50,7 @@ export default async function BuilderPage({
       groups={(g.data ?? []) as BuilderGroup[]}
       items={(r.data ?? []) as BuilderItem[]}
       folderId={f ?? null}
+      priceUi={priceUi}
     />
   );
 }

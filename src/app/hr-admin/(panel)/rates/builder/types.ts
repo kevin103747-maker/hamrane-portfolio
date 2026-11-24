@@ -6,6 +6,7 @@ export type BuilderFolder = {
   parent_id: string | null;
   name: unknown;
   descr: unknown;
+  question?: unknown;
   sort: number | null;
   hidden: boolean | null;
 };
