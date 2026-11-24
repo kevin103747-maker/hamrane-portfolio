@@ -243,8 +243,8 @@ export function Modal({ p, onClose, initialOff, onAddToCart, discordUrl, cartBad
           <p className="hr-pm-note">{L.exCap}</p>
 
           <div className="hr-pm-bar">
-            <div className="hr-pm-bar-sum">
-              {off.size > 0 ? (
+            {off.size > 0 && (
+              <div className="hr-pm-bar-sum">
                 <span className="hr-pm-bar-pair">
                   <span className="hr-pm-bar-base">
                     <em>{X.barBase}</em>
@@ -256,15 +256,19 @@ export function Modal({ p, onClose, initialOff, onAddToCart, discordUrl, cartBad
                     <b key={total ?? 'ask'}>{total != null ? <>{won(total)}{cur}~</> : P.askLater}</b>
                   </span>
                 </span>
-              ) : (
-                <span className="hr-pm-bar-sel" role="status" aria-live="polite">
-                  <em>{X.total}</em>
-                  <b key="base"><Price price={p.total} priceUsd={p.totalUsd} discount={p.discount} /></b>
-                </span>
-              )}
-            </div>
+              </div>
+            )}
             <div className="hr-pm-bar-btns">
-              <button type="button" className="hr-pm-qcopy" onClick={copyQuote}>
+              {onAddToCart && (
+                <button
+                  type="button"
+                  className="hr-cart-add hr-pm-cartbtn"
+                  onClick={() => { onAddToCart([...off]); setAdded(true); }}
+                >
+                  {P.cartAdd}
+                </button>
+              )}
+              <button type="button" className="hr-pm-qcopy hr-pm-copybtn" onClick={copyQuote}>
                 {copied ? X.copied : P.quoteCopy}
               </button>
               {discordUrl && (
@@ -273,36 +277,27 @@ export function Modal({ p, onClose, initialOff, onAddToCart, discordUrl, cartBad
                 </button>
               )}
             </div>
+            <div className="hr-pm-bar-links">
+              <button type="button" className="hr-pm-copylnk" onClick={copyQuote}>
+                {copied ? X.copied : X.copyItems}
+              </button>
+              <a className="hr-pm-asklnk" href="#contact" onClick={onClose}>
+                {P.ask} <Icon name="arrow" />
+              </a>
+            </div>
+            {added && cartBadge && (
+              <p className="hr-pm-added" role="status">
+                {fill(X.addedFmt, { n: cartBadge.n, amt: cartBadge.total })}
+              </p>
+            )}
+            {added && onViewCart && (
+              <button type="button" className="hr-pm-viewcart" onClick={onViewCart}>
+                {X.viewCart}
+              </button>
+            )}
+            {onAddToCart && !cartBadge && <p className="hr-pm-carthint">{X.cartHint}</p>}
             {dcNote && <p className="hr-pm-dcnote">{P.dcNote}</p>}
           </div>
-        </div>
-
-        <div className="hr-pm-foot">
-          {onAddToCart && (
-            <div className="hr-pm-cartextra">
-              <button
-                type="button"
-                className="hr-cart-add"
-                onClick={() => { onAddToCart([...off]); setAdded(true); }}
-              >
-                {P.cartAdd}
-              </button>
-              {added && cartBadge && (
-                <p className="hr-pm-added" role="status">
-                  {fill(X.addedFmt, { n: cartBadge.n, amt: cartBadge.total })}
-                </p>
-              )}
-              {added && onViewCart && (
-                <button type="button" className="hr-pm-viewcart" onClick={onViewCart}>
-                  {X.viewCart}
-                </button>
-              )}
-              <p className="hr-pm-carthint">{X.cartHint}</p>
-            </div>
-          )}
-          <a className="hr-pm-ask" href="#contact" onClick={onClose}>
-            {P.ask} <Icon name="arrow" />
-          </a>
         </div>
       </div>
     </div>,

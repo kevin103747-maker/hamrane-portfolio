@@ -1940,3 +1940,16 @@ a.dl-file:hover { border-color: var(--mint); background: var(--mint-soft); }
 @media (prefers-reduced-motion: reduce) {
   .hr-px-step-next, .hr-px-step-prev { animation: none; }
 }
+
+/* ===== 팝업 하단 막대: 버튼 한 줄 + 보조 링크 ===== */
+.hr-pm-cartbtn { flex: 1; width: auto; height: 46px; margin: 0; }
+.hr-pm-bar-links { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 16px; }
+.hr-pm-copylnk { display: none; padding: 0; border: 0; background: none; font: inherit; font-size: 12px; color: var(--text-3); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.hr-pm-copylnk:hover { color: var(--mint); }
+.hr-pm-asklnk { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--text-3); text-decoration: underline; text-underline-offset: 3px; }
+.hr-pm-asklnk:hover { color: var(--mint); }
+.hr-pm-asklnk svg { width: 12px; height: 12px; }
+@media (min-width: 1024px) and (hover: hover) {
+  .hr-pm-copybtn { display: none; }
+  .hr-pm-copylnk { display: inline; }
+}
