@@ -1863,3 +1863,13 @@ a.dl-file:hover { border-color: var(--mint); background: var(--mint-soft); }
   .hr-px-sec .hr-px-grid .hr-px-ico { top: 18px; right: 18px; }
   .hr-px-act { font-size: 14px; }
 }
+
+/* ===== 탐색기 패키지 카드 가격 ===== */
+.hr-px-sec .hr-px-grid .hr-px-price { display: flex; flex-direction: column; gap: 3px; }
+.hr-px-sec .hr-px-grid .hr-px-price-v { font: 800 22px/1.15 var(--f-sp); letter-spacing: -.02em; color: var(--text); }
+.hr-px-sec .hr-px-grid .hr-px-price-v small { font: 500 13px var(--f-kr); letter-spacing: 0; margin-left: 2px; }
+.hr-px-sec .hr-px-grid .hr-px-price-ask { font-size: 17px; font-weight: 700; color: var(--text-2); }
+.hr-px-sec .hr-px-grid .hr-px-price-note { font-size: 11.5px; color: var(--text-3); }
+@media (max-width: 620px) {
+  .hr-px-sec .hr-px-grid .hr-px-price-v { font-size: 19px; }
+}

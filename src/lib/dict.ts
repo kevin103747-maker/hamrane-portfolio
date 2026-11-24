@@ -173,6 +173,8 @@ const ko = {
     offTag: '제외',
     actChoose: '선택하기',
     actView: '구성 보기',
+    cardAsk: '별도 협의',
+    cardBase: '기본 구성 기준',
   },
   bundle: {
     aria: '묶음 할인 안내',
@@ -467,6 +469,8 @@ const en: Dict = {
     offTag: 'excluded',
     actChoose: 'Choose',
     actView: 'View details',
+    cardAsk: 'Ask for a quote',
+    cardBase: 'Base package',
   },
   bundle: {
     aria: 'Bundle discount info',

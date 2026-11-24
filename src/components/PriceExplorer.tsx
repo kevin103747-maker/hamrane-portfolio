@@ -1,8 +1,9 @@
 // src/components/PriceExplorer.tsx — 공개 단가 폴더 탐색 + PC 장바구니
 'use client';
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Modal, pkgMoney, pkgCopyLines, type PackageView } from './PackageList';
+import { Price } from './Price';
 import type { PublicNode } from '@/lib/price-tree-data';
 import { useLocale } from './LocaleLink';
 import { dict, fill } from '@/lib/dict';
@@ -12,6 +13,32 @@ type FolderNode = Extract<PublicNode, { kind: 'folder' }>;
 type CartItem = { id: string; off: string[] };
 
 const CART_KEY = 'hr-cart';
+
+/** 패키지 카드 하단 가격. '기본 구성 기준'(끔 항목 없음)으로 pkgMoney/Price의 기존 표시를 재사용합니다. */
+function CardPrice({ p }: { p: PackageView }) {
+  const lang = useLocale();
+  const L = dict(lang).pricing;
+  const X = dict(lang).pex;
+  const won = (n: number) => n.toLocaleString(L.numLocale);
+  const m = pkgMoney(p, []);
+  const usdOk = lang === 'en' && m.usd != null;
+  const ask = !usdOk && m.krw.ask;
+  let v: ReactNode;
+  if (ask) {
+    v = <span className="hr-px-price-ask">{X.cardAsk}</span>;
+  } else if (lang === 'en' && p.totalUsd != null && m.usd == null) {
+    // USD 칸은 있으나 일부 항목에 USD가 없어 KRW로 통일합니다. Price는 USD를 골라 버리므로 직접 표시합니다.
+    v = <>{won(m.krw.amount)}{L.cur}~</>;
+  } else {
+    v = <Price price={p.total} priceUsd={p.totalUsd} discount={p.discount} />;
+  }
+  return (
+    <span className="hr-px-price">
+      <b className="hr-px-price-v">{v}</b>
+      <small className="hr-px-price-note">{X.cardBase}</small>
+    </span>
+  );
+}
 
 function Cards({ children, pkgMap, onFolder, onPackage }: {
   children: PublicNode[];
@@ -45,6 +72,7 @@ function Cards({ children, pkgMap, onFolder, onPackage }: {
             <span className="hr-px-ico"><Icon name="tag" /></span>
             <strong className="hr-pv-q">{p.name}</strong>
             {p.desc && <span className="hr-px-d">{p.desc}</span>}
+            <CardPrice p={p} />
             <span className="hr-pv-go hr-px-act">
               <span className="hr-px-act-t">{X.actView}</span>
               <span className="hr-px-act-a" aria-hidden="true">›</span>
