@@ -33,4 +33,5 @@ type Pkg = {
   est?: string[]; // 수량이 예시인 단가 항목 id (곡마다 달라질 수 있는 항목)
   folderId?: string; // 이 패키지가 속한 단가 폴더 id
   optional?: string[]; // 방문자가 끌 수 있는 단가 항목 id들
+  workIds?: string[]; // 팝업에 '이 구성으로 작업한 곡'으로 보여줄 works id (최대 3개, 순서 유지)
 };

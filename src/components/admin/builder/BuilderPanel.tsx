@@ -3,7 +3,7 @@
 import { useState, useTransition, type FormEvent, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { savePackageBuilder, saveFolderFields, savePriceUi } from '@/app/hr-admin/(panel)/rates/builder/actions';
-import { PackageFormFields } from '@/components/admin/PackageFormFields';
+import { PackageFormFields, type PackageFormWork } from '@/components/admin/PackageFormFields';
 import { FolderFormFields } from '@/components/admin/FolderFormFields';
 import type {
   BuilderFolder, BuilderPkg, BuilderGroup, BuilderItem,
@@ -73,13 +73,14 @@ export function FolderPicker({
 
 /* ---------- 패키지 편집 폼 ---------- */
 export function PackageEditForm({
-  pkg, isNew, slotFolderId, groups, items, pkgCount, onClose, onSaved, onToast,
+  pkg, isNew, slotFolderId, groups, items, works, pkgCount, onClose, onSaved, onToast,
 }: {
   pkg: BuilderPkg | null;
   isNew: boolean;
   slotFolderId: string | null;
   groups: BuilderGroup[];
   items: BuilderItem[];
+  works: PackageFormWork[];
   pkgCount: number;
   onClose: () => void;
   onSaved: (pkg: Record<string, unknown>, slot: { id: string; folder_id: string | null; package_id: string; sort: number } | null) => void;
@@ -103,7 +104,7 @@ export function PackageEditForm({
     <form className="hr-card hr-f hr-bld-form" onSubmit={submit}>
       <h2>{isNew ? '새 패키지' : `패키지 수정 · ${txt(pkg?.name)}`}</h2>
       {isNew && <input type="hidden" name="slotFolderId" value={slotFolderId ?? ''} />}
-      <PackageFormFields cur={pkg} groups={groups} items={items} pkgCount={pkgCount} />
+      <PackageFormFields cur={pkg} groups={groups} items={items} pkgCount={pkgCount} works={works} />
       <div className="hr-act">
         <button type="button" onClick={onClose}>닫기</button>
         <button type="submit" disabled={pending}>{isNew ? '추가' : '수정 저장'}</button>

@@ -138,6 +138,7 @@ export async function savePackage(fd: FormData) {
     discount: d.discount,
     folder_id: folderId || null,
     optional: d.optional,
+    work_ids: d.workIds,
     sort: await pickSort(fd, 'packages', before?.sort as number | undefined),
   };
 

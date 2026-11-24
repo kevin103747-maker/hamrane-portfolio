@@ -22,6 +22,7 @@ import {
 import type {
   BuilderFolder, BuilderSlot, BuilderPkg, BuilderGroup, BuilderItem,
 } from '@/app/hr-admin/(panel)/rates/builder/types';
+import type { PackageFormWork } from '@/components/admin/PackageFormFields';
 import { LevelCard, AddCard, VaultCard, txt, type CardNode, type MenuAction } from './cards';
 import { BuilderTree } from './BuilderTree';
 import { EditPanel, PackageEditForm, FolderEditForm, FolderPicker, PriceUiForm } from './BuilderPanel';
@@ -58,13 +59,14 @@ function Crumb({ target, label, current, onClick }: { target: string | null; lab
 }
 
 export function BuilderBoard({
-  folders: folders0, slots: slots0, packages: pkgs0, groups, items, folderId, priceUi,
+  folders: folders0, slots: slots0, packages: pkgs0, groups, items, works, folderId, priceUi,
 }: {
   folders: BuilderFolder[];
   slots: BuilderSlot[];
   packages: BuilderPkg[];
   groups: BuilderGroup[];
   items: BuilderItem[];
+  works: PackageFormWork[];
   folderId: string | null;
   priceUi: { ko: string; en: string };
 }) {
@@ -541,6 +543,7 @@ export function BuilderBoard({
                 slotFolderId={pid}
                 groups={groups}
                 items={items}
+                works={works}
                 pkgCount={pkgs.length}
                 onClose={() => setEdit(null)}
                 onToast={showToast}
@@ -566,6 +569,7 @@ export function BuilderBoard({
                   slotFolderId={null}
                   groups={groups}
                   items={items}
+                  works={works}
                   pkgCount={pkgs.length}
                   onClose={() => setEdit(null)}
                   onToast={showToast}
