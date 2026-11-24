@@ -105,6 +105,8 @@ export async function PricingView({ lang = 'ko' }: { lang?: string }) {
             est: (p.est ?? []).includes(id),
             noun: lang === 'ko' ? nounOf(tr(it.unit)) : '',
             optKey: opt ? `i:${id}` : undefined,
+            itemId: id,
+            turn: turnOf(turnFor(turnaround, g.id, id)),
           });
         }
       }

@@ -1996,3 +1996,19 @@ a.dl-file:hover { border-color: var(--mint); background: var(--mint-soft); }
 
 /* ===== 곡 팝업이 패키지 팝업 위에 열릴 때 ===== */
 .modal.hr-modal-over { z-index: 210; }
+
+/* ===== 패키지 팝업: 항목별 소요·마감 펼침 ===== */
+.hr-pb li.hr-pb-w { display: block; }
+.hr-pb-liner { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; }
+.hr-pb li.hr-pb-x { cursor: pointer; }
+.hr-pb-exp { flex: none; width: 22px; height: 22px; margin-left: 6px; padding: 0; border-radius: 6px; color: var(--text-3); font-size: 14px; line-height: 1; vertical-align: middle; }
+.hr-pb-exp:hover { color: var(--mint); background: var(--card-2); }
+.hr-pb-exp[aria-expanded='true'] { transform: rotate(90deg); }
+.hr-pb-tsum { display: block; margin-top: 3px; font-size: 11px; color: var(--text-3); white-space: normal; overflow-wrap: anywhere; }
+.hr-pb li.off .hr-pb-tsum { text-decoration: none; }
+.hr-pb-det { margin-top: 6px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--card-2); font-size: 12.5px; cursor: text; }
+.hr-pb-dnote { margin: 0; color: var(--text-3); white-space: normal; overflow-wrap: anywhere; }
+.hr-pb-dl { display: grid; gap: 4px; margin: 0; }
+.hr-pb-dl > div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.hr-pb-dl dt { color: var(--text-3); }
+.hr-pb-dl dd { margin: 0; text-align: right; color: var(--text-2); white-space: normal; overflow-wrap: anywhere; }
