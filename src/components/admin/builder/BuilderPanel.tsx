@@ -1,6 +1,6 @@
 // src/components/admin/builder/BuilderPanel.tsx — 우측 편집 패널과 폴더 선택창
 'use client';
-import { useState, useTransition, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, useTransition, type FormEvent, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { savePackageBuilder, saveFolderFields, savePriceUi } from '@/app/hr-admin/(panel)/rates/builder/actions';
 import { PackageFormFields, type PackageFormWork } from '@/components/admin/PackageFormFields';
@@ -191,7 +191,50 @@ export function PriceUiForm({
   );
 }
 
-/* ---------- 패널 껍데기 ---------- */
-export function EditPanel({ children }: { children: ReactNode }) {
-  return <aside className="hr-bld-panel">{children}</aside>;
+/* ---------- 서랍 껍데기 (카드·폴더를 누르면 오른쪽에서 열리는 편집 창) ---------- */
+export function EditPanel({
+  title, focusKey, onClose, children,
+}: {
+  title: string;
+  /** 열려 있는 항목이 바뀌면 첫 입력칸으로 포커스를 다시 옮깁니다. */
+  focusKey: string;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  const ref = useRef<HTMLElement | null>(null);
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+
+  useEffect(() => {
+    ref.current
+      ?.querySelector<HTMLElement>('input:not([type="hidden"]), select, textarea')
+      ?.focus();
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeRef.current(); };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [focusKey]);
+
+  return (
+    <div className="hr-bd-back" onClick={() => closeRef.current()}>
+      <aside
+        ref={ref}
+        className="hr-bd-drawer"
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <header className="hr-bd-head">
+          <h2>{title}</h2>
+          <button type="button" className="hr-bd-x" aria-label="닫기" onClick={() => closeRef.current()}>✕</button>
+        </header>
+        <div className="hr-bd-body">{children}</div>
+      </aside>
+    </div>
+  );
 }

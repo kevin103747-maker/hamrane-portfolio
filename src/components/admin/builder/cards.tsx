@@ -1,6 +1,6 @@
 // src/components/admin/builder/cards.tsx — 빌더 카드(폴더·패키지·보관함·추가)와 카드 메뉴
 'use client';
-import { useState } from 'react';
+import { useState, type MouseEvent } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
@@ -13,7 +13,7 @@ export type CardNode =
   | { kind: 'folder'; folder: BuilderFolder }
   | { kind: 'slot'; slot: BuilderSlot; pkg: BuilderPkg };
 
-export type MenuAction = { label: string; danger?: boolean; onClick: () => void } | 'sep';
+export type MenuAction = { label: string; danger?: boolean; onClick: (el: HTMLElement | null) => void } | 'sep';
 
 function CardMenu({ actions }: { actions: MenuAction[] }) {
   const [open, setOpen] = useState(false);
@@ -40,7 +40,11 @@ function CardMenu({ actions }: { actions: MenuAction[] }) {
                   type="button"
                   role="menuitem"
                   className={a.danger ? 'danger' : undefined}
-                  onClick={(e) => { e.stopPropagation(); setOpen(false); a.onClick(); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOpen(false);
+                    a.onClick((e.currentTarget as HTMLElement).closest('.hr-bld-card, .hr-bld-vaultcard'));
+                  }}
                 >
                   {a.label}
                 </button>
@@ -74,7 +78,7 @@ export function LevelCard({
   count: number;
   shortcut?: boolean;
   menuActions: MenuAction[];
-  onOpen: () => void;
+  onOpen: (el: HTMLElement) => void;
   onNudge: (dir: -1 | 1) => void;
   suppressed: () => boolean;
 }) {
@@ -130,7 +134,7 @@ export function LevelCard({
       role="button"
       tabIndex={0}
       aria-label={node.kind === 'folder' ? `폴더 ${txt(node.folder.name)}` : `패키지 ${txt(node.pkg.name)}`}
-      onClick={() => { if (!suppressed()) onOpen(); }}
+      onClick={(e) => { if (!suppressed()) onOpen(e.currentTarget); }}
     >
       {body}
       <span className="hr-bld-tools">
@@ -141,7 +145,7 @@ export function LevelCard({
   );
 }
 
-export function AddCard({ label, onClick, disabled }: { label: string; onClick: () => void; disabled?: boolean }) {
+export function AddCard({ label, onClick, disabled }: { label: string; onClick: (e: MouseEvent<HTMLButtonElement>) => void; disabled?: boolean }) {
   return (
     <button type="button" className="hr-bld-card add" disabled={disabled} onClick={onClick}>
       <span className="hr-bld-addplus">+</span>
@@ -155,7 +159,7 @@ export function VaultCard({
 }: {
   pkg: BuilderPkg;
   menuActions: MenuAction[];
-  onOpen: () => void;
+  onOpen: (el: HTMLElement) => void;
   suppressed: () => boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -171,7 +175,7 @@ export function VaultCard({
       style={{ transform: CSS.Transform.toString(transform), opacity: isDragging ? 0.4 : 1 }}
       role="button"
       tabIndex={0}
-      onClick={() => { if (!suppressed()) onOpen(); }}
+      onClick={(e) => { if (!suppressed()) onOpen(e.currentTarget); }}
     >
       <span className="hr-bld-kind pkg" aria-hidden="true">●</span>
       <span className="hr-bld-name">{txt(pkg.name)}</span>
