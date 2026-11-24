@@ -34,11 +34,13 @@ const qtyText = (l: PkgLine) => (l.noun ? `${l.qty}${l.noun}` : `×${l.qty}`);
 /** 계산식용 표기: "20,000원 × 8트랙" */
 const mulText = (l: PkgLine) => (l.noun ? `${l.qty}${l.noun}` : `${l.qty}`);
 
-export function Modal({ p, onClose, initialOff, onAddToCart, discordUrl }: {
+export function Modal({ p, onClose, initialOff, onAddToCart, discordUrl, cartBadge, onViewCart }: {
   p: PackageView; onClose: () => void;
   initialOff?: string[]; // 장바구니에서 열 때 저장된 끔 상태
   onAddToCart?: (off: string[]) => void; // PC 장바구니 담기 (PC에서만 버튼 표시)
   discordUrl?: string; // 디스코드 문의 링크. 없으면 문의 버튼을 숨깁니다.
+  cartBadge?: { n: number; total: string } | null; // 담은 뒤 '내 견적' 개수·합계 표시용
+  onViewCart?: () => void; // '내 견적 보기' 버튼: 패널 펼치기
 }) {
   const lang = useLocale();
   const L = dict(lang).pricing;
@@ -49,6 +51,7 @@ export function Modal({ p, onClose, initialOff, onAddToCart, discordUrl }: {
   const [off, setOff] = useState<ReadonlySet<string>>(() => new Set(initialOff ?? []));
   const [copied, setCopied] = useState(false);
   const [dcNote, setDcNote] = useState(false);
+  const [added, setAdded] = useState(false);
   const isOff = (l: PkgLine) => l.optKey != null && off.has(l.optKey);
 
   useEffect(() => {
@@ -238,24 +241,64 @@ export function Modal({ p, onClose, initialOff, onAddToCart, discordUrl }: {
           </div>
 
           <p className="hr-pm-note">{L.exCap}</p>
+
+          <div className="hr-pm-bar">
+            <div className="hr-pm-bar-sum">
+              {off.size > 0 ? (
+                <span className="hr-pm-bar-pair">
+                  <span className="hr-pm-bar-base">
+                    <em>{X.barBase}</em>
+                    <Price price={p.total} priceUsd={p.totalUsd} discount={p.discount} />
+                  </span>
+                  <span className="hr-pm-bar-arrow" aria-hidden="true">→</span>
+                  <span className="hr-pm-bar-sel" role="status" aria-live="polite">
+                    <em>{X.barSel}</em>
+                    <b key={total ?? 'ask'}>{total != null ? <>{won(total)}{cur}~</> : P.askLater}</b>
+                  </span>
+                </span>
+              ) : (
+                <span className="hr-pm-bar-sel" role="status" aria-live="polite">
+                  <em>{X.total}</em>
+                  <b key="base"><Price price={p.total} priceUsd={p.totalUsd} discount={p.discount} /></b>
+                </span>
+              )}
+            </div>
+            <div className="hr-pm-bar-btns">
+              <button type="button" className="hr-pm-qcopy" onClick={copyQuote}>
+                {copied ? X.copied : P.quoteCopy}
+              </button>
+              {discordUrl && (
+                <button type="button" className="hr-pm-dc" onClick={inquireDiscord}>
+                  {P.dcAsk}
+                </button>
+              )}
+            </div>
+            {dcNote && <p className="hr-pm-dcnote">{P.dcNote}</p>}
+          </div>
         </div>
 
         <div className="hr-pm-foot">
-          <div className="hr-pm-btns">
-            <button type="button" className="hr-pm-qcopy" onClick={copyQuote}>
-              {copied ? X.copied : P.quoteCopy}
-            </button>
-            {discordUrl && (
-              <button type="button" className="hr-pm-dc" onClick={inquireDiscord}>
-                {P.dcAsk}
-              </button>
-            )}
-          </div>
-          {dcNote && <p className="hr-pm-dcnote">{P.dcNote}</p>}
           {onAddToCart && (
-            <button type="button" className="hr-cart-add" onClick={() => onAddToCart([...off])}>
-              {P.cartAdd}
-            </button>
+            <div className="hr-pm-cartextra">
+              <button
+                type="button"
+                className="hr-cart-add"
+                onClick={() => { onAddToCart([...off]); setAdded(true); }}
+              >
+                {P.cartAdd}
+              </button>
+              {added && cartBadge && (
+                <p className="hr-pm-added" role="status">
+                  {fill(X.addedFmt, { n: cartBadge.n, amt: cartBadge.total })}
+                </p>
+              )}
+              {added && onViewCart && (
+                <button type="button" className="hr-pm-viewcart" onClick={onViewCart}>
+                  {X.viewCart}
+                </button>
+              )}
+              <p className="hr-pm-carthint">{X.cartHint}</p>
+            </div>
           )}
           <a className="hr-pm-ask" href="#contact" onClick={onClose}>
             {P.ask} <Icon name="arrow" />

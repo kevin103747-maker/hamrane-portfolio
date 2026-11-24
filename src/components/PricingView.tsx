@@ -140,25 +140,42 @@ export async function PricingView({ lang = 'ko' }: { lang?: string }) {
 
   return (
     <>
-      <PageHead crumb="PRICING" title={L.pageTitle} en={L.pageSub} desc={L.pageDesc} />
+      <div className={useExplorer ? 'hr-px-top' : undefined}>
+        <PageHead crumb="PRICING" title={L.pageTitle} en={L.pageSub} desc={L.pageDesc} />
+      </div>
 
       {useExplorer && (
-        <section className="blk"><div className="wrap">
-          <SectionHead n="EXAMPLES" title={L.exTitle} sub={L.exSub} />
-          <p className="hr-rt-cap">{L.exCap}</p>
+        <section className="blk hr-px-sec"><div className="wrap">
           <PriceExplorer
             roots={tree}
             packages={explorerPackages}
             rootQuestion={rootQuestion}
             discordUrl={d.links.discordUrl || d.links.discordServer}
           />
+          <details className="hr-rt-details hr-rt-mini">
+            <summary>{X.viewRates}</summary>
+            <div className="hr-rt-details-body">
+              <RateBoard groups={board} bonus={bonusView} />
+
+              <p className="hr-pt-note sm">
+                {L.askNote}{' '}<a className="hr-pt-link" href="#contact">{L.askLink}</a>
+              </p>
+
+              <BundleBox
+                tiers={discounts.bundle}
+                lang={lang}
+                yes={groups.filter((g) => discounts.groups[g.id]?.bundle).map((g) => gName(g))}
+                no={groups.filter((g) => !discounts.groups[g.id]?.bundle).map((g) => gName(g))}
+              />
+              <p className="note"><i>NOTE</i>{tr(d.notice)}</p>
+            </div>
+          </details>
         </div></section>
       )}
 
-      {useExplorer ? (
-        <details className="hr-rt-details">
-          <summary>{X.viewRates}</summary>
-          <div className="hr-rt-details-body">
+      {!useExplorer && (
+        <>
+          <section><div className="wrap">
             <RateBoard groups={board} bonus={bonusView} />
 
             <p className="hr-pt-note sm">
@@ -172,32 +189,14 @@ export async function PricingView({ lang = 'ko' }: { lang?: string }) {
               no={groups.filter((g) => !discounts.groups[g.id]?.bundle).map((g) => gName(g))}
             />
             <p className="note"><i>NOTE</i>{tr(d.notice)}</p>
-          </div>
-        </details>
-      ) : (
-        <section><div className="wrap">
-          <RateBoard groups={board} bonus={bonusView} />
+          </div></section>
 
-          <p className="hr-pt-note sm">
-            {L.askNote}{' '}<a className="hr-pt-link" href="#contact">{L.askLink}</a>
-          </p>
-
-          <BundleBox
-            tiers={discounts.bundle}
-            lang={lang}
-            yes={groups.filter((g) => discounts.groups[g.id]?.bundle).map((g) => gName(g))}
-            no={groups.filter((g) => !discounts.groups[g.id]?.bundle).map((g) => gName(g))}
-          />
-          <p className="note"><i>NOTE</i>{tr(d.notice)}</p>
-        </div></section>
-      )}
-
-      {!useExplorer && (
-        <section className="blk"><div className="wrap">
-          <SectionHead n="EXAMPLES" title={L.exTitle} sub={L.exSub} />
-          <p className="hr-rt-cap">{L.exCap}</p>
-          <PackageList items={packages} />
-        </div></section>
+          <section className="blk"><div className="wrap">
+            <SectionHead n="EXAMPLES" title={L.exTitle} sub={L.exSub} />
+            <p className="hr-rt-cap">{L.exCap}</p>
+            <PackageList items={packages} />
+          </div></section>
+        </>
       )}
 
       <section className="hr-faq-sec"><div className="wrap">
