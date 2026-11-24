@@ -9,6 +9,7 @@ import { useSite } from './SiteProvider';
 import { useModal } from './ModalContext';
 import { Thumb } from './Thumb';
 import { dict, fill } from '@/lib/dict';
+import { feeLabel, type Fee, type GroupTurn } from '@/lib/turnaround';
 import type { Discount, Work } from '@/lib/types';
 
 /**
@@ -22,6 +23,8 @@ export type PkgLine = {
   name: string; qty: number; unit: number | null; unitUsd?: number | null; list?: number | null;
   est?: boolean; noun?: string; collab?: boolean; who?: string;
   optKey?: string; // 방문자가 끌 수 있는 항목의 안정적인 키 (i:<항목id> / e:<extras순번>)
+  itemId?: string; // 단가 항목 id. 필수 항목을 포함한 모든 rate_item 줄에 실립니다.
+  turn?: GroupTurn; // 소요·마감 요약. 없으면(협업 줄 제외) 요약·펼침을 렌더하지 않습니다.
 };
 type PkgRow = { label: string; lines: PkgLine[] };
 export type PackageView = {
@@ -37,6 +40,8 @@ const toNum = (s: string) => {
 const qtyText = (l: PkgLine) => (l.noun ? `${l.qty}${l.noun}` : `×${l.qty}`);
 /** 계산식용 표기: "20,000원 × 8트랙" */
 const mulText = (l: PkgLine) => (l.noun ? `${l.qty}${l.noun}` : `${l.qty}`);
+/** 평균 소요·마감 옵션 중 보여줄 정보가 하나라도 있는지 */
+const turnHasInfo = (t?: GroupTurn) => !!t && (!!t.avg.trim() || t.rush.on || t.same.on);
 
 export function Modal({ p, onClose, initialOff, onAddToCart, discordUrl, cartBadge, onViewCart }: {
   p: PackageView; onClose: () => void;
@@ -64,6 +69,7 @@ export function Modal({ p, onClose, initialOff, onAddToCart, discordUrl, cartBad
   const [dcNote, setDcNote] = useState(false);
   const [added, setAdded] = useState(false);
   const [hintSeen, setHintSeen] = useState(false);
+  const [openT, setOpenT] = useState<ReadonlySet<string>>(() => new Set());
   const scrollRef = useRef<HTMLDivElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
   const [moreDown, setMoreDown] = useState(false);
@@ -139,6 +145,8 @@ export function Modal({ p, onClose, initialOff, onAddToCart, discordUrl, cartBad
 
   // 모든 '켜진' 항목에 금액(0 포함)이 있을 때만 합계를 계산해 보여줍니다.
   const complete = active.length > 0 && active.every((l) => (useUsd ? l.unitUsd != null : l.unit != null));
+  // 마감 추가요금 표기: 금액형(won)인데 USD 값이 없으면 KRW로 표시해 통화를 섞지 않습니다.
+  const feeTxt = (f: Fee) => feeLabel(f, lang, useUsd && (!f || f.type !== 'won' || f.valueUsd != null));
   const sub = complete ? active.reduce((s, l) => s + ((useUsd ? l.unitUsd : l.unit) as number) * l.qty, 0) : 0;
   // 끈 항목의 금액만큼 패키지 정가에서도 뺍니다 (할인 전 정가 기준).
   const removed = all.filter(isOff).reduce((s, l) => s + ((useUsd ? l.unitUsd ?? 0 : l.unit ?? 0) as number) * l.qty, 0);
@@ -149,6 +157,12 @@ export function Modal({ p, onClose, initialOff, onAddToCart, discordUrl, cartBad
   const canToggle = all.some((l) => l.optKey != null);
   const toggle = (key: string) =>
     setOff((prev) => {
+      const n = new Set(prev);
+      if (n.has(key)) n.delete(key); else n.add(key);
+      return n;
+    });
+  const flipT = (key: string) =>
+    setOpenT((prev) => {
       const n = new Set(prev);
       if (n.has(key)) n.delete(key); else n.add(key);
       return n;
@@ -226,20 +240,39 @@ export function Modal({ p, onClose, initialOff, onAddToCart, discordUrl, cartBad
           <p className="hr-pm-count">{fill(P.itemsN, { n: all.length })}</p>
 
           <div className="hr-pb">
-            {p.rows.map((r) => (
+            {p.rows.map((r, ri) => (
               <div key={r.label}>
                 <span className="hr-pb-g">{r.label}</span>
                 <ul>
                   {r.lines.map((l, i) => {
                     const offLine = isOff(l);
+                    const hasT = l.collab || turnHasInfo(l.turn);
+                    const tKey = `${ri}:${i}`;
+                    const detId = `hr-pbd-${ri}-${i}`;
+                    const tOpen = openT.has(tKey);
                     return (
-                    <li key={`${l.name}-${i}`} className={offLine ? 'off' : undefined}>
+                    <li
+                      key={`${l.name}-${i}`}
+                      className={`${offLine ? 'off ' : ''}hr-pb-w${hasT ? ' hr-pb-x' : ''}`}
+                      onClick={hasT ? () => flipT(tKey) : undefined}
+                    >
+                      <div className="hr-pb-liner">
                       <span className="hr-pb-n">
                         {l.name}
                         {l.est
                           ? <small className="hr-pb-e">{fill(P.exQty, { q: qtyText(l) })}</small>
                           : l.qty > 1 && <small className="hr-pb-q">×{l.qty}</small>}
                         {l.collab && <small className="hr-pb-c">{P.collab}{l.who ? ` · ${l.who}` : ''}</small>}
+                        {hasT && (
+                          <button
+                            type="button"
+                            className="hr-pb-exp"
+                            aria-expanded={tOpen}
+                            aria-controls={detId}
+                            aria-label={fill(P.turnAria, { name: l.name })}
+                            onClick={(e) => { e.stopPropagation(); flipT(tKey); }}
+                          >›</button>
+                        )}
                         {l.optKey ? (
                           <>
                             <button
@@ -248,12 +281,17 @@ export function Modal({ p, onClose, initialOff, onAddToCart, discordUrl, cartBad
                               role="switch"
                               aria-checked={!offLine}
                               aria-label={fill(P.togAria, { name: l.name })}
-                              onClick={() => toggle(l.optKey!)}
+                              onClick={(e) => { e.stopPropagation(); toggle(l.optKey!); }}
                             ><i /></button>
                             <small className={`hr-tg-lab${offLine ? '' : ' in'}`}>{offLine ? P.togOff : P.togOn}</small>
                           </>
                         ) : (
                           <small className="hr-pb-always">{P.always}</small>
+                        )}
+                        {hasT && (
+                          <small className="hr-pb-tsum">
+                            {l.collab || !l.turn ? P.turnCollab : `${L.avg} ${l.turn.avg || L.askTiming}`}
+                          </small>
                         )}
                       </span>
                       <span className="hr-pb-a">
@@ -279,6 +317,26 @@ export function Modal({ p, onClose, initialOff, onAddToCart, discordUrl, cartBad
                           </>
                         )}
                       </span>
+                      </div>
+                      {tOpen && hasT && (
+                        <div className="hr-pb-det" id={detId} onClick={(e) => e.stopPropagation()}>
+                          {l.collab || !l.turn ? (
+                            <p className="hr-pb-dnote">{P.turnCollab}</p>
+                          ) : (
+                            <dl className="hr-pb-dl">
+                              <div><dt>{L.avg}</dt><dd>{l.turn.avg || L.askTiming}</dd></div>
+                              <div>
+                                <dt>{L.optRush}</dt>
+                                <dd>{l.turn.rush.on ? `${l.turn.rush.days || L.askTiming} · ${feeTxt(l.turn.rush.fee)}` : L.na}</dd>
+                              </div>
+                              <div>
+                                <dt>{L.optSame}</dt>
+                                <dd>{l.turn.same.on ? feeTxt(l.turn.same.fee) : L.na}</dd>
+                              </div>
+                            </dl>
+                          )}
+                        </div>
+                      )}
                     </li>
                     );
                   })}

@@ -147,6 +147,8 @@ const ko = {
     itemsN: '구성 {n}개',
     moreBelow: '↓ scroll',
     samples: '이 구성으로 작업한 곡 듣기',
+    turnCollab: '일정은 협의',
+    turnAria: '{name} 소요·마감 기간',
   },
   pex: {
     up: '상위로',
@@ -452,6 +454,8 @@ const en: Dict = {
     itemsN: '{n} items',
     moreBelow: '↓ scroll',
     samples: 'Songs made with this package',
+    turnCollab: 'Schedule by discussion',
+    turnAria: '{name} turnaround & deadlines',
   },
   pex: {
     up: 'Up',
