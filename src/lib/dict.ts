@@ -171,6 +171,8 @@ const ko = {
     add: '내 견적에 담기',
     cartAria: '내 견적',
     offTag: '제외',
+    actChoose: '선택하기',
+    actView: '구성 보기',
   },
   bundle: {
     aria: '묶음 할인 안내',
@@ -463,6 +465,8 @@ const en: Dict = {
     add: 'Add to quote',
     cartAria: 'My quote',
     offTag: 'excluded',
+    actChoose: 'Choose',
+    actView: 'View details',
   },
   bundle: {
     aria: 'Bundle discount info',

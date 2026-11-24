@@ -20,8 +20,9 @@ function Cards({ children, pkgMap, onFolder, onPackage }: {
   onPackage?: (id: string) => void;
 }) {
   const X = dict(useLocale()).pex;
+  const gn = Math.min(children.length, 3);
   return (
-    <div className="hr-px-grid">
+    <div className={`hr-px-grid${gn ? ` hr-px-g${gn}` : ''}`}>
       {children.map((n) => {
         if (n.kind === 'folder') {
           return (
@@ -30,7 +31,10 @@ function Cards({ children, pkgMap, onFolder, onPackage }: {
               <strong className="hr-pv-q">{n.name}</strong>
               {n.desc && <span className="hr-px-d">{n.desc}</span>}
               {n.pkgs > 0 && <span className="hr-px-meta">{fill(X.pkgN, { n: n.pkgs })}</span>}
-              <span className="hr-pv-go" aria-hidden="true"><Icon name="next" /></span>
+              <span className="hr-pv-go hr-px-act">
+                <span className="hr-px-act-t">{X.actChoose}</span>
+                <span className="hr-px-act-a" aria-hidden="true">›</span>
+              </span>
             </button>
           );
         }
@@ -41,7 +45,10 @@ function Cards({ children, pkgMap, onFolder, onPackage }: {
             <span className="hr-px-ico"><Icon name="tag" /></span>
             <strong className="hr-pv-q">{p.name}</strong>
             {p.desc && <span className="hr-px-d">{p.desc}</span>}
-            <span className="hr-pv-go" aria-hidden="true"><Icon name="next" /></span>
+            <span className="hr-pv-go hr-px-act">
+              <span className="hr-px-act-t">{X.actView}</span>
+              <span className="hr-px-act-a" aria-hidden="true">›</span>
+            </span>
           </button>
         );
       })}

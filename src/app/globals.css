@@ -1833,3 +1833,33 @@ a.dl-file:hover { border-color: var(--mint); background: var(--mint-soft); }
 @media (max-width: 560px) {
   .hr-rt-mini .hr-rt-details-body { padding: 18px 0 0; }
 }
+
+/* ===== 탐색기 카드 확대 · 열 채우기 · 단계 제목 ===== */
+.hr-px-grid.hr-px-g1 { grid-template-columns: minmax(0, 620px); gap: 18px; }
+.hr-px-grid.hr-px-g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.hr-px-grid.hr-px-g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+@media (max-width: 900px) {
+  .hr-px-grid.hr-px-g3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 620px) {
+  .hr-px-grid.hr-px-g2, .hr-px-grid.hr-px-g3 { grid-template-columns: 1fr; }
+}
+
+.hr-px-sec .hr-px-grid .hr-pv { min-height: 200px; padding: 30px; gap: 12px; background: var(--card-2); border-color: var(--line-2); }
+.hr-px-sec .hr-px-grid .hr-pv:hover { border-color: var(--mint); }
+.hr-px-sec .hr-px-grid .hr-pv-q { font-size: 28px; font-weight: 800; line-height: 1.25; }
+.hr-px-sec .hr-px-grid .hr-px-d { font-size: 15px; line-height: 1.55; }
+.hr-px-sec .hr-px-grid .hr-px-meta { font-size: 13px; }
+.hr-px-sec .hr-px-grid .hr-px-ico { top: 26px; right: 26px; font-size: 17px; opacity: .55; }
+.hr-px-act { font-size: 15px; font-weight: 600; }
+.hr-px-act-a { font-size: 22px; line-height: 1; margin-left: 4px; font-weight: 400; }
+
+.hr-px-sec .hr-px-title { font-size: clamp(26px, 4.2vw, 38px); }
+
+@media (max-width: 620px) {
+  .hr-px-sec .hr-px-grid .hr-pv { min-height: 132px; padding: 20px; gap: 10px; }
+  .hr-px-sec .hr-px-grid .hr-pv-q { font-size: 19px; }
+  .hr-px-sec .hr-px-grid .hr-px-d { font-size: 14px; }
+  .hr-px-sec .hr-px-grid .hr-px-ico { top: 18px; right: 18px; }
+  .hr-px-act { font-size: 14px; }
+}
