@@ -146,7 +146,12 @@ export async function PricingView({ lang = 'ko' }: { lang?: string }) {
         <section className="blk"><div className="wrap">
           <SectionHead n="EXAMPLES" title={L.exTitle} sub={L.exSub} />
           <p className="hr-rt-cap">{L.exCap}</p>
-          <PriceExplorer roots={tree} packages={explorerPackages} rootQuestion={rootQuestion} />
+          <PriceExplorer
+            roots={tree}
+            packages={explorerPackages}
+            rootQuestion={rootQuestion}
+            discordUrl={d.links.discordUrl || d.links.discordServer}
+          />
         </div></section>
       )}
 

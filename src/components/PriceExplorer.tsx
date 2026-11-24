@@ -2,7 +2,7 @@
 'use client';
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Modal, pkgMoney, type PackageView } from './PackageList';
+import { Modal, pkgMoney, pkgCopyLines, type PackageView } from './PackageList';
 import type { PublicNode } from '@/lib/price-tree-data';
 import { useLocale } from './LocaleLink';
 import { dict, fill } from '@/lib/dict';
@@ -49,8 +49,8 @@ function Cards({ children, pkgMap, onFolder, onPackage }: {
   );
 }
 
-function ExplorerInner({ roots, pkgMap, rootQuestion }: {
-  roots: PublicNode[]; pkgMap: Map<string, PackageView>; rootQuestion: string;
+function ExplorerInner({ roots, pkgMap, rootQuestion, discordUrl }: {
+  roots: PublicNode[]; pkgMap: Map<string, PackageView>; rootQuestion: string; discordUrl?: string;
 }) {
   const sp = useSearchParams();
   const router = useRouter();
@@ -186,17 +186,16 @@ function ExplorerInner({ roots, pkgMap, rootQuestion }: {
           onClose={() => go(curId)}
           initialOff={cartSeed?.id === openPkg.id ? cartSeed.off : undefined}
           onAddToCart={(off) => addToCart(openPkg.id, off)}
+          discordUrl={discordUrl}
         />
       )}
 
-      {entries.length > 0 && (
-        <CartPanel
-          entries={entries}
-          onOpen={(id, off) => go(curId, id, { id, off })}
-          onRemove={(id) => setCart((prev) => prev.filter((x) => x.id !== id))}
-          onClear={() => setCart([])}
-        />
-      )}
+      <CartPanel
+        entries={entries}
+        onOpen={(id, off) => go(curId, id, { id, off })}
+        onRemove={(id) => setCart((prev) => prev.filter((x) => x.id !== id))}
+        onClear={() => setCart([])}
+      />
     </>
   );
 }
@@ -230,20 +229,8 @@ function CartPanel({ entries, onOpen, onRemove, onClear }: {
   const buildCopy = () => {
     const out: string[] = [];
     for (const e of money) {
-      const m = side(e);
-      out.push(`[${e.pkg.name}] ${X.sub}: ${won(m.amount)}${cur}~`);
-      for (const r of e.pkg.rows) {
-        for (const l of r.lines) {
-          const offLine = l.optKey != null && e.off.includes(l.optKey);
-          if (offLine) {
-            out.push(` - (${X.offTag}) ${l.name}`);
-          } else {
-            const get = useUsd ? l.unitUsd : l.unit;
-            const amt = get == null ? P.askLater : `${won(get * l.qty)}${cur}`;
-            out.push(` - ${l.name}${l.qty > 1 ? ` ×${l.qty}` : ''}  ${amt}`);
-          }
-        }
-      }
+      const r = pkgCopyLines(e.pkg, e.off, { useUsd, cur, won, sub: X.sub, lineAsk: P.askLater, offTag: X.offTag });
+      out.push(...r.lines);
     }
     out.push(`${X.total}: ${won(grand)}${cur}~ ${L.vat}`);
     if (hasAsk) out.push(X.askLater);
@@ -263,6 +250,18 @@ function CartPanel({ entries, onOpen, onRemove, onClear }: {
 
   const totalText = `${entries.length} · ${won(grand)}${cur}~`;
 
+  if (entries.length === 0) {
+    return (
+      <aside className="hr-cart" aria-label={X.cartAria}>
+        <div className="hr-cart-panel">
+          <div className="hr-cart-head"><b>{X.cart}</b></div>
+          <p className="hr-cart-note">{X.cartNote}</p>
+          <p className="hr-cart-empty">{X.cartEmpty}</p>
+        </div>
+      </aside>
+    );
+  }
+
   if (folded) {
     return (
       <aside className="hr-cart" aria-label={X.cartAria}>
@@ -281,6 +280,7 @@ function CartPanel({ entries, onOpen, onRemove, onClear }: {
           <b>{X.cart}</b>
           <button type="button" className="hr-cart-fold" onClick={() => setFolded(true)} aria-label={X.fold}>–</button>
         </div>
+        <p className="hr-cart-note">{X.cartNote}</p>
         <ul className="hr-cart-list">
           {money.map((e) => {
             const m = side(e);
@@ -317,8 +317,8 @@ function CartPanel({ entries, onOpen, onRemove, onClear }: {
   );
 }
 
-export function PriceExplorer({ roots, packages, rootQuestion = '' }: {
-  roots: PublicNode[]; packages: PackageView[]; rootQuestion?: string;
+export function PriceExplorer({ roots, packages, rootQuestion = '', discordUrl }: {
+  roots: PublicNode[]; packages: PackageView[]; rootQuestion?: string; discordUrl?: string;
 }) {
   const pkgMap = useMemo(() => new Map(packages.map((p) => [p.id, p])), [packages]);
   return (
@@ -327,7 +327,7 @@ export function PriceExplorer({ roots, packages, rootQuestion = '' }: {
         <Cards children={roots} pkgMap={pkgMap} />
       }
     >
-      <ExplorerInner roots={roots} pkgMap={pkgMap} rootQuestion={rootQuestion} />
+      <ExplorerInner roots={roots} pkgMap={pkgMap} rootQuestion={rootQuestion} discordUrl={discordUrl} />
     </Suspense>
   );
 }

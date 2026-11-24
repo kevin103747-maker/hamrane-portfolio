@@ -1802,3 +1802,17 @@ a.dl-file:hover { border-color: var(--mint); background: var(--mint-soft); }
   .hr-px-grid { grid-template-columns: 1fr; }
 }
 
+/* ===== 패키지 팝업: 목록으로·토글 안내·견적 복사·디스코드 문의 ===== */
+.hr-pm-tolist { display: inline-flex; align-items: center; height: 34px; margin: 0 0 12px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--card-2); color: var(--text-2); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.hr-pm-tolist:hover { color: var(--text); border-color: var(--line-2); }
+.hr-pm-tognote { margin: 14px 0 0; font-size: 12.5px; line-height: 1.6; color: var(--text-3); }
+.hr-tg-lab { margin-left: 6px; font-size: 11px; color: var(--text-3); white-space: nowrap; }
+.hr-tg-lab.in { color: var(--mint); }
+.hr-pm-btns { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.hr-pm-qcopy { height: 42px; border-radius: 12px; border: 1px solid var(--line); background: transparent; color: var(--text-2); font-size: 13px; font-weight: 600; }
+.hr-pm-qcopy:hover { color: var(--text); border-color: var(--line-2); }
+.hr-pm-dc { height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--mint); color: var(--mint-ink); font-size: 14px; font-weight: 700; }
+.hr-pm-dc:hover { background: var(--mint-2); }
+.hr-pm-dcnote { margin: 0 0 10px; font-size: 12.5px; color: var(--mint); text-align: center; }
+.hr-cart-note { margin: 0; padding: 10px 16px 0; font-size: 12px; line-height: 1.6; color: var(--text-3); }
+.hr-cart-empty { margin: 0; padding: 18px 16px 20px; font-size: 13px; color: var(--text-3); text-align: center; }
