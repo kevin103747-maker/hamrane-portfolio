@@ -128,15 +128,22 @@ export async function PricingView({ lang = 'ko' }: { lang?: string }) {
     };
   });
 
-  // 폴더 트리에 실제로 등장하는 패키지만 탐색기에 넘깁니다.
+  // 폴더 트리에 실제로 등장하는 패키지·항목만 탐색기에 넘깁니다.
   const treePkgIds = new Set<string>();
+  const treeItemIds = new Set<string>();
   const collectPkgIds = (ns: PublicNode[]) => {
     for (const n of ns) {
-      if (n.kind === 'package') treePkgIds.add(n.id); else collectPkgIds(n.children);
+      if (n.kind === 'package') treePkgIds.add(n.id);
+      else if (n.kind === 'item') treeItemIds.add(n.id);
+      else if (n.kind === 'folder') collectPkgIds(n.children);
     }
   };
   collectPkgIds(tree);
   const explorerPackages = packages.filter((p) => treePkgIds.has(p.id));
+  // 항목 카드는 단가표와 같은 BoardItem(이름·가격·할인·마감·혜택 번역 포함)을 재사용합니다.
+  const explorerItems = board.flatMap((g) =>
+    g.items.filter((i) => treeItemIds.has(i.id)).map((item) => ({ group: g.name, item })),
+  );
   const useExplorer = tree.length > 0 && explorerPackages.length > 0;
   // 최상위 질문: 영어 화면은 영어가 비면 한국어로 대신합니다.
   const rootQuestion = lang === 'ko' ? ui.ko : ui.en || ui.ko;
@@ -152,6 +159,7 @@ export async function PricingView({ lang = 'ko' }: { lang?: string }) {
           <PriceExplorer
             roots={tree}
             packages={explorerPackages}
+            items={explorerItems}
             rootQuestion={rootQuestion}
             discordUrl={d.links.discordUrl || d.links.discordServer}
           />

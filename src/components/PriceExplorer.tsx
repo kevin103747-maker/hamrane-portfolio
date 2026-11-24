@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Modal, pkgMoney, pkgCopyLines, type PackageView } from './PackageList';
+import { RateModal, type BoardItem } from './RateBoard';
 import { Price } from './Price';
 import type { PublicNode } from '@/lib/price-tree-data';
 import { useLocale } from './LocaleLink';
@@ -11,6 +12,8 @@ import { Icon } from './Icons';
 
 type FolderNode = Extract<PublicNode, { kind: 'folder' }>;
 type CartItem = { id: string; off: string[] };
+/** 폴더 트리의 단가 항목 노드에 붙는 표시 정보 (분야명 + 단가표 카드 데이터) */
+export type ExplorerItem = { group: string; item: BoardItem };
 
 const CART_KEY = 'hr-cart';
 
@@ -40,11 +43,31 @@ function CardPrice({ p }: { p: PackageView }) {
   );
 }
 
-function Cards({ children, pkgMap, onFolder, onPackage }: {
+/** 항목 카드 하단 가격. RateBoard 카드와 같은 Price 컴포넌트·통화 규칙을 씁니다. */
+function ItemPrice({ item }: { item: BoardItem }) {
+  const lang = useLocale();
+  const X = dict(lang).pex;
+  const ask = !(item.price ?? '').trim();
+  const v = ask ? (
+    <span className="hr-px-price-ask">{X.cardAsk}</span>
+  ) : (
+    <Price price={item.price} priceUsd={item.priceUsd} discount={item.discount} />
+  );
+  return (
+    <span className="hr-px-price">
+      <b className="hr-px-price-v">{v}</b>
+      {item.unit ? <small className="hr-px-price-note">{item.unit}</small> : null}
+    </span>
+  );
+}
+
+function Cards({ children, pkgMap, itemMap, onFolder, onPackage, onItem }: {
   children: PublicNode[];
   pkgMap: Map<string, PackageView>;
+  itemMap: Map<string, ExplorerItem>;
   onFolder?: (id: string) => void;
   onPackage?: (id: string) => void;
+  onItem?: (id: string) => void;
 }) {
   const X = dict(useLocale()).pex;
   const gn = Math.min(children.length, 3);
@@ -60,6 +83,24 @@ function Cards({ children, pkgMap, onFolder, onPackage }: {
               {n.pkgs > 0 && <span className="hr-px-meta">{fill(X.pkgN, { n: n.pkgs })}</span>}
               <span className="hr-pv-go hr-px-act">
                 <span className="hr-px-act-t">{X.actChoose}</span>
+                <span className="hr-px-act-a" aria-hidden="true">›</span>
+              </span>
+            </button>
+          );
+        }
+        if (n.kind === 'item') {
+          const info = itemMap.get(n.id);
+          if (!info) return null;
+          const { group, item: it } = info;
+          return (
+            <button key={`i-${n.id}`} type="button" className="hr-pv hr-px" aria-haspopup="dialog" onClick={() => onItem?.(n.id)}>
+              <span className="hr-px-ico"><Icon name="tag" /></span>
+              <span className="hr-px-badge">{X.rateTag}</span>
+              <strong className="hr-pv-q">{it.name}</strong>
+              <span className="hr-px-meta">{group}</span>
+              <ItemPrice item={it} />
+              <span className="hr-pv-go hr-px-act">
+                <span className="hr-px-act-t">{X.actRate}</span>
                 <span className="hr-px-act-a" aria-hidden="true">›</span>
               </span>
             </button>
@@ -99,8 +140,9 @@ function cartTotals(entries: { pkg: PackageView; off: string[] }[], lang: string
   return { money, useUsd, cur, side, grand, hasAsk, won };
 }
 
-function ExplorerInner({ roots, pkgMap, rootQuestion, discordUrl }: {
-  roots: PublicNode[]; pkgMap: Map<string, PackageView>; rootQuestion: string; discordUrl?: string;
+function ExplorerInner({ roots, pkgMap, itemMap, rootQuestion, discordUrl }: {
+  roots: PublicNode[]; pkgMap: Map<string, PackageView>; itemMap: Map<string, ExplorerItem>;
+  rootQuestion: string; discordUrl?: string;
 }) {
   const sp = useSearchParams();
   const router = useRouter();
@@ -126,7 +168,19 @@ function ExplorerInner({ roots, pkgMap, rootQuestion, discordUrl }: {
     const s = new Set<string>();
     const walk = (ns: PublicNode[]) => {
       for (const n of ns) {
-        if (n.kind === 'package') s.add(n.id); else walk(n.children);
+        if (n.kind === 'package') s.add(n.id);
+        else if (n.kind === 'folder') walk(n.children);
+      }
+    };
+    walk(roots);
+    return s;
+  }, [roots]);
+  const treeItemIds = useMemo(() => {
+    const s = new Set<string>();
+    const walk = (ns: PublicNode[]) => {
+      for (const n of ns) {
+        if (n.kind === 'item') s.add(n.id);
+        else if (n.kind === 'folder') walk(n.children);
       }
     };
     walk(roots);
@@ -135,10 +189,12 @@ function ExplorerInner({ roots, pkgMap, rootQuestion, discordUrl }: {
 
   const p = sp.get('p');
   const k = sp.get('k');
+  const i = sp.get('i');
   const curId = p && folders.has(p) ? p : null;
   const cur = curId ? folders.get(curId)! : null;
   const children = cur ? cur.children : roots;
   const openPkg = k && treePkgIds.has(k) ? pkgMap.get(k) : undefined;
+  const openItem = i && treeItemIds.has(i) ? itemMap.get(i) : undefined;
 
   // 장바구니 상태 (sessionStorage)
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -157,10 +213,11 @@ function ExplorerInner({ roots, pkgMap, rootQuestion, discordUrl }: {
     try { sessionStorage.setItem(CART_KEY, JSON.stringify(cart)); } catch { /* 저장 실패는 무시 */ }
   }, [cart]);
 
-  const go = (fid: string | null, kid?: string | null, seed?: CartItem | null) => {
+  const go = (fid: string | null, kid?: string | null, seed?: CartItem | null, iid?: string | null) => {
     const q = new URLSearchParams();
     if (fid) q.set('p', fid);
     if (kid) q.set('k', kid);
+    if (iid) q.set('i', iid);
     const s = q.toString();
     router.push(s ? `${pathname}?${s}` : pathname, { scroll: false });
     setCartSeed(seed ?? null);
@@ -247,8 +304,10 @@ function ExplorerInner({ roots, pkgMap, rootQuestion, discordUrl }: {
         <Cards
           children={children}
           pkgMap={pkgMap}
+          itemMap={itemMap}
           onFolder={(id) => go(id)}
           onPackage={(id) => go(curId, id)}
+          onItem={(id) => go(curId, null, null, id)}
         />
       </div>
 
@@ -262,6 +321,15 @@ function ExplorerInner({ roots, pkgMap, rootQuestion, discordUrl }: {
           discordUrl={discordUrl}
           cartBadge={cartBadge}
           onViewCart={() => setCartTick((t) => t + 1)}
+        />
+      )}
+
+      {openItem && !openPkg && (
+        <RateModal
+          key={openItem.item.id}
+          groupName={openItem.group}
+          i={openItem.item}
+          onClose={() => go(curId)}
         />
       )}
 
@@ -449,17 +517,19 @@ function CartPanel({ entries, totals, addTick, openTick = 0, discordUrl, onOpen,
   );
 }
 
-export function PriceExplorer({ roots, packages, rootQuestion = '', discordUrl }: {
-  roots: PublicNode[]; packages: PackageView[]; rootQuestion?: string; discordUrl?: string;
+export function PriceExplorer({ roots, packages, items = [], rootQuestion = '', discordUrl }: {
+  roots: PublicNode[]; packages: PackageView[]; items?: ExplorerItem[];
+  rootQuestion?: string; discordUrl?: string;
 }) {
   const pkgMap = useMemo(() => new Map(packages.map((p) => [p.id, p])), [packages]);
+  const itemMap = useMemo(() => new Map(items.map((x) => [x.item.id, x])), [items]);
   return (
     <Suspense
       fallback={
-        <Cards children={roots} pkgMap={pkgMap} />
+        <Cards children={roots} pkgMap={pkgMap} itemMap={itemMap} />
       }
     >
-      <ExplorerInner roots={roots} pkgMap={pkgMap} rootQuestion={rootQuestion} discordUrl={discordUrl} />
+      <ExplorerInner roots={roots} pkgMap={pkgMap} itemMap={itemMap} rootQuestion={rootQuestion} discordUrl={discordUrl} />
     </Suspense>
   );
 }

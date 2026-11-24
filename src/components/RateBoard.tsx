@@ -18,7 +18,7 @@ import { useLocale } from './LocaleLink';
 import { dict, fill } from '@/lib/dict';
 import type { MixItem } from '@/lib/pricing-mixer';
 
-type BoardItem = {
+export type BoardItem = {
   id: string; name: string; desc: string; price: string; priceUsd?: string; unit: string; tag?: string; discount?: Discount;
   turn?: GroupTurn; noDisc?: boolean; bonus?: string; noBonus?: string;
 };
@@ -76,7 +76,7 @@ function OptRow({ label, days, on, fee, base, isBase, useUsd }: {
 }
 
 
-function RateModal({ groupName, i, onClose }: { groupName: string; i: BoardItem; onClose: () => void }) {
+export function RateModal({ groupName, i, onClose }: { groupName: string; i: BoardItem; onClose: () => void }) {
   const { L, lang } = useL();
   const closeRef = useRef<HTMLButtonElement>(null);
 

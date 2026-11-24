@@ -556,3 +556,14 @@ details.hr-fold > summary { cursor: pointer; font-weight: 600; }
 .hr-bld-grid.hr-bld-grid2 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 @media (max-width: 1150px) { .hr-bld-grid.hr-bld-grid2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 620px) { .hr-bld-grid.hr-bld-grid2 { grid-template-columns: minmax(0, 1fr); } }
+
+/* ===== 빌더: 단가 항목 카드·보관함 ===== */
+.hr-bld-kind.item { background: color-mix(in oklab, var(--mint) 26%, transparent); color: var(--mint); border-radius: 50%; font-size: 10px; }
+.hr-bld-vgroup { margin-top: 10px; }
+.hr-bld-vgroup > summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-2); padding: 4px 0; }
+.hr-bld-vgroup > summary:hover { color: var(--mint); }
+.hr-bld-vgroup .hr-bld-vaultlist { margin-top: 8px; }
+.hr-bld-iteminfo dl { display: grid; gap: 8px; margin: 12px 0; }
+.hr-bld-iteminfo dl > div { display: flex; gap: 12px; font-size: 14px; }
+.hr-bld-iteminfo dt { flex: none; width: 64px; color: var(--text-3); }
+.hr-bld-iteminfo dd { margin: 0; overflow-wrap: anywhere; }

@@ -191,6 +191,41 @@ export function PriceUiForm({
   );
 }
 
+/* ---------- 단가 항목 요약 (읽기 전용) ---------- */
+export function ItemEditForm({
+  item, group, slotId, onClose, onRemove,
+}: {
+  item: BuilderItem;
+  group: string;
+  slotId?: string;
+  onClose: () => void;
+  onRemove?: () => void;
+}) {
+  const price = String(item.price ?? '').trim();
+  const unit = txt(item.unit);
+  const disc = item.discount as { on?: boolean; price?: string } | null | undefined;
+  const hasDisc = !!disc && (disc.on === true || !!disc.price);
+  return (
+    <div className="hr-card hr-bld-form hr-bld-iteminfo">
+      <h2>단가 항목 · {txt(item.name)}</h2>
+      <dl>
+        <div><dt>분야</dt><dd>{group || '—'}</dd></div>
+        <div><dt>단가</dt><dd>{price ? `${price}원` : '별도 협의'}</dd></div>
+        <div><dt>단위</dt><dd>{unit || '—'}</dd></div>
+        <div><dt>이벤트 할인</dt><dd>{hasDisc ? '있음' : '없음'}</dd></div>
+      </dl>
+      <p className="hr-sub">가격·이름 등 내용은 단가표에서 수정합니다.</p>
+      <div className="hr-act">
+        {slotId && onRemove ? (
+          <button type="button" className="hr-del" onClick={onRemove}>여기서 빼기</button>
+        ) : null}
+        <a className="hr-link" href="/hr-admin/rates">단가표에서 수정 →</a>
+        <button type="button" onClick={onClose}>닫기</button>
+      </div>
+    </div>
+  );
+}
+
 /* ---------- 서랍 껍데기 (카드·폴더를 누르면 오른쪽에서 열리는 편집 창) ---------- */
 export function EditPanel({
   title, focusKey, onClose, children,

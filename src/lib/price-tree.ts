@@ -4,12 +4,17 @@ export type TreeFolder = {
   parent_id: string | null;
   sort: number | null;
 };
+// 슬롯은 패키지(package_id) 또는 단가 항목(item_id) 중 정확히 하나를 가리킵니다 (CHECK 제약).
 export type TreeSlot = {
   id: string;
   folder_id: string | null;
-  package_id: string;
+  package_id: string | null;
+  item_id: string | null;
   sort: number | null;
 };
+
+/** 슬롯이 가리키는 대상. 패키지 또는 단가 항목 하나입니다. */
+export type SlotTarget = { packageId: string } | { itemId: string };
 
 export const MAX_DEPTH = 4; // 폴더 깊이 최대 4단계 (최상위 폴더 = 1단계)
 export const MAX_CHILDREN = 12; // 폴더당 자식(폴더+슬롯 합계) 최대 12개
@@ -87,16 +92,24 @@ export function folderMoveError(
   return null;
 }
 
-/** 슬롯(패키지 카드)을 newParent로 옮기거나 추가할 수 있는지 사유를 돌려줍니다. */
+const slotTargetKey = (s: TreeSlot): string | null =>
+  s.package_id ? `p:${s.package_id}` : s.item_id ? `i:${s.item_id}` : null;
+const targetKey = (t: SlotTarget): string =>
+  'packageId' in t ? `p:${t.packageId}` : `i:${t.itemId}`;
+
+/** 슬롯(패키지·항목 카드)을 newParent로 옮기거나 추가할 수 있는지 사유를 돌려줍니다. */
 export function slotMoveError(
-  packageId: string,
+  target: SlotTarget,
   newParentId: string | null,
   folders: TreeFolder[],
   slots: TreeSlot[],
   excludeSlotId?: string,
 ): string | null {
-  if (slots.some((s) => s.package_id === packageId && (s.folder_id ?? null) === newParentId && s.id !== excludeSlotId)) {
-    return '같은 패키지가 이미 그 폴더에 있습니다.';
+  const tk = targetKey(target);
+  if (slots.some((s) => slotTargetKey(s) === tk && (s.folder_id ?? null) === newParentId && s.id !== excludeSlotId)) {
+    return 'packageId' in target
+      ? '같은 패키지가 이미 그 폴더에 있습니다.'
+      : '같은 항목이 이미 그 폴더에 있습니다.';
   }
   const n =
     folders.filter((x) => (x.parent_id ?? null) === newParentId).length +

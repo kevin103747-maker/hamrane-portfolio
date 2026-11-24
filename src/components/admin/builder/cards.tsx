@@ -4,14 +4,23 @@ import { useState, type MouseEvent } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import type { BuilderFolder, BuilderSlot, BuilderPkg } from '@/app/hr-admin/(panel)/rates/builder/types';
+import type { BuilderFolder, BuilderSlot, BuilderPkg, BuilderItem } from '@/app/hr-admin/(panel)/rates/builder/types';
 
 export const txt = (v: unknown): string =>
   typeof v === 'string' ? v : ((v as { ko?: string } | null)?.ko ?? '');
 
+/** 단가 항목 카드·보관함에 공통으로 쓰는 보조 줄: "50,000원 · 트랙당" */
+export const itemSub = (item: BuilderItem): string => {
+  const price = String(item.price ?? '').trim();
+  const unit = txt(item.unit);
+  const head = price ? `${price}원` : '별도 협의';
+  return unit ? `${head} · ${unit}` : head;
+};
+
 export type CardNode =
   | { kind: 'folder'; folder: BuilderFolder }
-  | { kind: 'slot'; slot: BuilderSlot; pkg: BuilderPkg };
+  | { kind: 'slot'; slot: BuilderSlot; pkg: BuilderPkg }
+  | { kind: 'itemslot'; slot: BuilderSlot; item: BuilderItem; group: string };
 
 export type MenuAction = { label: string; danger?: boolean; onClick: (el: HTMLElement | null) => void } | 'sep';
 
@@ -85,7 +94,7 @@ export function LevelCard({
   const sid = node.kind === 'folder' ? `f:${node.folder.id}` : `s:${node.slot.id}`;
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: sid,
-    data: { kind: node.kind, refId: node.kind === 'folder' ? node.folder.id : node.slot.id },
+    data: { kind: node.kind === 'folder' ? 'folder' : 'slot', refId: node.kind === 'folder' ? node.folder.id : node.slot.id },
   });
   // 폴더 카드의 위쪽(아이콘+이름) 영역은 "이 폴더로 이동" 놓기 자리입니다.
   const enterId = node.kind === 'folder' ? `into:${node.folder.id}:card` : `none:${sid}`;
@@ -110,6 +119,16 @@ export function LevelCard({
       </div>
       <small className="hr-bld-sub">{txt(node.folder.descr) || '폴더'}</small>
     </>
+  ) : node.kind === 'itemslot' ? (
+    <>
+      <span className="hr-bld-kind item" aria-hidden="true">≡</span>
+      <b className="hr-bld-name">{txt(node.item.name)}</b>
+      <span className="hr-bld-tags">
+        {node.group ? <span className="hr-bld-badge">{node.group}</span> : null}
+        {shortcut ? <span className="hr-bld-badge copy" title="같은 항목이 다른 폴더에도 있습니다">⧉</span> : null}
+      </span>
+      <small className="hr-bld-sub">{itemSub(node.item)}</small>
+    </>
   ) : (
     <>
       <span className="hr-bld-kind pkg" aria-hidden="true">●</span>
@@ -133,7 +152,7 @@ export function LevelCard({
       {...listeners}
       role="button"
       tabIndex={0}
-      aria-label={node.kind === 'folder' ? `폴더 ${txt(node.folder.name)}` : `패키지 ${txt(node.pkg.name)}`}
+      aria-label={node.kind === 'folder' ? `폴더 ${txt(node.folder.name)}` : node.kind === 'itemslot' ? `단가 항목 ${txt(node.item.name)}` : `패키지 ${txt(node.pkg.name)}`}
       onClick={(e) => { if (!suppressed()) onOpen(e.currentTarget); }}
     >
       {body}
@@ -180,6 +199,39 @@ export function VaultCard({
       <span className="hr-bld-kind pkg" aria-hidden="true">●</span>
       <span className="hr-bld-name">{txt(pkg.name)}</span>
       {pkg.tag ? <span className="hr-bld-badge">{String(pkg.tag)}</span> : null}
+      <CardMenu actions={menuActions} />
+    </div>
+  );
+}
+
+/** 보관함의 단가 항목 카드. 패키지 VaultCard와 같은 드래그·메뉴 규칙입니다. */
+export function VaultItemCard({
+  item, group, menuActions, onOpen, suppressed,
+}: {
+  item: BuilderItem;
+  group: string;
+  menuActions: MenuAction[];
+  onOpen: (el: HTMLElement) => void;
+  suppressed: () => boolean;
+}) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: `vaulti:${item.id}`,
+    data: { kind: 'vault-item', itemId: item.id },
+  });
+  return (
+    <div
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      className="hr-bld-vaultcard"
+      style={{ transform: CSS.Transform.toString(transform), opacity: isDragging ? 0.4 : 1 }}
+      role="button"
+      tabIndex={0}
+      onClick={(e) => { if (!suppressed()) onOpen(e.currentTarget); }}
+    >
+      <span className="hr-bld-kind item" aria-hidden="true">≡</span>
+      <span className="hr-bld-name">{txt(item.name)}</span>
+      {group ? <span className="hr-bld-badge">{group}</span> : null}
       <CardMenu actions={menuActions} />
     </div>
   );
