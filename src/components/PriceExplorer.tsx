@@ -252,8 +252,6 @@ function ExplorerInner({ roots, pkgMap, rootQuestion, discordUrl }: {
         />
       </div>
 
-      {cur && <div className="hr-px-foot">{backBtn}</div>}
-
       {openPkg && (
         <Modal
           key={openPkg.id}
@@ -322,6 +320,13 @@ function CartPanel({ entries, totals, addTick, openTick = 0, discordUrl, onOpen,
     setFolded(false);
     setOpenEmpty(false);
   }, [openTick]);
+
+  // 좁은 PC 폭에서는 카드 영역을 가리지 않도록 패널을 접힌 상태로 시작합니다.
+  useEffect(() => {
+    try {
+      if (window.matchMedia('(min-width: 1024px) and (max-width: 1280px) and (hover: hover)').matches) setFolded(true);
+    } catch { /* matchMedia 실패는 무시 */ }
+  }, []);
 
   const buildCopy = () => {
     const out: string[] = [];

@@ -52,6 +52,10 @@ export function Modal({ p, onClose, initialOff, onAddToCart, discordUrl, cartBad
   const [copied, setCopied] = useState(false);
   const [dcNote, setDcNote] = useState(false);
   const [added, setAdded] = useState(false);
+  const [hintSeen, setHintSeen] = useState(false);
+  useEffect(() => {
+    try { if (sessionStorage.getItem('hr-cart-hint-seen')) setHintSeen(true); } catch { /* 저장소 접근 실패는 무시 */ }
+  }, []);
   const isOff = (l: PkgLine) => l.optKey != null && off.has(l.optKey);
 
   useEffect(() => {
@@ -242,9 +246,9 @@ export function Modal({ p, onClose, initialOff, onAddToCart, discordUrl, cartBad
 
           <p className="hr-pm-note">{L.exCap}</p>
 
-          <div className="hr-pm-bar">
-            <div className="hr-pm-bar-sum">
-              {off.size > 0 ? (
+          <div className="hr-pm-bar hr-pm-bar-s">
+            {off.size > 0 && (
+              <div className="hr-pm-bar-sum">
                 <span className="hr-pm-bar-pair">
                   <span className="hr-pm-bar-base">
                     <em>{X.barBase}</em>
@@ -256,15 +260,24 @@ export function Modal({ p, onClose, initialOff, onAddToCart, discordUrl, cartBad
                     <b key={total ?? 'ask'}>{total != null ? <>{won(total)}{cur}~</> : P.askLater}</b>
                   </span>
                 </span>
-              ) : (
-                <span className="hr-pm-bar-sel" role="status" aria-live="polite">
-                  <em>{X.total}</em>
-                  <b key="base"><Price price={p.total} priceUsd={p.totalUsd} discount={p.discount} /></b>
-                </span>
-              )}
-            </div>
+              </div>
+            )}
             <div className="hr-pm-bar-btns">
-              <button type="button" className="hr-pm-qcopy" onClick={copyQuote}>
+              {onAddToCart && (
+                <button
+                  type="button"
+                  className="hr-cart-add hr-pm-cartbtn"
+                  onClick={() => {
+                    onAddToCart([...off]);
+                    setAdded(true);
+                    setHintSeen(true);
+                    try { sessionStorage.setItem('hr-cart-hint-seen', '1'); } catch { /* 저장 실패는 무시 */ }
+                  }}
+                >
+                  {P.cartAdd}
+                </button>
+              )}
+              <button type="button" className="hr-pm-qcopy hr-pm-copybtn" onClick={copyQuote}>
                 {copied ? X.copied : P.quoteCopy}
               </button>
               {discordUrl && (
@@ -273,36 +286,27 @@ export function Modal({ p, onClose, initialOff, onAddToCart, discordUrl, cartBad
                 </button>
               )}
             </div>
-            {dcNote && <p className="hr-pm-dcnote">{P.dcNote}</p>}
-          </div>
-        </div>
-
-        <div className="hr-pm-foot">
-          {onAddToCart && (
-            <div className="hr-pm-cartextra">
-              <button
-                type="button"
-                className="hr-cart-add"
-                onClick={() => { onAddToCart([...off]); setAdded(true); }}
-              >
-                {P.cartAdd}
-              </button>
-              {added && cartBadge && (
-                <p className="hr-pm-added" role="status">
-                  {fill(X.addedFmt, { n: cartBadge.n, amt: cartBadge.total })}
-                </p>
-              )}
+            <div className="hr-pm-bar-links">
               {added && onViewCart && (
-                <button type="button" className="hr-pm-viewcart" onClick={onViewCart}>
+                <button type="button" className="hr-pm-viewlnk" onClick={onViewCart}>
                   {X.viewCart}
                 </button>
               )}
-              <p className="hr-pm-carthint">{X.cartHint}</p>
+              <button type="button" className="hr-pm-copylnk" onClick={copyQuote}>
+                {copied ? X.copied : X.copyItems}
+              </button>
+              <a className="hr-pm-asklnk" href="#contact" onClick={onClose}>
+                {P.ask} <Icon name="arrow" />
+              </a>
             </div>
-          )}
-          <a className="hr-pm-ask" href="#contact" onClick={onClose}>
-            {P.ask} <Icon name="arrow" />
-          </a>
+            {added && cartBadge && (
+              <p className="hr-pm-added" role="status">
+                {fill(X.addedFmt, { n: cartBadge.n, amt: cartBadge.total })}
+              </p>
+            )}
+            {onAddToCart && !cartBadge && !hintSeen && <p className="hr-pm-carthint">{X.cartHint}</p>}
+            {dcNote && <p className="hr-pm-dcnote">{P.dcNote}</p>}
+          </div>
         </div>
       </div>
     </div>,
