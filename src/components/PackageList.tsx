@@ -1,6 +1,6 @@
 // src/components/PackageList.tsx — 질문형 미리보기 카드 + 클릭하면 구성·항목별 금액 팝업
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Price, Until } from './Price';
 import { Icon } from './Icons';
@@ -43,6 +43,7 @@ export function Modal({ p, onClose, initialOff, onAddToCart, discordUrl, cartBad
   onViewCart?: () => void; // '내 견적 보기' 버튼: 패널 펼치기
 }) {
   const lang = useLocale();
+  const C = dict(lang).common;
   const L = dict(lang).pricing;
   const P = dict(lang).pkg;
   const X = dict(lang).pex;
@@ -53,9 +54,53 @@ export function Modal({ p, onClose, initialOff, onAddToCart, discordUrl, cartBad
   const [dcNote, setDcNote] = useState(false);
   const [added, setAdded] = useState(false);
   const [hintSeen, setHintSeen] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const barRef = useRef<HTMLDivElement>(null);
+  const [moreDown, setMoreDown] = useState(false);
+  const [barH, setBarH] = useState(0);
   useEffect(() => {
     try { if (sessionStorage.getItem('hr-cart-hint-seen')) setHintSeen(true); } catch { /* 저장소 접근 실패는 무시 */ }
   }, []);
+
+  // 스크롤이 넘치고 맨 아래 5px 안쪽이 아닐 때만 '더 아래' 신호를 보입니다.
+  // 스크롤은 passive + rAF 쓰로틀, 크기 변화(모달·창·토글로 인한 내용 높이 변화)는
+  // ResizeObserver와 매 렌더 후 재판정으로 잡습니다.
+  const checkMore = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const overflow = el.scrollHeight - el.clientHeight > 2;
+    const nearEnd = el.scrollHeight - el.scrollTop - el.clientHeight <= 5;
+    setMoreDown(overflow && !nearEnd);
+    const bar = barRef.current;
+    if (bar) setBarH(bar.offsetHeight);
+  }, []);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    let raf = 0;
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => { raf = 0; checkMore(); });
+    };
+    checkMore();
+    el.addEventListener('scroll', onScroll, { passive: true });
+    const ro = new ResizeObserver(checkMore);
+    ro.observe(el);
+    if (barRef.current) ro.observe(barRef.current);
+    return () => {
+      el.removeEventListener('scroll', onScroll);
+      if (raf) cancelAnimationFrame(raf);
+      ro.disconnect();
+    };
+  }, [checkMore]);
+  useEffect(() => { checkMore(); });
+
+  const scrollDown = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    el.scrollBy({ top: Math.round(el.clientHeight * 0.8), behavior: reduce ? 'auto' : 'smooth' });
+  };
   const isOff = (l: PkgLine) => l.optKey != null && off.has(l.optKey);
 
   useEffect(() => {
@@ -145,7 +190,7 @@ export function Modal({ p, onClose, initialOff, onAddToCart, discordUrl, cartBad
           </svg>
         </button>
 
-        <div className="hr-pm-scroll">
+        <div className="hr-pm-scroll" ref={scrollRef}>
           <button type="button" className="hr-pm-tolist" onClick={onClose}>{P.backList}</button>
           <div className="hr-pm-top"><span>EX {p.no}</span><em>{p.tag}</em></div>
           <h3>{p.name}</h3>
@@ -163,6 +208,7 @@ export function Modal({ p, onClose, initialOff, onAddToCart, discordUrl, cartBad
             </strong>
             <i>{L.vat}{off.size > 0 ? null : <Until discount={p.discount} />}</i>
           </div>
+          <p className="hr-pm-count">{fill(P.itemsN, { n: all.length })}</p>
 
           <div className="hr-pb">
             {p.rows.map((r) => (
@@ -246,7 +292,7 @@ export function Modal({ p, onClose, initialOff, onAddToCart, discordUrl, cartBad
 
           <p className="hr-pm-note">{L.exCap}</p>
 
-          <div className="hr-pm-bar hr-pm-bar-s">
+          <div className="hr-pm-bar hr-pm-bar-s" ref={barRef}>
             {off.size > 0 && (
               <div className="hr-pm-bar-sum">
                 <span className="hr-pm-bar-pair">
@@ -308,6 +354,15 @@ export function Modal({ p, onClose, initialOff, onAddToCart, discordUrl, cartBad
             {dcNote && <p className="hr-pm-dcnote">{P.dcNote}</p>}
           </div>
         </div>
+
+        {moreDown && (
+          <div className="hr-pm-more" style={{ bottom: barH }}>
+            <div className="hr-pm-fade" aria-hidden="true" />
+            <button type="button" className="hr-pm-chip" onClick={scrollDown} aria-label={C.scrollDown}>
+              {P.moreBelow}
+            </button>
+          </div>
+        )}
       </div>
     </div>,
     document.body,

@@ -144,6 +144,8 @@ const ko = {
     dcAsk: '디스코드로 문의하기',
     dcNote: '견적이 복사됐어요. 디스코드에서 붙여 넣어 주세요.',
     backList: '← 목록으로',
+    itemsN: '구성 {n}개',
+    moreBelow: '↓ scroll',
   },
   pex: {
     up: '상위로',
@@ -446,6 +448,8 @@ const en: Dict = {
     dcAsk: 'Inquire on Discord',
     dcNote: 'Copied. Paste it in Discord.',
     backList: '← Back to list',
+    itemsN: '{n} items',
+    moreBelow: '↓ scroll',
   },
   pex: {
     up: 'Up',
