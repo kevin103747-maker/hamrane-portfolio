@@ -1977,3 +1977,7 @@ a.dl-file:hover { border-color: var(--mint); background: var(--mint-soft); }
 .hr-pm-fade { position: absolute; inset: 0; background: linear-gradient(to top, var(--card) 20%, transparent); }
 .hr-pm-chip { pointer-events: auto; display: inline-flex; align-items: center; gap: 4px; height: 30px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--card-2); color: var(--text-2); font-size: 12px; font-weight: 600; box-shadow: 0 6px 18px rgba(0, 0, 0, .28); transition: color .2s, border-color .2s; }
 .hr-pm-chip:hover { color: var(--mint); border-color: var(--mint); }
+
+/* ===== 칩이 페이드 위에 오도록 positioned + 명시 스타일 ===== */
+.hr-pm-more .hr-pm-chip { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 4px; height: 30px; padding: 0 14px; border: 1px solid var(--line-2); border-radius: 999px; background: var(--card-2); color: var(--text); font-size: 12px; font-weight: 600; line-height: 1; white-space: nowrap; cursor: pointer; box-shadow: 0 6px 18px rgba(0, 0, 0, .28); pointer-events: auto; transition: color .2s, border-color .2s; }
+.hr-pm-more .hr-pm-chip:hover { color: var(--mint); border-color: var(--mint); }
