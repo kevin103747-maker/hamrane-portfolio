@@ -1816,3 +1816,20 @@ a.dl-file:hover { border-color: var(--mint); background: var(--mint-soft); }
 .hr-pm-dcnote { margin: 0 0 10px; font-size: 12.5px; color: var(--mint); text-align: center; }
 .hr-cart-note { margin: 0; padding: 10px 16px 0; font-size: 12px; line-height: 1.6; color: var(--text-3); }
 .hr-cart-empty { margin: 0; padding: 18px 16px 20px; font-size: 13px; color: var(--text-3); text-align: center; }
+
+/* ===== 탐색기 화면 정리: 헤더 축소 · 분야별 단가 링크형 ===== */
+.hr-px-sec { padding-top: 56px; }
+.hr-px-top .phead p { font-size: 14px; }
+@media (max-width: 560px) {
+  .hr-px-sec { padding-top: 40px; }
+}
+
+.hr-rt-mini { margin-top: 48px; border: 0; background: transparent; border-radius: 0; }
+.hr-rt-mini > summary { padding: 0; font-size: 13px; font-weight: 600; color: var(--text-3); }
+.hr-rt-mini > summary::before { color: var(--text-3); font-size: 12px; }
+.hr-rt-mini > summary:hover { color: var(--text-2); }
+.hr-rt-mini[open] > summary { border-bottom: 0; }
+.hr-rt-mini .hr-rt-details-body { padding: 20px 0 0; }
+@media (max-width: 560px) {
+  .hr-rt-mini .hr-rt-details-body { padding: 18px 0 0; }
+}
