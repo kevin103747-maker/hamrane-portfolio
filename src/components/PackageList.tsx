@@ -241,20 +241,43 @@ export function Modal({ p, onClose, initialOff, onAddToCart, discordUrl, cartBad
           </div>
 
           <p className="hr-pm-note">{L.exCap}</p>
+
+          <div className="hr-pm-bar">
+            <div className="hr-pm-bar-sum">
+              {off.size > 0 ? (
+                <span className="hr-pm-bar-pair">
+                  <span className="hr-pm-bar-base">
+                    <em>{X.barBase}</em>
+                    <Price price={p.total} priceUsd={p.totalUsd} discount={p.discount} />
+                  </span>
+                  <span className="hr-pm-bar-arrow" aria-hidden="true">→</span>
+                  <span className="hr-pm-bar-sel" role="status" aria-live="polite">
+                    <em>{X.barSel}</em>
+                    <b key={total ?? 'ask'}>{total != null ? <>{won(total)}{cur}~</> : P.askLater}</b>
+                  </span>
+                </span>
+              ) : (
+                <span className="hr-pm-bar-sel" role="status" aria-live="polite">
+                  <em>{X.total}</em>
+                  <b key="base"><Price price={p.total} priceUsd={p.totalUsd} discount={p.discount} /></b>
+                </span>
+              )}
+            </div>
+            <div className="hr-pm-bar-btns">
+              <button type="button" className="hr-pm-qcopy" onClick={copyQuote}>
+                {copied ? X.copied : P.quoteCopy}
+              </button>
+              {discordUrl && (
+                <button type="button" className="hr-pm-dc" onClick={inquireDiscord}>
+                  {P.dcAsk}
+                </button>
+              )}
+            </div>
+            {dcNote && <p className="hr-pm-dcnote">{P.dcNote}</p>}
+          </div>
         </div>
 
         <div className="hr-pm-foot">
-          <div className="hr-pm-btns">
-            <button type="button" className="hr-pm-qcopy" onClick={copyQuote}>
-              {copied ? X.copied : P.quoteCopy}
-            </button>
-            {discordUrl && (
-              <button type="button" className="hr-pm-dc" onClick={inquireDiscord}>
-                {P.dcAsk}
-              </button>
-            )}
-          </div>
-          {dcNote && <p className="hr-pm-dcnote">{P.dcNote}</p>}
           {onAddToCart && (
             <div className="hr-pm-cartextra">
               <button

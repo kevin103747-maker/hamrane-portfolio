@@ -178,6 +178,8 @@ const ko = {
     addedFmt: '내 견적에 담았어요 · {n}개 · 합계 {amt}',
     viewCart: '내 견적 보기',
     cartHint: '여러 패키지를 담아 합계를 볼 수 있어요.',
+    barBase: '기본',
+    barSel: '선택',
   },
   bundle: {
     aria: '묶음 할인 안내',
@@ -477,6 +479,8 @@ const en: Dict = {
     addedFmt: 'Added to My Quote · {n} items · Total {amt}',
     viewCart: 'View My Quote',
     cartHint: 'Add several packages to see a combined total.',
+    barBase: 'Base',
+    barSel: 'Selected',
   },
   bundle: {
     aria: 'Bundle discount info',

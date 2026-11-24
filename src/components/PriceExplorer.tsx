@@ -207,6 +207,16 @@ function ExplorerInner({ roots, pkgMap, rootQuestion, discordUrl }: {
   ) : null;
   const question = (cur ? cur.question : rootQuestion) || X.qEmpty;
 
+  // 단계 전환 방향: 경로 길이가 깊어지면 오른쪽에서, 얕아지면 왼쪽에서 들어옵니다.
+  // 첫 렌더(직접 링크·새로고침)와 같은 깊이 이동에서는 연출하지 않습니다.
+  const depth = path.length;
+  const prevDepth = useRef<number | null>(null);
+  const stepDir =
+    prevDepth.current == null || prevDepth.current === depth
+      ? ''
+      : depth > prevDepth.current ? 'next' : 'prev';
+  useEffect(() => { prevDepth.current = depth; }, [depth]);
+
   return (
     <>
       {cur && (
@@ -230,12 +240,17 @@ function ExplorerInner({ roots, pkgMap, rootQuestion, discordUrl }: {
 
       {cur?.desc && <p className="hr-px-fdesc">{cur.desc}</p>}
 
-      <Cards
-        children={children}
-        pkgMap={pkgMap}
-        onFolder={(id) => go(id)}
-        onPackage={(id) => go(curId, id)}
-      />
+      <div
+        key={curId ?? 'root'}
+        className={stepDir ? `hr-px-step hr-px-step-${stepDir}` : 'hr-px-step'}
+      >
+        <Cards
+          children={children}
+          pkgMap={pkgMap}
+          onFolder={(id) => go(id)}
+          onPackage={(id) => go(curId, id)}
+        />
+      </div>
 
       {cur && <div className="hr-px-foot">{backBtn}</div>}
 

@@ -1908,3 +1908,35 @@ a.dl-file:hover { border-color: var(--mint); background: var(--mint-soft); }
 
 /* 카드 안 가격: button의 white-space: nowrap을 풀어 줍니다 */
 .hr-px-sec .hr-px-grid .hr-px-price, .hr-px-sec .hr-px-grid .hr-px-price-v { white-space: normal; overflow-wrap: anywhere; }
+
+/* ===== 팝업 하단 고정 합계 막대 ===== */
+.hr-pm-bar { position: sticky; bottom: 0; z-index: 1; display: grid; gap: 8px; margin: 16px -28px 0; padding: 12px 28px calc(12px + env(safe-area-inset-bottom)); background: var(--card); border-top: 1px solid var(--line); }
+.hr-pm-bar-sum { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; font-size: 14px; color: var(--text-2); }
+.hr-pm-bar-pair { display: inline-flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; }
+.hr-pm-bar-base, .hr-pm-bar-sel { display: inline-flex; align-items: baseline; gap: 6px; }
+.hr-pm-bar em { font: 500 11px var(--f-mono); font-style: normal; color: var(--text-3); letter-spacing: .06em; }
+.hr-pm-bar-arrow { color: var(--text-3); }
+.hr-pm-bar-sel b { font: 700 18px/1.2 var(--f-sp); letter-spacing: -.02em; color: var(--text); animation: hr-pm-bar-tick .35s ease-out; }
+.hr-pm-bar-sel .pdisc { font-size: 15px; }
+.hr-pm-bar-btns { display: flex; gap: 8px; }
+.hr-pm-bar-btns .hr-pm-qcopy { flex: 1; height: 46px; }
+.hr-pm-bar-btns .hr-pm-dc { flex: 1; }
+@keyframes hr-pm-bar-tick { 0% { color: var(--mint); } 100% { color: var(--text); } }
+@media (max-width: 640px) {
+  .hr-pm-bar { margin: 16px -20px 0; padding: 12px 20px calc(12px + env(safe-area-inset-bottom)); }
+}
+@media (max-width: 560px) {
+  .hr-pm-bar { margin: 16px -18px 0; padding: 12px 18px calc(12px + env(safe-area-inset-bottom)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hr-pm-bar-sel b { animation: none; }
+}
+
+/* ===== 탐색기 단계 전환 연출 ===== */
+@keyframes hr-px-in-r { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: none; } }
+@keyframes hr-px-in-l { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: none; } }
+.hr-px-step-next { animation: hr-px-in-r .18s ease-out; }
+.hr-px-step-prev { animation: hr-px-in-l .18s ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .hr-px-step-next, .hr-px-step-prev { animation: none; }
+}
