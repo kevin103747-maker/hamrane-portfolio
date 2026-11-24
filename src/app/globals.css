@@ -1981,3 +1981,15 @@ a.dl-file:hover { border-color: var(--mint); background: var(--mint-soft); }
 /* ===== 칩이 페이드 위에 오도록 positioned + 명시 스타일 ===== */
 .hr-pm-more .hr-pm-chip { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 4px; height: 30px; padding: 0 14px; border: 1px solid var(--line-2); border-radius: 999px; background: var(--card-2); color: var(--text); font-size: 12px; font-weight: 600; line-height: 1; white-space: nowrap; cursor: pointer; box-shadow: 0 6px 18px rgba(0, 0, 0, .28); pointer-events: auto; transition: color .2s, border-color .2s; }
 .hr-pm-more .hr-pm-chip:hover { color: var(--mint); border-color: var(--mint); }
+
+/* ===== 패키지 팝업: 이 구성으로 작업한 곡 ===== */
+.hr-pm-samples { margin-top: 18px; }
+.hr-pm-samples-t { display: block; font: 500 11px var(--f-mono); letter-spacing: .08em; color: var(--text-3); }
+.hr-pm-samples ul { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; }
+.hr-pm-smp { display: flex; align-items: center; gap: 12px; width: 100%; padding: 8px; border: 1px solid var(--line); border-radius: 12px; background: var(--card-2); text-align: left; transition: border-color .2s; }
+.hr-pm-smp:hover { border-color: var(--line-2); }
+.hr-pm-smp-th { flex: none; width: 72px; border-radius: 8px; }
+.hr-pm-smp-tx { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.hr-pm-smp-tx b, .hr-pm-smp-tx small { white-space: normal; overflow-wrap: anywhere; }
+.hr-pm-smp-tx b { font-size: 14px; font-weight: 600; color: var(--text); }
+.hr-pm-smp-tx small { font-size: 12px; color: var(--text-3); }

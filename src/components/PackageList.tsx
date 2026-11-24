@@ -5,8 +5,11 @@ import { createPortal } from 'react-dom';
 import { Price, Until } from './Price';
 import { Icon } from './Icons';
 import { useLocale } from './LocaleLink';
+import { useSite } from './SiteProvider';
+import { useModal } from './ModalContext';
+import { Thumb } from './Thumb';
 import { dict, fill } from '@/lib/dict';
-import type { Discount } from '@/lib/types';
+import type { Discount, Work } from '@/lib/types';
 
 /**
  * unit: 개당 금액(숫자, 0이면 무료). 금액이 정해지지 않은 협업 상품 등은 null
@@ -23,6 +26,7 @@ export type PkgLine = {
 type PkgRow = { label: string; lines: PkgLine[] };
 export type PackageView = {
   id: string; no: string; tag: string; name: string; desc: string; total: string; totalUsd?: string; discount?: Discount; rows: PkgRow[];
+  workIds?: string[]; // '이 구성으로 작업한 곡'에 연결된 works id (숨김·삭제된 곡은 여기서 걸러짐)
 };
 
 const toNum = (s: string) => {
@@ -47,6 +51,12 @@ export function Modal({ p, onClose, initialOff, onAddToCart, discordUrl, cartBad
   const L = dict(lang).pricing;
   const P = dict(lang).pkg;
   const X = dict(lang).pex;
+  const s = useSite();
+  const { openWork } = useModal();
+  // 연결된 곡 중 실제로 공개 목록에 있는 것만 보여줍니다(숨김·삭제 곡은 조용히 제외).
+  const samples = (p.workIds ?? [])
+    .map((id) => s.works.find((w) => w.id === id))
+    .filter((w): w is Work => w != null);
   const won = (n: number) => n.toLocaleString(L.numLocale);
   const closeRef = useRef<HTMLButtonElement>(null);
   const [off, setOff] = useState<ReadonlySet<string>>(() => new Set(initialOff ?? []));
@@ -289,6 +299,25 @@ export function Modal({ p, onClose, initialOff, onAddToCart, discordUrl, cartBad
             {hasEst && <p className="hr-pb-miss">{P.estNote}</p>}
             {off.size > 0 && <p className="hr-pb-miss">{P.offNote}</p>}
           </div>
+
+          {samples.length > 0 && (
+            <div className="hr-pm-samples">
+              <span className="hr-pm-samples-t">{P.samples}</span>
+              <ul>
+                {samples.map((w) => (
+                  <li key={w.id}>
+                    <button type="button" className="hr-pm-smp" onClick={() => openWork(w.id)}>
+                      <Thumb work={w} className="hr-pm-smp-th" label="" />
+                      <span className="hr-pm-smp-tx">
+                        <b>{w.title}</b>
+                        <small>{s.artistNames(w)}</small>
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <p className="hr-pm-note">{L.exCap}</p>
 
